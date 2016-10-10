@@ -1,11 +1,10 @@
 # AF-Clean
 Master's project modelling the spontaneous emergence of Atrial Fibrillation in a simple Cellular Automata based on work by Kim Christensen et al in PRL 114, 028104 (2015).
 
-Master's project modelling the spontaneous emergence of Atrial Fibrillation in a simple Cellular Automata based on work by Kim Christensen et al  in PRL 114, 028104 (2015).
 
 Example of how to define tissue and propagate signal:
 
-a = tissue(nu = 0.1,delta = 0.05,eps = 0.05,rp = 50)
+a = Heart(nu = 0.1,delta = 0.05,eps = 0.05,rp = 50)
 
 Without periodic pulsing
 
