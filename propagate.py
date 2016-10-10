@@ -106,84 +106,87 @@ class Heart:
                 if len(j) != 0:
                     self.cell_grid[[j]] -= 1 #Refractory counter for all cells currently in excited list
 
-            #print len(self.excited)
-            ind_up = ind + self.shape[0] #Index of cells directly above initially excited cells
-            ind_down = ind - self.shape[0] #Index of cells below
-            for k in range(len(ind_up)): #Enforces continuous boundary conditions on top
-                if ind_up[k] >= self.size:
-                    ind_up[k] -= self.size
-            for k in range(len(ind_down)):#Enforces continuous boundary conditions on bottom
-                if ind_down[k] < 0:
-                    ind_down[k] += self.size
-            ind_right = ind[[np.argwhere(ind % self.shape[1] != self.shape[1] - 1).flatten()]] #Deletes any cells outside of right tissue boundary
-            ind_right += 1 #Above: the entries corresponding to the indices of 'ind' where the remainder when dividing by grid length is not grid length - 1
-            ind_left = ind[[np.argwhere(ind % self.shape[1] != 0).flatten()]] #Deletes any cells outside of left tissue boundary
-            ind_left -= 1 #Above: the entries corresponding to the indices of 'ind' where the remainder when dividing by grid length is not 0
+            if len(self.excited[exc_index]) != 0:
 
-            ind_left = ind_left[[np.argwhere(self.cell_grid[[ind_left]] == 0).flatten()]] #Removes cells which are refractory
-            if len(ind_left) != 0:
-                norm = ind_left[[np.argwhere(self.cell_dys[[ind_left]] == 0).flatten()]] #Non-dysfunctional cell indices
-                self.cell_grid[[norm]] = self.__rp #Non-dysfunctional cells excited
-                exc += norm.tolist() #Add excited cells to temporary list of cells excited at this time step.
-                dys = ind_left[[np.argwhere(self.cell_dys[[ind_left]] == 1).flatten()]] #Dysfunctional cell indices
-                rand = np.random.random(len(dys)) #List of random numbers between 0 and 1 for comparison to failed firing rate self.__e
-                dys_fire = dys[[np.argwhere(rand > self.__e).flatten()]] #Indices of dys which do fire
-                self.cell_grid[[dys_fire]] = self.__rp #Excite dys cells
-                exc += dys_fire.tolist() #Add excited cells to temporary list of cells excited at this time step.
+                #print len(self.excited)
+                ind_up = ind + self.shape[0] #Index of cells directly above initially excited cells
+                ind_down = ind - self.shape[0] #Index of cells below
+                for k in range(len(ind_up)): #Enforces continuous boundary conditions on top
+                    if ind_up[k] >= self.size:
+                        ind_up[k] -= self.size
+                for k in range(len(ind_down)):#Enforces continuous boundary conditions on bottom
+                    if ind_down[k] < 0:
+                        ind_down[k] += self.size
+                ind_right = ind[[np.argwhere(ind % self.shape[1] != self.shape[1] - 1).flatten()]] #Deletes any cells outside of right tissue boundary
+                ind_right += 1 #Above: the entries corresponding to the indices of 'ind' where the remainder when dividing by grid length is not grid length - 1
+                ind_left = ind[[np.argwhere(ind % self.shape[1] != 0).flatten()]] #Deletes any cells outside of left tissue boundary
+                ind_left -= 1 #Above: the entries corresponding to the indices of 'ind' where the remainder when dividing by grid length is not 0
 
-            ind_right = ind_right[[np.argwhere(self.cell_grid[[ind_right]] == 0).flatten()]] #same as ind_left for cells on right of excited.
-            if len(ind_right) != 0:
-                norm = ind_right[[np.argwhere(self.cell_dys[[ind_right]] == 0).flatten()]]
-                self.cell_grid[[norm]] = self.__rp
-                exc += norm.tolist()
-                dys = ind_right[[np.argwhere(self.cell_dys[[ind_right]] == 1).flatten()]]
-                rand = np.random.random(len(dys))
-                dys_fire = dys[[np.argwhere(rand > self.__e).flatten()]]
-                self.cell_grid[[dys_fire]] = self.__rp
-                exc += dys_fire.tolist()
-            self.ind_up = ind_up
+                ind_left = ind_left[[np.argwhere(self.cell_grid[[ind_left]] == 0).flatten()]] #Removes cells which are refractory
+                if len(ind_left) != 0:
+                    norm = ind_left[[np.argwhere(self.cell_dys[[ind_left]] == 0).flatten()]] #Non-dysfunctional cell indices
+                    self.cell_grid[[norm]] = self.__rp #Non-dysfunctional cells excited
+                    exc += norm.tolist() #Add excited cells to temporary list of cells excited at this time step.
+                    dys = ind_left[[np.argwhere(self.cell_dys[[ind_left]] == 1).flatten()]] #Dysfunctional cell indices
+                    rand = np.random.random(len(dys)) #List of random numbers between 0 and 1 for comparison to failed firing rate self.__e
+                    dys_fire = dys[[np.argwhere(rand > self.__e).flatten()]] #Indices of dys which do fire
+                    self.cell_grid[[dys_fire]] = self.__rp #Excite dys cells
+                    exc += dys_fire.tolist() #Add excited cells to temporary list of cells excited at this time step.
 
-            ind_up = ind_up[[np.argwhere(self.cell_vert[[ind]] == 1).flatten()]] #Same as ind_left for cells above. Checks whether initial excited cell has vert connection.
-            ind_up = ind_up[[np.argwhere(self.cell_grid[[ind_up]] == 0).flatten()]]
-            if len(ind_up) != 0:
+                ind_right = ind_right[[np.argwhere(self.cell_grid[[ind_right]] == 0).flatten()]] #same as ind_left for cells on right of excited.
+                if len(ind_right) != 0:
+                    norm = ind_right[[np.argwhere(self.cell_dys[[ind_right]] == 0).flatten()]]
+                    self.cell_grid[[norm]] = self.__rp
+                    exc += norm.tolist()
+                    dys = ind_right[[np.argwhere(self.cell_dys[[ind_right]] == 1).flatten()]]
+                    rand = np.random.random(len(dys))
+                    dys_fire = dys[[np.argwhere(rand > self.__e).flatten()]]
+                    self.cell_grid[[dys_fire]] = self.__rp
+                    exc += dys_fire.tolist()
+                self.ind_up = ind_up
 
-                norm = ind_up[[np.argwhere(self.cell_dys[[ind_up]] == 0).flatten()]]
-                self.cell_grid[[norm]] = self.__rp
-                exc += norm.tolist()
-                dys = ind_up[[np.argwhere(self.cell_dys[[ind_up]] == 1).flatten()]]
-                rand = np.random.random(len(dys))
-                dys_fire = dys[[np.argwhere(rand > self.__e).flatten()]]
-                self.cell_grid[[dys_fire]] = self.__rp
-                exc += dys_fire.tolist()
+                ind_up = ind_up[[np.argwhere(self.cell_vert[[ind]] == 1).flatten()]] #Same as ind_left for cells above. Checks whether initial excited cell has vert connection.
+                ind_up = ind_up[[np.argwhere(self.cell_grid[[ind_up]] == 0).flatten()]]
+                if len(ind_up) != 0:
 
-            ind_down = ind_down[[np.argwhere(self.cell_vert[[ind_down]] == 1).flatten()]]#Same as ind_left for cells below. Checks whether below cell has vert connection.
-            ind_down = ind_down[[np.argwhere(self.cell_grid[[ind_down]] == 0).flatten()]]
-            if len(ind_down) != 0:
+                    norm = ind_up[[np.argwhere(self.cell_dys[[ind_up]] == 0).flatten()]]
+                    self.cell_grid[[norm]] = self.__rp
+                    exc += norm.tolist()
+                    dys = ind_up[[np.argwhere(self.cell_dys[[ind_up]] == 1).flatten()]]
+                    rand = np.random.random(len(dys))
+                    dys_fire = dys[[np.argwhere(rand > self.__e).flatten()]]
+                    self.cell_grid[[dys_fire]] = self.__rp
+                    exc += dys_fire.tolist()
 
-                norm = ind_down[[np.argwhere(self.cell_dys[[ind_down]] == 0).flatten()]]
-                self.cell_grid[[norm]] = self.__rp
-                exc += norm.tolist()
-                dys = ind_down[[np.argwhere(self.cell_dys[[ind_down]] == 1).flatten()]]
-                rand = np.random.random(len(dys))
-                dys_fire = dys[[np.argwhere(rand > self.__e).flatten()]]
-                self.cell_grid[[dys_fire]] = self.__rp
-                exc += dys_fire.tolist()
-        self.__t += 1 #next time step
-        app_index = self.__t % self.__rp #index of self.excited which should be replaced by current temporary list
+                ind_down = ind_down[[np.argwhere(self.cell_vert[[ind_down]] == 1).flatten()]]#Same as ind_left for cells below. Checks whether below cell has vert connection.
+                ind_down = ind_down[[np.argwhere(self.cell_grid[[ind_down]] == 0).flatten()]]
+                if len(ind_down) != 0:
 
-        if self.__t % self.pulse_rate == 0: #If time is multiple of pulse rate, pulse cells fire
-            print self.__t
-            index = self.pulse_index[[np.argwhere(self.cell_grid[[self.pulse_index]] == 0).flatten()]].tolist()
-            index = index[[np.argwhere(self.cell_dys[[index != 2]]).flatten()]].tolist() #Does not fire dead cells
-            self.cell_grid[[index]] = self.__rp
-            exc += index
+                    norm = ind_down[[np.argwhere(self.cell_dys[[ind_down]] == 0).flatten()]]
+                    self.cell_grid[[norm]] = self.__rp
+                    exc += norm.tolist()
+                    dys = ind_down[[np.argwhere(self.cell_dys[[ind_down]] == 1).flatten()]]
+                    rand = np.random.random(len(dys))
+                    dys_fire = dys[[np.argwhere(rand > self.__e).flatten()]]
+                    self.cell_grid[[dys_fire]] = self.__rp
+                    exc += dys_fire.tolist()
 
-        if len(self.excited) < self.__rp: #Append process for list of last refractory period worth of excitations
-            self.excited.append(np.array(exc, dtype = 'int32'))
-        else:
-            self.excited[app_index] = np.array(exc, dtype = 'int32')
+            self.__t += 1 #next time step
+            app_index = self.__t % self.__rp #index of self.excited which should be replaced by current temporary list
 
-        self.exc_total.append(np.array(exc, dtype = 'int32')) #List containing all previously excited states
+            if self.__t % self.pulse_rate == 0: #If time is multiple of pulse rate, pulse cells fire
+                print self.__t
+                index = self.pulse_index[[np.argwhere(self.cell_grid[[self.pulse_index]] == 0).flatten()]]
+                index = index[[np.argwhere(self.cell_dys[[index]] != 2).flatten()]] #Does not fire dead cells
+                self.cell_grid[[index]] = self.__rp
+                exc += index.tolist()
+
+            if len(self.excited) < self.__rp: #Append process for list of last refractory period worth of excitations
+                self.excited.append(np.array(exc, dtype = 'int32'))
+            else:
+                self.excited[app_index] = np.array(exc, dtype = 'int32')
+
+            self.exc_total.append(np.array(exc, dtype = 'int32')) #List containing all previously excited states
 
     def save(self, file_name):
 
