@@ -6,19 +6,16 @@ import numpy as np
 
 
 class Visual:
-    def __init__(self, file_name=None, shape=(200, 200)):
+    def __init__(self, file_name=None):
         """
         shape is assumed to be 200 by 200. Will probably need a way to record this in
         main.py and then read it here.
-
         :param file_name:
-        :param shape:
         """
 
         if not file_name:
             raise ValueError("Need a file to gather data from.")
-        self.shape = shape
-        self.file_data = pickle.load(open("%s.p" % file_name, 'rb'))
+        self.file_data, self.shape, self.rp = pickle.load(open("%s.p" % file_name, 'rb'))
         self.animation_data = []
         self.frames = len(self.file_data)
 
@@ -27,8 +24,9 @@ class Visual:
         """
         self.__animation_fig = plt.figure()
         self.__iteration_text = self.__animation_fig.text(0, 0, "Time Step: 1")
-        self.__animation_grid = np.zeros(shape, dtype=np.int8)
-        self.__im = plt.imshow(self.__animation_grid, cmap="gray", interpolation="none", vmin=0, vmax=50)
+        self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
+        self.__im = plt.imshow(self.__animation_grid, cmap="gray", interpolation="nearest", vmin=0, vmax=50,
+                               origin="lower")
 
     def unravel(self, data):
         """
@@ -46,11 +44,15 @@ class Visual:
         """
         for individual_data in self.file_data:
             self.__animation_grid[(self.__animation_grid > 0) & (self.__animation_grid <= 50)] -= 1
-            indices = Visual.unravel(self, individual_data)
-            for i in range(len(indices[0])):
-                self.__animation_grid[indices[0][i]][indices[1][i]] = 50
-            current_state = self.__animation_grid.copy()
-            self.animation_data.append(current_state)
+            if individual_data == []:            # could use <if not individual_data.any():> but this is more readable.
+                current_state = self.__animation_grid.copy()
+                self.animation_data.append(current_state)
+            else:
+                indices = Visual.unravel(self, individual_data)
+                for i in range(len(indices[0])):
+                    self.__animation_grid[indices[0][i]][indices[1][i]] = 50
+                current_state = self.__animation_grid.copy()
+                self.animation_data.append(current_state)
 
     def init(self):
         """
@@ -63,21 +65,22 @@ class Visual:
     def animate(self, t):
         """
         Function that updates the animation figure. Used in show_animation.
-        :param t:
+        :param t: Time step.
         :return:
         """
         self.__im.set_array(self.animation_data[t])
         self.__iteration_text.set_text("Time Step: {0}".format(t))
         return self.__im,
 
-    def show_animation(self):  # only plays once. Need to work out why.
+    def show_animation(self, fps=30):
         """
-        Plays the animation (only plays it once).
+        Shows the animation.
+        :param fps: frames per second for the playback.
         :return:
         """
         _ = animation.FuncAnimation(self.__animation_fig, functools.partial(Visual.animate, self),
-                                    init_func=functools.partial(Visual.init, self), frames=self.frames, interval=1,
-                                    repeat=False)
+                                    init_func=functools.partial(Visual.init, self), frames=self.frames,
+                                    interval=1000/fps, repeat=True)
         plt.show()
 
     def save_animation(self, name_of_file):
@@ -91,7 +94,7 @@ class Visual:
                                       init_func=functools.partial(Visual.init, self), frames=self.frames, interval=1,
                                       repeat=False)
         file_name = '%s.mp4' % name_of_file
-        ani.save(str(file_name), fps=30, extra_args=['-vcodec', 'libx264'])
+        ani.save(str(file_name), fps=60, extra_args=['-vcodec', 'libx264'])
 
     def show_frame(self, desired_frame):
         """
