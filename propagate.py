@@ -4,7 +4,7 @@ import random
 import pickle
 
 
-class tissue:
+class Heart:
 
     def __init__(self,nu = 1.,delta = 0.05, eps = 0.05, rp = 50):
         """Fraction of vertical connections given: \'nu\'.
