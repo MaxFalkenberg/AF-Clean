@@ -93,6 +93,8 @@ class Heart:
             self.excited[self.__t % self.__rp] = index
 
     def propagate(self,t_steps = 1):
+        if self.__t == 0 and len(self.exc_total) == 0:
+            Heart.pulse(self)
 
         for i in range(t_steps):
             #print self.cell_grid
