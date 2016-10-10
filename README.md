@@ -10,16 +10,13 @@ a = Heart(nu = 0.1,delta = 0.05,eps = 0.05,rp = 50)
 
   * Default pacemaker cells: 
   ```python
-  a.pulse()
+  SKIP
   ```
   
   * Custom pacemaker cells:
   ```python
   a.set_pulse(rate = 0, vectors = [[y1,y2,y3...],[x1,x2,x3...]])  
-  ```
-    THEN
-  ```python
-  a.pulse()
+
   ```
 2. With periodic pulsing at rate P
 
@@ -31,11 +28,7 @@ a = Heart(nu = 0.1,delta = 0.05,eps = 0.05,rp = 50)
   ```python
   a.set_pulse(rate = P, vectors = [[y1,y2,y3...],[x1,x2,x3...]])
   ```
-    THEN
-  ```python
-  a.pulse()
-  ```
-
+```
 Propagate excitations for T time steps:
  ```python
  a.propagate(t_steps = T)
