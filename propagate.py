@@ -119,8 +119,6 @@ class Heart:
             Heart.pulse(self)
 
         for i in range(t_steps):
-            if not i % state_record_step:
-                self.state_history.append(np.random.get_state())  # Seed recording for generator.
             exc_index = self.__t % self.__rp #Defines current index for position in list of list of excited cells
             if len(self.excited[exc_index]) == 0 and self.pulse_rate == 0:
                 print self.__t
@@ -166,9 +164,12 @@ class Heart:
             else:
                 self.excited[app_index] = exc
 
+            if not i % state_record_step:
+                self.state_history.append(np.random.get_state())  # Seed recording for generator.
+                
             self.exc_total.append(exc) #List containing all previously excited states
 
     def save(self, file_name):
         # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
-        np.save(str(file_name),(self.exc_total,self.shape,self.__rp))
-        np.save("%s_seeds" % file_name, (self.__n, self.__d, self.__e, self.__t, self.__rp, self.state_history))
+        np.save(str(file_name),(self.exc_total,self.shape,self.__rp,
+                                self.__n, self.__d, self.__e, self.__t, self.state_history))
