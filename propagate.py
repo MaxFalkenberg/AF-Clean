@@ -1,12 +1,10 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import random
 import pickle
 
 
 class Heart:
 
-    def __init__(self,nu = 1.,delta = 0.05, eps = 0.05, rp = 50):
+    def __init__(self,seed_file = None,nu = 1.,delta = 0.05, eps = 0.05, rp = 50):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
@@ -24,6 +22,8 @@ class Heart:
         self.pulse_rate = 0
         self.pulse_vectors = None
         self.pulse_index = None
+        self.initial_seed = seed_file
+        self.state_history = []
 
         self.cell_grid = np.zeros(self.size, dtype = 'int8') #Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
         self.cell_vert = np.zeros(self.size, dtype = 'int8') #Defines whether cell has vertical connection. 1 = Yes, 0 = No.
@@ -31,8 +31,8 @@ class Heart:
         #The above change from self.cell_type to splitting between dys and vert was necessary for the np.argwhere logic statements later.
 
         for i in range(self.size):
-            rand_nu = random.random()
-            rand_delta = random.random()
+            rand_nu = np.random.random_sample()
+            rand_delta = np.random.random_sample()
 
             if rand_nu < self.__n: #If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
                 if rand_delta < self.__d: #If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.__e.
