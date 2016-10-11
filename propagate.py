@@ -120,7 +120,6 @@ class Heart:
             Heart.pulse(self)
 
         for i in range(t_steps):
-            exc = []
             exc_index = self.__t % self.__rp #Defines current index for position in list of list of excited cells
             if len(self.excited[exc_index]) == 0 and self.pulse_rate == 0:
                 print self.__t
