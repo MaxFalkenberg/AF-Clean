@@ -15,7 +15,15 @@ class Visual:
 
         if not file_name:
             raise ValueError("Need a file to gather data from.")
-        self.file_data, self.shape, self.rp = pickle.load(open("%s.p" % file_name, 'rb'))
+        origin = np.load("%s.npy" % file_name)
+        self.file_data = origin[0]
+        self.shape = origin[1]
+        self.rp = origin[2]
+        self.nu = origin[3]
+        self.delta = origin[4]
+        self.epsilon = origin[5]
+        self.time_step = origin[6]
+        self.state_history = origin[7]
         self.animation_data = []
         self.frames = len(self.file_data)
 
