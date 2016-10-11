@@ -117,6 +117,7 @@ class Heart:
     def propagate(self, t_steps=1, state_record_step=20):
         if self.__t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
+            self.state_history.append(np.random.get_state())
 
         for i in range(t_steps):
             exc_index = self.__t % self.__rp  # Defines current index for position in list of list of excited cells
