@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 
 
 class Heart:
@@ -170,5 +169,6 @@ class Heart:
             self.exc_total.append(exc) #List containing all previously excited states
 
     def save(self, file_name):
-        pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
-        #np.save(str(file_name),(self.exc_total,self.shape,self.__rp))
+        # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
+        np.save(str(file_name),(self.exc_total,self.shape,self.__rp))
+        np.save("%s_seeds" % file_name, (self.__n, self.__d, self.__e, self.__t, self.__rp, self.state_history))
