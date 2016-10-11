@@ -2,27 +2,29 @@ import numpy as np
 
 
 class Heart:
+
     def __init__(self, seed_file=None, nu=1., delta=0.05, eps=0.05, rp=50):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
             Probability of failed firing: \'eps\'."""
 
-        if seef_file is None:
+        self.__t = 0
+        self.pulse_rate = 0
+        self.pulse_vectors = None
+        self.pulse_index = None
+        self.initial_seed = seed_file
+
+        if self.initial_seed is None:
 
             self.__n = nu  # Private vertical fractions variable
             self.__d = delta  # Private cell dysfunction variable
             self.__e = eps  # Private cell depolarisation failure variable
-            self.__t = 0
-            self.excited = []
-            self.exc_total = []
-            self.__rp = rp
             self.shape = (200, 200)
             self.size = self.shape[0] * self.shape[1]
-            self.pulse_rate = 0
-            self.pulse_vectors = None
-            self.pulse_index = None
-            self.initial_seed = seed_file
+            self.__rp = rp
+            self.excited = []
+            self.exc_total = []
             self.state_history = [(np.random.get_state())]
             np.random.set_state(self.state_history[0])
 
@@ -49,23 +51,22 @@ class Heart:
 
         else:
 
-            origin = np.load("%s.npy" % seed_file)
+            origin = np.load("%s.npy" % self.initial_seed)
 
-            self.__n = nu  # Private vertical fractions variable
-            self.__d = delta  # Private cell dysfunction variable
-            self.__e = eps  # Private cell depolarisation failure variable
-            self.__t = 0
-            self.excited = []
-            self.exc_total = []
-            self.__rp = rp
-            self.shape = (200, 200)
+            self.shape = origin[0]
             self.size = self.shape[0] * self.shape[1]
-            self.pulse_rate = 0
-            self.pulse_vectors = None
-            self.pulse_index = None
-            self.initial_seed = seed_file
-            self.state_history = [(np.random.get_state())]
-            np.random.set_state(self.state_history[0])
+            self.__rp = origin[1]
+            self.__n = origin[3]  # Private vertical fractions variable
+            self.__d = origin[4]  # Private cell dysfunction variable
+            self.__e = origin[5]  # Private cell depolarisation failure variable
+            self.state_history = origin[6]
+            self.excited = []
+
+            self.exc_total = []  # should append the 50 excited states in here before the seed recording.
+            """
+            Need to add way to reload self._rp frames in the past to start simulation from seed recording point.
+            Could use the convert method in animator.py
+            """
 
     def destroy_cells(self, vectors):  # Could set grid values to -1 to speed up propagate loop
         """Input vector of cells to be permanently blocked. Format as list of two lists:
