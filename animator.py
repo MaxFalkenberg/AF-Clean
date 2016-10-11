@@ -22,8 +22,7 @@ class Visual:
         self.nu = origin[3]
         self.delta = origin[4]
         self.epsilon = origin[5]
-        self.time_step = origin[6]
-        self.state_history = origin[7]
+        self.state_history = origin[6]
         self.animation_data = []
         self.frames = len(self.file_data)
 
