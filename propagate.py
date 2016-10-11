@@ -8,7 +8,7 @@ class Heart:
             Fraction of dystfunctional cells: \'delta\'.
             Probability of failed firing: \'eps\'."""
 
-        if seef_file == None:
+        if seef_file is None:
 
             self.__n = nu  # Private vertical fractions variable
             self.__d = delta  # Private cell dysfunction variable
@@ -46,6 +46,26 @@ class Heart:
                 else:
                     if rand_delta < self.__d:  # Dysfunctional but not vertically connected.
                         self.cell_dys[i] = 1
+
+        else:
+
+            origin = np.load("%s.npy" % seed_file)
+
+            self.__n = nu  # Private vertical fractions variable
+            self.__d = delta  # Private cell dysfunction variable
+            self.__e = eps  # Private cell depolarisation failure variable
+            self.__t = 0
+            self.excited = []
+            self.exc_total = []
+            self.__rp = rp
+            self.shape = (200, 200)
+            self.size = self.shape[0] * self.shape[1]
+            self.pulse_rate = 0
+            self.pulse_vectors = None
+            self.pulse_index = None
+            self.initial_seed = seed_file
+            self.state_history = [(np.random.get_state())]
+            np.random.set_state(self.state_history[0])
 
     def destroy_cells(self, vectors):  # Could set grid values to -1 to speed up propagate loop
         """Input vector of cells to be permanently blocked. Format as list of two lists:
