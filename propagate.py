@@ -8,41 +8,44 @@ class Heart:
             Fraction of dystfunctional cells: \'delta\'.
             Probability of failed firing: \'eps\'."""
 
-        self.__n = nu  # Private vertical fractions variable
-        self.__d = delta  # Private cell dysfunction variable
-        self.__e = eps  # Private cell depolarisation failure variable
-        self.__t = 0
-        self.excited = []
-        self.exc_total = []
-        self.__rp = rp
-        self.shape = (200, 200)
-        self.size = self.shape[0] * self.shape[1]
-        self.pulse_rate = 0
-        self.pulse_vectors = None
-        self.pulse_index = None
-        self.initial_seed = seed_file
-        self.state_history = [(np.random.get_state())]
+        if seef_file == None:
 
-        self.cell_grid = np.zeros(self.size,
-                                  dtype='int8')  # Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
-        self.cell_vert = np.zeros(self.size,
-                                  dtype='int8')  # Defines whether cell has vertical connection. 1 = Yes, 0 = No.
-        self.cell_dys = np.zeros(self.size, dtype='int8')  # Defines whether cell is dysfunctional. 1 = Yes, 0 = No.
-        # The above change from self.cell_type to splitting between dys and vert was necessary for the np.argwhere logic statements later.
+            self.__n = nu  # Private vertical fractions variable
+            self.__d = delta  # Private cell dysfunction variable
+            self.__e = eps  # Private cell depolarisation failure variable
+            self.__t = 0
+            self.excited = []
+            self.exc_total = []
+            self.__rp = rp
+            self.shape = (200, 200)
+            self.size = self.shape[0] * self.shape[1]
+            self.pulse_rate = 0
+            self.pulse_vectors = None
+            self.pulse_index = None
+            self.initial_seed = seed_file
+            self.state_history = [(np.random.get_state())]
+            np.random.set_state(self.state_history[0])
 
-        for i in range(self.size):
-            rand_nu = np.random.random_sample()
-            rand_delta = np.random.random_sample()
+            self.cell_grid = np.zeros(self.size,
+                                      dtype='int8')  # Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
+            self.cell_vert = np.zeros(self.size,
+                                      dtype='int8')  # Defines whether cell has vertical connection. 1 = Yes, 0 = No.
+            self.cell_dys = np.zeros(self.size, dtype='int8')  # Defines whether cell is dysfunctional. 1 = Yes, 0 = No.
+            # The above change from self.cell_type to splitting between dys and vert was necessary for the np.argwhere logic statements later.
 
-            if rand_nu < self.__n:  # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
-                if rand_delta < self.__d:  # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.__e.
-                    self.cell_vert[i] = 1  # Both vertically connected and dysfunctional.
-                    self.cell_dys[i] = 1
+            for i in range(self.size):
+                rand_nu = np.random.random(1)[0]
+                rand_delta = np.random.random(1)[0]
+
+                if rand_nu < self.__n:  # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
+                    if rand_delta < self.__d:  # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.__e.
+                        self.cell_vert[i] = 1  # Both vertically connected and dysfunctional.
+                        self.cell_dys[i] = 1
+                    else:
+                        self.cell_vert[i] = 1  # Vertically connected but not dysfunctional.
                 else:
-                    self.cell_vert[i] = 1  # Vertically connected but not dysfunctional.
-            else:
-                if rand_delta < self.__d:  # Dysfunctional but not vertically connected.
-                    self.cell_dys[i] = 1
+                    if rand_delta < self.__d:  # Dysfunctional but not vertically connected.
+                        self.cell_dys[i] = 1
 
     def destroy_cells(self, vectors):  # Could set grid values to -1 to speed up propagate loop
         """Input vector of cells to be permanently blocked. Format as list of two lists:
@@ -167,7 +170,7 @@ class Heart:
             else:
                 self.excited[app_index] = exc
 
-            if not i % state_record_step:
+            if i % state_record_step == 0:
                 self.state_history.append(np.random.get_state())  # Seed recording for generator.
 
             self.exc_total.append(exc)  # List containing all previously excited states
