@@ -72,12 +72,13 @@ class Visual:
         self.__iteration_text.set_text("Time Step: {0}".format(t))
         return self.__im,
 
-    def show_animation(self, fps=30):
+    def show_animation(self, fps=60):
         """
         Shows the animation.
         :param fps: frames per second for the playback.
         :return:
         """
+        Visual.convert(self)
         _ = animation.FuncAnimation(self.__animation_fig, functools.partial(Visual.animate, self),
                                     init_func=functools.partial(Visual.init, self), frames=self.frames,
                                     interval=1000/fps, repeat=True)
