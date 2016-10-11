@@ -198,4 +198,4 @@ class Heart:
     def save(self, file_name):
         # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
         np.save(str(file_name), (self.exc_total, self.shape, self.__rp,
-                                 self.__n, self.__d, self.__e, self.__t, self.state_history))
+                                 self.__n, self.__d, self.__e, self.state_history))
