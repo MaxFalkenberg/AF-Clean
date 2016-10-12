@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import functools
-import pickle
 import numpy as np
 
 
