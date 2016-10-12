@@ -3,7 +3,7 @@ import numpy as np
 
 class Heart:
 
-    def __init__(self, seed_file=None, nu=1., delta=0.05, eps=0.05, rp=50):
+    def __init__(self, seed_file=None, nu=1., delta=0.0, eps=0.0, rp=50):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
@@ -24,6 +24,7 @@ class Heart:
             self.size = self.shape[0] * self.shape[1]
             self.__rp = rp
             self.excited = []
+            self.excited_hist = None
             self.exc_total = []
             self.state_history = [(np.random.get_state())]
             np.random.set_state(self.state_history[0])
@@ -64,11 +65,15 @@ class Heart:
             self.__d = origin[4]  # Private cell dysfunction variable
             self.__e = origin[5]  # Private cell depolarisation failure variable
             self.state_history = origin[6]
-            self.exc_total = origin[0][seed_frame - self.__rp:seed_frame]  # should append the 50 excited states in here before the seed recording.
+            print seed_frame - self.__rp + 1
+            print seed_frame + 1
+            self.exc_total = origin[0][seed_frame - self.__rp + 1:seed_frame+1]  # should append the 50 excited states in here before the seed recording.
 
             self.initial_grid = [0] * self.size
-            self.cell_vert = origin[7]
-            self.cell_dys = origin[8]
+            self.cell_vert = origin[8]
+            self.cell_dys = origin[9]
+
+            self.excited = origin[10]
 
             self.t = seed_frame
 
@@ -80,8 +85,7 @@ class Heart:
 
             self.cell_grid = np.array(self.initial_grid)
             excited_marker = self.t % self.__rp
-            self.excited = origin[0][seed_frame - excited_marker:seed_frame] + \
-                           origin[0][seed_frame - self.__rp:seed_frame - excited_marker]
+            #self.excited = origin[0][(seed_frame+1) - excited_marker:seed_frame+1] + origin[0][(seed_frame+1) - self.__rp:(seed_frame+1) - excited_marker]
 
     def destroy_cells(self, vectors):  # Could set grid values to -1 to speed up propagate loop
         """Input vector of cells to be permanently blocked. Format as list of two lists:
@@ -206,13 +210,15 @@ class Heart:
             else:
                 self.excited[app_index] = exc
 
-            if i % state_record_step == 0:
+            if self.t == 51:
                 self.state_history.append(np.random.get_state())  # Seed recording for generator.
+                self.excited_hist = self.excited
 
             self.exc_total.append(exc)  # List containing all previously excited states
+            self.excited_hist = self.excited
 
     def save(self, file_name):
         # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
         np.save(str(file_name), (self.exc_total, self.shape, self.__rp,
                                  self.__n, self.__d, self.__e, self.state_history,
-                                 self.cell_grid, self.cell_vert, self.cell_dys))
+                                 self.cell_grid, self.cell_vert, self.cell_dys, self.excited_hist))
