@@ -159,7 +159,6 @@ class Heart:
 
         for i in range(t_steps):
             exc_index = self.t % self.__rp  # Defines current index for position in list of list of excited cells
-            print exc_index
             if len(self.excited[exc_index]) == 0 and self.pulse_rate == 0:
                 print self.t
                 raise ValueError(
@@ -194,6 +193,7 @@ class Heart:
 
             try:
                 if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
+                    print self.t
                     index = self.pulse_index[self.cell_grid[self.pulse_index] == 0]
                     index = index[self.cell_dys[index] != 2]  # Does not fire dead cells
                     self.cell_grid[index] = self.__rp
