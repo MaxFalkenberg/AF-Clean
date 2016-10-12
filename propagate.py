@@ -194,7 +194,6 @@ class Heart:
 
             try:
                 if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
-                    print self.t
                     index = self.pulse_index[self.cell_grid[self.pulse_index] == 0]
                     index = index[self.cell_dys[index] != 2]  # Does not fire dead cells
                     self.cell_grid[index] = self.__rp
