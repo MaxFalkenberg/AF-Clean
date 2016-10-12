@@ -53,16 +53,29 @@ class Heart:
 
             origin = np.load("%s.npy" % self.initial_seed)
 
-            self.shape = origin[0]
+            print "Length of original simulation: %s"
+            print "Please specify frame to start simulation from: (save rate: 20)"
+            seed_frame = int(raw_input())
+
+            self.shape = origin[1]
             self.size = self.shape[0] * self.shape[1]
-            self.__rp = origin[1]
+            self.__rp = origin[2]
             self.__n = origin[3]  # Private vertical fractions variable
             self.__d = origin[4]  # Private cell dysfunction variable
             self.__e = origin[5]  # Private cell depolarisation failure variable
             self.state_history = origin[6]
-            self.excited = []
+            self.excited = origin[0][seed_frame - self.__rp:seed_frame]
+            self.exc_total = origin[0][seed_frame - self.__rp:seed_frame]  # should append the 50 excited states in here before the seed recording.
 
-            self.exc_total = []  # should append the 50 excited states in here before the seed recording.
+            self.initial_grid = [0] * self.size
+            self.cell_vert = origin[7]
+            self.cell_dys = origin[8]
+
+            for setup_cells in self.excited:
+                for individual_cells in setup_cells.tolist():
+                    self.initial_grid[individual_cells] = setup_cells + 1
+
+            self.cell_grid = np.array(self.initial_grid)
             """
             Need to add way to reload self._rp frames in the past to start simulation from seed recording point.
             Could use the convert method in animator.py
