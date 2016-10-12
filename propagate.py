@@ -82,10 +82,6 @@ class Heart:
             excited_marker = self.t % self.__rp
             self.excited = origin[0][seed_frame - excited_marker:seed_frame] + \
                            origin[0][seed_frame - self.__rp:seed_frame - excited_marker]
-            """
-            Need to add way to reload self._rp frames in the past to start simulation from seed recording point.
-            Could use the convert method in animator.py
-            """
 
     def destroy_cells(self, vectors):  # Could set grid values to -1 to speed up propagate loop
         """Input vector of cells to be permanently blocked. Format as list of two lists:
