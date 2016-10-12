@@ -64,14 +64,14 @@ class Heart:
             self.__d = origin[4]  # Private cell dysfunction variable
             self.__e = origin[5]  # Private cell depolarisation failure variable
             self.state_history = origin[6]
-            self.excited = origin[0][seed_frame - self.__rp:seed_frame]
+            self.excited = []
             self.exc_total = origin[0][seed_frame - self.__rp:seed_frame]  # should append the 50 excited states in here before the seed recording.
 
             self.initial_grid = [0] * self.size
             self.cell_vert = origin[7]
             self.cell_dys = origin[8]
 
-            for setup_cells in self.excited:
+            for setup_cells in self.exc_total:
                 for individual_cells in setup_cells.tolist():
                     self.initial_grid[individual_cells] = setup_cells + 1
 
@@ -157,6 +157,7 @@ class Heart:
 
         for i in range(t_steps):
             exc_index = self.__t % self.__rp  # Defines current index for position in list of list of excited cells
+            print exc_index
             if len(self.excited[exc_index]) == 0 and self.pulse_rate == 0:
                 print self.__t
                 raise ValueError(
