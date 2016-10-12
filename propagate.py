@@ -9,7 +9,6 @@ class Heart:
             Fraction of dystfunctional cells: \'delta\'.
             Probability of failed firing: \'eps\'."""
 
-        self.__t = 0
         self.pulse_rate = 0
         self.pulse_vectors = None
         self.pulse_index = None
@@ -17,6 +16,7 @@ class Heart:
 
         if self.initial_seed is None:
 
+            self.t = 0
             self.__n = nu  # Private vertical fractions variable
             self.__d = delta  # Private cell dysfunction variable
             self.__e = eps  # Private cell depolarisation failure variable
@@ -53,7 +53,7 @@ class Heart:
 
             origin = np.load("%s.npy" % self.initial_seed)
 
-            print "Length of original simulation: %s"
+            print "Length of original simulation: %s" % len(origin[0])
             print "Please specify frame to start simulation from: (save rate: 20)"
             seed_frame = int(raw_input())
 
@@ -64,18 +64,24 @@ class Heart:
             self.__d = origin[4]  # Private cell dysfunction variable
             self.__e = origin[5]  # Private cell depolarisation failure variable
             self.state_history = origin[6]
-            self.excited = []
             self.exc_total = origin[0][seed_frame - self.__rp:seed_frame]  # should append the 50 excited states in here before the seed recording.
 
             self.initial_grid = [0] * self.size
             self.cell_vert = origin[7]
             self.cell_dys = origin[8]
 
+            self.t = seed_frame
+
+            excitation_level = 0
             for setup_cells in self.exc_total:
+                excitation_level += 1
                 for individual_cells in setup_cells.tolist():
-                    self.initial_grid[individual_cells] = setup_cells + 1
+                    self.initial_grid[individual_cells] = excitation_level
 
             self.cell_grid = np.array(self.initial_grid)
+            excited_marker = self.t % self.__rp
+            self.excited = origin[0][seed_frame - excited_marker:seed_frame] + \
+                           origin[0][seed_frame - self.__rp:seed_frame - excited_marker]
             """
             Need to add way to reload self._rp frames in the past to start simulation from seed recording point.
             Could use the convert method in animator.py
@@ -127,7 +133,7 @@ class Heart:
         if len(self.excited) < self.__rp:
             self.excited.append(index)
         else:
-            self.excited[self.__t % self.__rp] = index
+            self.excited[self.t % self.__rp] = index
 
     def prop_tool(self, ind_list):
         # Solely used as part of Heart.propagate() to process signal propagation
@@ -152,14 +158,14 @@ class Heart:
             return np.array([], dtype='int32')  # Important to ensure no irregularities in datatype
 
     def propagate(self, t_steps=1, state_record_step=20):
-        if self.__t == 0 and len(self.exc_total) == 0:
+        if self.t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
 
         for i in range(t_steps):
-            exc_index = self.__t % self.__rp  # Defines current index for position in list of list of excited cells
+            exc_index = self.t % self.__rp  # Defines current index for position in list of list of excited cells
             print exc_index
             if len(self.excited[exc_index]) == 0 and self.pulse_rate == 0:
-                print self.__t
+                print self.t
                 raise ValueError(
                     'No excited cells to propagate.')  # Error only raised if there are no excited cells and a future pulse will not excite any cells.
             ind = self.excited[exc_index]
@@ -187,12 +193,12 @@ class Heart:
             else:
                 exc = np.array([], dtype='int32')
 
-            self.__t += 1  # next time step
-            app_index = self.__t % self.__rp  # index of self.excited which should be replaced by current temporary list
+            self.t += 1  # next time step
+            app_index = self.t % self.__rp  # index of self.excited which should be replaced by current temporary list
 
             try:
-                if self.__t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
-                    print self.__t
+                if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
+                    print self.t
                     index = self.pulse_index[self.cell_grid[self.pulse_index] == 0]
                     index = index[self.cell_dys[index] != 2]  # Does not fire dead cells
                     self.cell_grid[index] = self.__rp
