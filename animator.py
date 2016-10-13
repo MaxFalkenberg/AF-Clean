@@ -49,14 +49,14 @@ class Visual:
         :return:
         """
         for individual_data in self.file_data:
-            self.__animation_grid[(self.__animation_grid > 0) & (self.__animation_grid <= 50)] -= 1
+            self.__animation_grid[(self.__animation_grid > 0) & (self.__animation_grid <= self.rp)] -= 1
             if individual_data == []:            # could use <if not individual_data.any():> but this is more readable.
                 current_state = self.__animation_grid.copy()
                 self.animation_data.append(current_state)
             else:
                 indices = Visual.unravel(self, individual_data)
                 for i in range(len(indices[0])):
-                    self.__animation_grid[indices[0][i]][indices[1][i]] = 50
+                    self.__animation_grid[indices[0][i]][indices[1][i]] = self.rp
                 current_state = self.__animation_grid.copy()
                 self.animation_data.append(current_state)
 
