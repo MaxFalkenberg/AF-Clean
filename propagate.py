@@ -68,8 +68,8 @@ class Heart:
             self.exc_total = origin[0][seed_frame - self.__rp:seed_frame +1]  # should append the 50 excited states in here before the seed recording.
 
             self.initial_grid = [0] * self.size
-            self.cell_vert = origin[8]
-            self.cell_dys = origin[9]
+            self.cell_vert = origin[7]
+            self.cell_dys = origin[8]
 
             self.t = seed_frame
 
@@ -218,4 +218,4 @@ class Heart:
         # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
         np.save(str(file_name), (self.exc_total, self.shape, self.__rp,
                                  self.__n, self.__d, self.__e, self.state_history,
-                                 self.cell_grid, self.cell_vert, self.cell_dys))
+                                 self.cell_vert, self.cell_dys))
