@@ -3,7 +3,7 @@ import numpy as np
 
 class Heart:
 
-    def __init__(self, seed_file=None, nu=1., delta=0.05, eps=0.05, rp=50):
+    def __init__(self, seed_file=None, nu=0.1, delta=0.1, eps=0.05, rp=50):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
@@ -13,6 +13,7 @@ class Heart:
         self.pulse_vectors = None
         self.pulse_index = None
         self.initial_seed = seed_file
+        self.destroy = {}
 
         if self.initial_seed is None:
 
@@ -25,8 +26,7 @@ class Heart:
             self.__rp = rp
             self.excited = []
             self.exc_total = []
-            self.state_history = [(np.random.get_state())]
-            np.random.set_state(self.state_history[0])
+            self.state_history = {}
 
             self.cell_grid = np.zeros(self.size,
                                       dtype='int8')  # Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
@@ -54,7 +54,7 @@ class Heart:
             origin = np.load("%s.npy" % self.initial_seed)
 
             print "Length of original simulation: %s" % len(origin[0])
-            print "Please specify frame to start simulation from: (save rate: 20)"
+            print "Please specify frame to start simulation from: (save rate: %s)" % origin[2]
             seed_frame = int(raw_input())
 
             self.shape = origin[1]
@@ -65,13 +65,16 @@ class Heart:
             self.__e = origin[5]  # Private cell depolarisation failure variable
             self.state_history = origin[6]
             self.file_data = origin[0]
-            self.exc_total = origin[0][seed_frame - self.__rp:seed_frame +1]  # should append the 50 excited states in here before the seed recording.
+            self.exc_total = []  # should append the 50 excited states in here before the seed recording.
 
             self.initial_grid = [0] * self.size
             self.cell_vert = origin[7]
             self.cell_dys = origin[8]
 
+           # self.exc_total = origin[0][
+           #                  seed_frame - self.__rp:seed_frame + 1]  # should append the 50 excited states in here before the seed recording.
             self.t = seed_frame
+            np.random.set_state(self.state_history[self.t])
 
             excitation_level = 0
             for setup_cells in self.file_data[self.t - self.__rp + 1:self.t + 1]:
@@ -82,8 +85,6 @@ class Heart:
             self.cell_grid = np.array(self.initial_grid)
 
             excited_marker = self.t % self.__rp     # This is currently broken (compare excited cell lists for both.)
-#            print origin[0][seed_frame + 1 - excited_marker:seed_frame]
-#            print origin[0][seed_frame - self.__rp+1:seed_frame - excited_marker]
             self.excited = origin[0][seed_frame:seed_frame+1] + origin[0][seed_frame - self.__rp + 1:seed_frame - excited_marker]
 
     def destroy_cells(self, vectors):  # Could set grid values to -1 to speed up propagate loop
@@ -96,6 +97,7 @@ class Heart:
         index = np.ravel_multi_index(vectors, self.shape)
         self.cell_vert[[index]] = 2
         self.cell_dys[[index]] = 2  # Permanently blocked cell
+        self.destroy[self.t] = index
 
     def set_pulse(self, rate, vectors=None):
         # Use before self.pulse. Defines the rate at which the pulse fires and if desired
@@ -156,7 +158,7 @@ class Heart:
         except:
             return np.array([], dtype='int32')  # Important to ensure no irregularities in datatype
 
-    def propagate(self, t_steps=1, state_record_step=20):
+    def propagate(self, t_steps=1):
         if self.t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
 
@@ -208,10 +210,8 @@ class Heart:
                 self.excited.append(exc)
             else:
                 self.excited[app_index] = exc
-
-            if self.t == 100:
-                self.state_history.append(np.random.get_state())  # Seed recording for generator.
-
+            if self.t % self.__rp == 0:
+                self.state_history[self.t] = np.random.get_state()  # Seed recording for generator.
             self.exc_total.append(exc)  # List containing all previously excited states
 
     def save(self, file_name):
