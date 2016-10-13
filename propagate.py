@@ -3,7 +3,7 @@ import numpy as np
 
 class Heart:
 
-    def __init__(self, seed_file=None, nu=1., delta=0.0, eps=0.0, rp=5):
+    def __init__(self, seed_file=None, nu=1., delta=0.05, eps=0.05, rp=50):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
