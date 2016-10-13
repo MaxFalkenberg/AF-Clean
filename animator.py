@@ -31,7 +31,7 @@ class Visual:
         self.__animation_fig = plt.figure()
         self.__iteration_text = self.__animation_fig.text(0, 0, "Time Step: 1")
         self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
-        self.__im = plt.imshow(self.__animation_grid, cmap="gray", interpolation="nearest", vmin=0, vmax=50,
+        self.__im = plt.imshow(self.__animation_grid, cmap="gray", interpolation="nearest", vmin=0, vmax=self.rp,
                                origin="lower")
 
     def unravel(self, data):
@@ -110,7 +110,7 @@ class Visual:
         :return:
         """
 
-        plt.imshow(self.animation_data[desired_frame], cmap="gray", interpolation='nearest', vmin=0, vmax=50,
+        plt.imshow(self.animation_data[desired_frame], cmap="gray", interpolation='nearest', vmin=0, vmax=self.rp,
                    origin='lower')
         plt.annotate("Time Step: %s" % desired_frame, xy=(1, 0), xycoords='axes fraction', fontsize=16,
                      xytext=(100, -20), textcoords='offset points', ha='right', va='top')
