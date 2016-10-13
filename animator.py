@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib
 import functools
 import numpy as np
 
@@ -22,6 +23,8 @@ class Visual:
         self.delta = origin[4]
         self.epsilon = origin[5]
         self.state_history = origin[6]
+        self.destroyed = origin[9]
+        self.starting_t = origin[10]
         self.animation_data = []
         self.frames = len(self.file_data)
 
@@ -29,7 +32,10 @@ class Visual:
         animation figures
         """
         self.__animation_fig = plt.figure()
-        self.__iteration_text = self.__animation_fig.text(0, 0, "Time Step: 1")
+        self.__iteration_text = self.__animation_fig.text(0.84, 0.03, "Time Step: 1")
+        self.__nu_text = self.__animation_fig.text(0.84, 0.09, r'$\nu$ = $%s$' % self.nu, fontsize=14)
+        self.__delta_text = self.__animation_fig.text(0.84, 0.15, r'$\delta$ = $%s$' % self.delta, fontsize=14)
+        self.__epsilon_text = self.__animation_fig.text(0.84, 0.21, r'$\epsilon$ = $%s$' % self.epsilon, fontsize=14)
         self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
         self.__im = plt.imshow(self.__animation_grid, cmap="gray", interpolation="nearest", vmin=0, vmax=self.rp,
                                origin="lower")
@@ -49,6 +55,11 @@ class Visual:
         :return:
         """
         for individual_data in self.file_data:
+            if self.starting_t in self.destroyed:
+                indices = Visual.unravel(self, self.destroyed[self.starting_t])
+                for i in range(len(indices[0])):
+                    self.__animation_grid[indices[0][i]][indices[1][i]] = self.rp + 1
+            self.starting_t += 1
             self.__animation_grid[(self.__animation_grid > 0) & (self.__animation_grid <= self.rp)] -= 1
             if individual_data == []:            # could use <if not individual_data.any():> but this is more readable.
                 current_state = self.__animation_grid.copy()
@@ -110,13 +121,15 @@ class Visual:
         :return:
         """
 
-        plt.imshow(self.animation_data[desired_frame], cmap="gray", interpolation='nearest', vmin=0, vmax=self.rp,
+        c_map_custom = matplotlib.cm.gray
+        c_map_custom.set_over('r')
+        plt.imshow(self.animation_data[desired_frame], cmap=c_map_custom, interpolation='nearest', vmin=0, vmax=self.rp,
                    origin='lower')
         plt.annotate("Time Step: %s" % desired_frame, xy=(1, 0), xycoords='axes fraction', fontsize=16,
                      xytext=(100, -20), textcoords='offset points', ha='right', va='top')
         c_bar = plt.colorbar()
         c_bar.ax.tick_params(labelsize=14)
-        c_bar.set_label(r'$S(I,J)}$', fontsize=16, rotation=0, labelpad=25)
+        c_bar.set_label(r'$S(I,J)$', fontsize=16, rotation=0, labelpad=25)
         plt.xlabel(r'$J$', fontsize=16, labelpad=12)
         plt.ylabel(r'$I$', fontsize=16, rotation=0, labelpad=15)
         plt.xticks(fontsize=14)
