@@ -1,6 +1,17 @@
 import numpy as np
 
 
+def square_ablation(position, x_len, y_len):
+    x_index = []
+    y_index = []
+    y_ref, x_ref = position  # Needs to be flipped to get desired effect. y_ref <--> x_ref
+    for i in range(x_ref, x_ref + x_len):
+        for j in range(y_ref, y_ref + y_len):
+            x_index.append(i)
+            y_index.append(j)
+    return [x_index, y_index]
+
+
 class Heart:
 
     def __init__(self, seed_file=None, nu=0.13, delta=0.05, eps=0.05, rp=50):
@@ -10,7 +21,7 @@ class Heart:
             Probability of failed firing: \'eps\'."""
 
         self.initial_seed = seed_file
-        self.destroyed = {}
+        self.destroyed = []
 
         if self.initial_seed is None:
 
@@ -27,7 +38,6 @@ class Heart:
             self.excited = []
             self.exc_total = []
             self.state_history = {}
-            self.pulse_history = {}
             self.starting_t = 0
 
             self.cell_grid = np.zeros(self.size,
@@ -50,6 +60,8 @@ class Heart:
                 else:
                     if rand_delta < self.__d:  # Dysfunctional but not vertically connected.
                         self.cell_dys[i] = 1
+
+            self.state_history[0] = np.random.get_state()
 
         else:
 
@@ -75,8 +87,8 @@ class Heart:
             self.pulse_rate = origin[11]
             self.pulse_history = origin[12]
             self.starting_t = seed_frame
-            self.pulse_vectors = self.pulse_history[self.starting_t][1]
-            self.pulse_index = self.pulse_history[self.starting_t][0]
+            self.pulse_vectors = self.pulse_history[1]
+            self.pulse_index = self.pulse_history[0]
 
 
            # self.exc_total = origin[0][
@@ -95,17 +107,6 @@ class Heart:
             excited_marker = self.t % self.__rp     # This is currently broken (compare excited cell lists for both.)
             self.excited = origin[0][seed_frame:seed_frame+1] + origin[0][seed_frame - self.__rp + 1:seed_frame - excited_marker]
 
-    def square_ablation(self, position, x_len, y_len):
-        x_index = []
-        y_index = []
-        x_ref, y_ref = position
-        for i in range(x_ref, x_ref + x_len):
-            for j in range(y_ref, y_ref + y_len):
-                x_index.append(i)
-                y_index.append(j)
-        return [x_index, y_index]
-
-
     def destroy_cells(self, type, vectors_custom=None):  # Could set grid values to -1 to speed up propagate loop
         """Input vector of cells to be permanently blocked. Format as list of two lists:
         with y coordinates in list 1 and x coordinates in list 2. x = column, y = row.
@@ -122,10 +123,10 @@ class Heart:
             print "Enter Position of square (bottom left corner)"
             position = tuple(int(x.strip()) for x in raw_input().split(','))
             print "x length:"
-            x_len = int(raw_input())
-            print "y_length"
-            y_len = int(raw_input())
-            vectors = Heart.square_ablation(self,position, x_len, y_len)
+            y_len = int(raw_input())  # Need to flip to get desired effect
+            print "y length"
+            x_len = int(raw_input())  # Need to flip to get desired effect
+            vectors = square_ablation(position, x_len, y_len)
 
         index = np.ravel_multi_index(vectors, self.shape)
         self.cell_vert[[index]] = 2
@@ -243,9 +244,11 @@ class Heart:
                 self.excited.append(exc)
             else:
                 self.excited[app_index] = exc
+
             if self.t % self.__rp == 0:
                 self.state_history[self.t] = np.random.get_state()  # Seed recording for generator.
-                self.pulse_history[self.t] = (self.pulse_index, self.pulse_vectors)
+
+            self.pulse_history = (self.pulse_index, self.pulse_vectors)
             self.exc_total.append(exc)  # List containing all previously excited states
 
     def save(self, file_name):
