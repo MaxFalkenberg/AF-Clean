@@ -27,6 +27,7 @@ class Visual:
         self.starting_t = origin[10]
         self.animation_data = []
         self.frames = len(self.file_data)
+        self.frame_range = []
 
         """
         animation figures
@@ -39,6 +40,8 @@ class Visual:
         self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
         self.__im = plt.imshow(self.__animation_grid, cmap="gray", interpolation="nearest", vmin=0, vmax=self.rp,
                                origin="lower")
+
+        Visual.convert(self)
 
     def unravel(self, data):
         """
@@ -95,11 +98,18 @@ class Visual:
         :param fps: frames per second for the playback.
         :return:
         """
-        Visual.convert(self)
         _ = animation.FuncAnimation(self.__animation_fig, functools.partial(Visual.animate, self),
                                     init_func=functools.partial(Visual.init, self), frames=self.frames,
                                     interval=1000/fps, repeat=True)
         plt.show()
+
+    def show_range(self, fps = 60):
+        """
+
+        :param fps:
+        :return:
+        """
+
 
     def save_animation(self, name_of_file):
         """

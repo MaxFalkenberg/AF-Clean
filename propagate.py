@@ -32,7 +32,7 @@ class Heart:
             self.__n = nu  # Private vertical fractions variable
             self.__d = delta  # Private cell dysfunction variable
             self.__e = eps  # Private cell depolarisation failure variable
-            self.shape = (200, 200)
+            self.shape = (1000, 1000)
             self.size = self.shape[0] * self.shape[1]
             self.__rp = rp
             self.excited = []
@@ -71,9 +71,9 @@ class Heart:
 
             origin = np.load("%s.npy" % self.initial_seed)
 
-            print "Length of original simulation: %s" % len(origin[0])
-            print "Please specify frame to start simulation from: (save rate: %s)" % origin[2]
-            seed_frame = int(raw_input())
+            print("Length of original simulation: %s" % len(origin[0]))
+            print("Please specify frame to start simulation from: (save rate: %s)" % origin[2])
+            seed_frame = int(input())
 
             self.shape = origin[1]
             self.size = self.shape[0] * self.shape[1]
@@ -123,13 +123,13 @@ class Heart:
             vectors = vectors_custom
 
         if str(type) == "square":
-            print "Please input square ablation parameters:"
-            print "Enter Position of square (bottom left corner)"
-            position = tuple(int(x.strip()) for x in raw_input().split(','))
-            print "x length:"
-            y_len = int(raw_input())  # Need to flip to get desired effect
-            print "y length"
-            x_len = int(raw_input())  # Need to flip to get desired effect
+            print("Please input square ablation parameters:")
+            print("Enter Position of square (bottom left corner)")
+            position = tuple(int(x.strip()) for x in input().split(','))
+            print("x length:")
+            y_len = int(input())  # Need to flip to get desired effect
+            print("y length")
+            x_len = int(input())  # Need to flip to get desired effect
             vectors = square_ablation(position, x_len, y_len)
 
         index = np.ravel_multi_index(vectors, self.shape)
@@ -140,7 +140,7 @@ class Heart:
     def set_pulse(self, rate, vectors=None):
         # Use before self.pulse. Defines the rate at which the pulse fires and if desired
         # defines custom pacemaker cells. If vectors = None, left most wall of tissue will be pacemaker.
-        if vectors != None:
+        if vectors is not None:
             self.pulse_vectors = vectors
         self.pulse_rate = rate
 
@@ -209,7 +209,7 @@ class Heart:
             app_index = (self.t + 1) % self.__rp
             ind = self.excited[exc_index]
             if len(ind) == 0 and self.pulse_rate == 0:
-                print self.t
+                print(self.t)
                 raise ValueError(
                     'No excited cells to propagate.')  # Error only raised if there are no excited cells and a future pulse will not excite any cells.
             if self.t >= self.__rp - 1:
@@ -239,7 +239,7 @@ class Heart:
             self.t += 1
             try:
                 if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
-                    print self.t
+                    print(self.t)
                     index = self.pulse_index[self.cell_grid[self.pulse_index]]
                     if self.any_ablate:
                         index = index[self.cell_alive[index]]  # Does not fire dead cells
