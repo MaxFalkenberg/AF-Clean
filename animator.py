@@ -29,43 +29,12 @@ class Visual:
         self.animation_data = []
         self.frame_range = []
 
-        count = 0
-        state = 'NORMAL'
-        entry = [0] * 2
-        self.AF_states = ["All"]
-
-        for exc_list in self.file_data:
-            if state == 'NORMAL' and len(exc_list) > (1.1 * self.shape[0]):
-                    state = 'AF'
-                    entry[0] = count
-            if state == 'AF' and len(exc_list) <= (1.1 * self.shape[0]):
-                    state = 'NORMAL'
-                    entry[1] = count
-                    self.AF_states.append(entry)
-                    entry = [0] * 2
-            count += 1
-
-        print(self.AF_states)
-        range_inquire = [inquirer.List('Range', message="Please select a range to animate:", choices=self.AF_states,),]
-        answer = inquirer.prompt(range_inquire)
-
-        if not answer['Range'] == "All":
-            start = int(answer['Range'][0])
-            finish = int(answer['Range'][1])
-            self.data_range = self.file_data[start:finish]
-        else:
-            self.data_range = self.file_data
-
-        self.frames = len(self.data_range)
-
         """
         animation figures
         """
-        Visual.figure_init(self)
-
+        self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
+        Visual.range(self)
         Visual.convert(self)
-
-        print(len(self.animation_data))
 
     def unravel(self, data):
         """
@@ -98,6 +67,50 @@ class Visual:
                 current_state = self.__animation_grid.copy()
                 self.animation_data.append(current_state)
 
+    def range(self):
+        """
+
+        :return:
+        """
+        self.animation_data = []
+        self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
+        count = 0
+        state = 'NORMAL'
+        entry = [0] * 2
+        self.AF_states = ["All", "Custom"]
+
+        for exc_list in self.file_data:
+            if state == 'NORMAL' and len(exc_list) > (1.1 * self.shape[0]):
+                    state = 'AF'
+                    entry[0] = count
+            if state == 'AF' and len(exc_list) <= (1.1 * self.shape[0]):
+                    state = 'NORMAL'
+                    entry[1] = count
+                    self.AF_states.append(entry)
+                    entry = [0] * 2
+            count += 1
+
+        range_inquire = [inquirer.List('Range', message="Please select a range to animate", choices=self.AF_states,),]
+        answer = inquirer.prompt(range_inquire)
+
+        if answer['Range'] == "All":
+            self.data_range = self.file_data
+            self.frames = len(self.data_range)
+        elif answer['Range'] == "Custom":
+            custom_range = [inquirer.Text('Start', message="Starting index"),
+                            inquirer.Text('End', message="Ending index")]
+            custom_answer = inquirer.prompt(custom_range)
+            self.data_range = self.file_data[int(custom_answer['Start']):int(custom_answer['End'])]
+            self.frames = len(self.data_range)
+        else:
+            start = int(answer['Range'][0])
+            finish = int(answer['Range'][1])
+            self.data_range = self.file_data[start:finish]
+            self.frames = len(self.data_range)
+
+        print(len(self.data_range))
+        Visual.convert(self)
+
     def figure_init(self):
         """
 
@@ -108,7 +121,6 @@ class Visual:
         self.__nu_text = self.__animation_fig.text(0.84, 0.09, r'$\nu$ = $%s$' % self.nu, fontsize=14)
         self.__delta_text = self.__animation_fig.text(0.84, 0.15, r'$\delta$ = $%s$' % self.delta, fontsize=14)
         self.__epsilon_text = self.__animation_fig.text(0.84, 0.21, r'$\epsilon$ = $%s$' % self.epsilon, fontsize=14)
-        self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
 
     def init(self):
         """
@@ -136,6 +148,7 @@ class Visual:
         :param fps: frames per second for the playback.
         :return:
         """
+        Visual.figure_init(self)
         _ = animation.FuncAnimation(self.__animation_fig, functools.partial(Visual.animate, self),
                                     init_func=functools.partial(Visual.init, self),
                                     frames=self.frames,
@@ -143,7 +156,6 @@ class Visual:
                                     repeat=False)
         plt.show()
         plt.close("all")
-        Visual.figure_init(self)
 
     def save_animation(self, name_of_file):
         """
@@ -153,7 +165,7 @@ class Visual:
         """
 
         ani = animation.FuncAnimation(self.__animation_fig, functools.partial(Visual.animate, self),
-                                      init_func=functools.partial(Visual.init, self), frames=self.frames, interval=1,
+                                      init_func=functools.partial(Visual.init, self), frames=self.frames+1, interval=1,
                                       repeat=False)
         file_name = '%s.mp4' % name_of_file
         ani.save(str(file_name), fps=60, extra_args=['-vcodec', 'libx264'])
