@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib
 import functools
+import inquirer
 import numpy as np
 
 
@@ -26,22 +27,45 @@ class Visual:
         self.destroyed = origin[9]
         self.starting_t = origin[10]
         self.animation_data = []
-        self.frames = len(self.file_data)
         self.frame_range = []
+
+        count = 0
+        state = 'NORMAL'
+        entry = [0] * 2
+        self.AF_states = ["All"]
+
+        for exc_list in self.file_data:
+            if state == 'NORMAL' and len(exc_list) > (1.1 * self.shape[0]):
+                    state = 'AF'
+                    entry[0] = count
+            if state == 'AF' and len(exc_list) <= (1.1 * self.shape[0]):
+                    state = 'NORMAL'
+                    entry[1] = count
+                    self.AF_states.append(entry)
+                    entry = [0] * 2
+            count += 1
+
+        print(self.AF_states)
+        range_inquire = [inquirer.List('Range', message="Please select a range to animate:", choices=self.AF_states,),]
+        answer = inquirer.prompt(range_inquire)
+
+        if not answer['Range'] == "All":
+            start = int(answer['Range'][0])
+            finish = int(answer['Range'][1])
+            self.data_range = self.file_data[start:finish]
+        else:
+            self.data_range = self.file_data
+
+        self.frames = len(self.data_range)
 
         """
         animation figures
         """
-        self.__animation_fig = plt.figure()
-        self.__iteration_text = self.__animation_fig.text(0.84, 0.03, "Time Step: 1")
-        self.__nu_text = self.__animation_fig.text(0.84, 0.09, r'$\nu$ = $%s$' % self.nu, fontsize=14)
-        self.__delta_text = self.__animation_fig.text(0.84, 0.15, r'$\delta$ = $%s$' % self.delta, fontsize=14)
-        self.__epsilon_text = self.__animation_fig.text(0.84, 0.21, r'$\epsilon$ = $%s$' % self.epsilon, fontsize=14)
-        self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
-        self.__im = plt.imshow(self.__animation_grid, cmap="gray", interpolation="nearest", vmin=0, vmax=self.rp,
-                               origin="lower")
+        Visual.figure_init(self)
 
         Visual.convert(self)
+
+        print(len(self.animation_data))
 
     def unravel(self, data):
         """
@@ -57,7 +81,7 @@ class Visual:
         Converts all the file data into arrays that can be animated.
         :return:
         """
-        for individual_data in self.file_data:
+        for individual_data in self.data_range:
             if self.starting_t in self.destroyed:
                 indices = Visual.unravel(self, self.destroyed[self.starting_t])
                 for i in range(len(indices[0])):
@@ -74,12 +98,26 @@ class Visual:
                 current_state = self.__animation_grid.copy()
                 self.animation_data.append(current_state)
 
+    def figure_init(self):
+        """
+
+        :return:
+        """
+        self.__animation_fig = plt.figure()
+        self.__iteration_text = self.__animation_fig.text(0.84, 0.03, "Time Step: 1")
+        self.__nu_text = self.__animation_fig.text(0.84, 0.09, r'$\nu$ = $%s$' % self.nu, fontsize=14)
+        self.__delta_text = self.__animation_fig.text(0.84, 0.15, r'$\delta$ = $%s$' % self.delta, fontsize=14)
+        self.__epsilon_text = self.__animation_fig.text(0.84, 0.21, r'$\epsilon$ = $%s$' % self.epsilon, fontsize=14)
+        self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
+
     def init(self):
         """
         Initialises the animation. Used in show_animation function.
         :return:
         """
-        self.__im.set_array(np.zeros(self.shape, dtype=np.int8))
+        self.__im = plt.imshow(np.zeros(self.shape, dtype=np.int8), cmap="gray", interpolation="nearest", vmin=0,
+                               vmax=self.rp,
+                               origin="lower", animated=True)
         return self.__im,
 
     def animate(self, t):
@@ -99,17 +137,13 @@ class Visual:
         :return:
         """
         _ = animation.FuncAnimation(self.__animation_fig, functools.partial(Visual.animate, self),
-                                    init_func=functools.partial(Visual.init, self), frames=self.frames,
-                                    interval=1000/fps, repeat=True)
+                                    init_func=functools.partial(Visual.init, self),
+                                    frames=self.frames,
+                                    interval=1000/fps,
+                                    repeat=False)
         plt.show()
-
-    def show_range(self, fps = 60):
-        """
-
-        :param fps:
-        :return:
-        """
-
+        plt.close("all")
+        Visual.figure_init(self)
 
     def save_animation(self, name_of_file):
         """

@@ -32,7 +32,7 @@ class Heart:
             self.__n = nu  # Private vertical fractions variable
             self.__d = delta  # Private cell dysfunction variable
             self.__e = eps  # Private cell depolarisation failure variable
-            self.shape = (1000, 1000)
+            self.shape = (200, 200)
             self.size = self.shape[0] * self.shape[1]
             self.__rp = rp
             self.excited = []
