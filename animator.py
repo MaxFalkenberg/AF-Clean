@@ -26,15 +26,17 @@ class Visual:
         self.state_history = origin[6]
         self.destroyed = origin[9]
         self.starting_t = origin[10]
+        self.pulse_rate = origin[11]
         self.animation_data = []
         self.frame_range = []
+        self.starting_frame_t = None
+        # Initial refractory data for applying to animations.
+        self.refractory_data = []
+        self.raw_refractory_data = []
 
-        """
-        animation figures
-        """
-        self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
+        self.animation_grid = np.zeros(self.shape, dtype=np.int8)
+
         Visual.range(self)
-        Visual.convert(self)
 
     def unravel(self, data):
         """
@@ -45,12 +47,29 @@ class Visual:
         """
         return np.unravel_index(data, self.shape)
 
-    def convert(self):
+    def init_grid(self):
+        """
+
+        :return:
+        """
+        self.animation_grid = np.zeros(self.shape, dtype=np.int8)
+        count = 50
+        for refractory_data in self.raw_refractory_data[::-1]:
+            if refractory_data == []:
+                pass
+            else:
+                indices = Visual.unravel(self, refractory_data)
+                for i in range(len(indices[0])):
+                    self.__animation_grid[indices[0][i]][indices[1][i]] = count
+            count -= 1
+
+    def convert(self, data, output_list):
         """
         Converts all the file data into arrays that can be animated.
         :return:
         """
-        for individual_data in self.data_range:
+
+        for individual_data in data:
             if self.starting_t in self.destroyed:
                 indices = Visual.unravel(self, self.destroyed[self.starting_t])
                 for i in range(len(indices[0])):
@@ -59,13 +78,13 @@ class Visual:
             self.__animation_grid[(self.__animation_grid > 0) & (self.__animation_grid <= self.rp)] -= 1
             if individual_data == []:            # could use <if not individual_data.any():> but this is more readable.
                 current_state = self.__animation_grid.copy()
-                self.animation_data.append(current_state)
+                output_list.append(current_state)
             else:
                 indices = Visual.unravel(self, individual_data)
                 for i in range(len(indices[0])):
                     self.__animation_grid[indices[0][i]][indices[1][i]] = self.rp
                 current_state = self.__animation_grid.copy()
-                self.animation_data.append(current_state)
+                output_list.append(current_state)
 
     def range(self):
         """
@@ -73,43 +92,71 @@ class Visual:
         :return:
         """
         self.animation_data = []
+        self.refractory_data = []
         self.__animation_grid = np.zeros(self.shape, dtype=np.int8)
         count = 0
         state = 'NORMAL'
-        entry = [0] * 2
+        entry = [0, -1]
         self.AF_states = ["All", "Custom"]
 
         for exc_list in self.file_data:
             if state == 'NORMAL' and len(exc_list) > (1.1 * self.shape[0]):
-                    state = 'AF'
-                    entry[0] = count
+                state = 'AF'
+                entry[0] = count
+            """
             if state == 'AF' and len(exc_list) <= (1.1 * self.shape[0]):
                     state = 'NORMAL'
                     entry[1] = count
                     self.AF_states.append(entry)
                     entry = [0] * 2
+            """
+            if state == 'AF' and len(exc_list) <= (1.1 * self.shape[0]):
+                state = 'TEST'
+                test_count = count
+
+            if state == 'TEST' and len(exc_list) > (1.1 * self.shape[0]):
+                state = 'AF'
+
+            if state == 'TEST' and (count - test_count == 2 * self.pulse_rate):
+                state = 'NORMAL'
+                entry[1] = count
+                self.AF_states.append(entry)
+                entry = [0] * 2
             count += 1
 
         range_inquire = [inquirer.List('Range', message="Please select a range to animate", choices=self.AF_states,),]
         answer = inquirer.prompt(range_inquire)
 
+        #  Whole animation data
         if answer['Range'] == "All":
             self.data_range = self.file_data
+            self.raw_refractory_data = []
             self.frames = len(self.data_range)
+            self.starting_frame_t = 0
+        #  Custom Range
         elif answer['Range'] == "Custom":
             custom_range = [inquirer.Text('Start', message="Starting index"),
                             inquirer.Text('End', message="Ending index")]
             custom_answer = inquirer.prompt(custom_range)
             self.data_range = self.file_data[int(custom_answer['Start']):int(custom_answer['End'])]
+            refractory_start = int(custom_answer['Start']) - self.rp
+            refractory_end = int(custom_answer['Start'])
+            if refractory_start < 0:
+                refractory_start = 0
+            self.raw_refractory_data = self.file_data[refractory_start:refractory_end]
             self.frames = len(self.data_range)
+            self.starting_frame_t = int(custom_answer['Start'])
+        #  AF Ranges
         else:
-            start = int(answer['Range'][0])
-            finish = int(answer['Range'][1])
-            self.data_range = self.file_data[start:finish]
+            self.data_range = self.file_data[int(answer['Range'][0]):int(answer['Range'][1])]
+            self.raw_refractory_data = self.file_data[int(answer['Range'][0])-self.rp:int(answer['Range'][0])]
             self.frames = len(self.data_range)
+            self.starting_frame_t = int(answer['Range'][0])
 
-        print(len(self.data_range))
-        Visual.convert(self)
+        if self.raw_refractory_data:
+            Visual.init_grid(self)
+
+        Visual.convert(self, self.data_range, self.animation_data)
 
     def figure_init(self):
         """
@@ -117,10 +164,10 @@ class Visual:
         :return:
         """
         self.__animation_fig = plt.figure()
-        self.__iteration_text = self.__animation_fig.text(0.84, 0.03, "Time Step: 1")
-        self.__nu_text = self.__animation_fig.text(0.84, 0.09, r'$\nu$ = $%s$' % self.nu, fontsize=14)
-        self.__delta_text = self.__animation_fig.text(0.84, 0.15, r'$\delta$ = $%s$' % self.delta, fontsize=14)
-        self.__epsilon_text = self.__animation_fig.text(0.84, 0.21, r'$\epsilon$ = $%s$' % self.epsilon, fontsize=14)
+        self.__iteration_text = self.__animation_fig.text(0.02, 0.02, "Time Step: 1")
+        self.__nu_text = self.__animation_fig.text(0.84, 0.84, r'$\nu$ = $%s$' % self.nu, fontsize=14)
+        self.__delta_text = self.__animation_fig.text(0.84, 0.78, r'$\delta$ = $%s$' % self.delta, fontsize=14)
+        self.__epsilon_text = self.__animation_fig.text(0.84, 0.72, r'$\epsilon$ = $%s$' % self.epsilon, fontsize=14)
 
     def init(self):
         """
@@ -139,10 +186,10 @@ class Visual:
         :return:
         """
         self.__im.set_array(self.animation_data[t])
-        self.__iteration_text.set_text("Time Step: {0}".format(t))
+        self.__iteration_text.set_text("Time Step: {0}".format(t+self.starting_frame_t))
         return self.__im,
 
-    def show_animation(self, fps=60):
+    def show_animation(self, fps=30):
         """
         Shows the animation.
         :param fps: frames per second for the playback.
@@ -163,12 +210,13 @@ class Visual:
         :param name_of_file:
         :return:
         """
-
+        Visual.figure_init(self)
         ani = animation.FuncAnimation(self.__animation_fig, functools.partial(Visual.animate, self),
-                                      init_func=functools.partial(Visual.init, self), frames=self.frames+1, interval=1,
+                                      init_func=functools.partial(Visual.init, self), frames=self.frames, interval=1,
                                       repeat=False)
         file_name = '%s.mp4' % name_of_file
         ani.save(str(file_name), fps=60, extra_args=['-vcodec', 'libx264'])
+        plt.close("all")
 
     def show_frame(self, desired_frame):
         """

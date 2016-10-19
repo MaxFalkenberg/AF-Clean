@@ -14,13 +14,13 @@ def square_ablation(position, x_len, y_len):
 
 class Heart:
 
-    def __init__(self, nu=0.12, delta=0.05, eps=0.05, rp=50,seed_file=None):
+    def __init__(self, nu=0.12, delta=0.05, eps=0.05, rp=50, seed=None):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
             Probability of failed firing: \'eps\'."""
 
-        self.initial_seed = seed_file
+        self.initial_seed = seed
         self.destroyed = []
 
         if self.initial_seed is None:
@@ -94,9 +94,8 @@ class Heart:
             self.pulse_vectors = self.pulse_history[1]
             self.pulse_index = self.pulse_history[0]
 
-
-           # self.exc_total = origin[0][
-           #                  seed_frame - self.__rp:seed_frame + 1]  # should append the 50 excited states in here before the seed recording.
+#            self.past_exc_seed = origin[0][seed_frame - self.__rp:seed_frame]
+#            print(len(self.past_exc_seed))
             self.t = seed_frame
             np.random.set_state(self.state_history[self.t])
 
