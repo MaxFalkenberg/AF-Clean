@@ -21,7 +21,7 @@ class Heart:
             Probability of failed firing: \'eps\'."""
 
         self.initial_seed = seed
-        self.destroyed = []
+        self.destroyed = {}
 
         if self.initial_seed is None:
 
@@ -85,11 +85,14 @@ class Heart:
             self.file_data = origin[0]
             self.exc_total = []  # should append the 50 excited states in here before the seed recording.
 
-            self.initial_grid = [0] * self.size
+            self.initial_grid = [1] * self.size
             self.cell_vert = origin[7]
             self.cell_dys = origin[8]
             self.pulse_rate = origin[11]
             self.pulse_history = origin[12]
+            self.cell_alive = origin[13]
+            self.any_ablate = origin[14]
+            self.cell_norm = np.invert(self.cell_dys)
             self.starting_t = seed_frame
             self.pulse_vectors = self.pulse_history[1]
             self.pulse_index = self.pulse_history[0]
@@ -101,11 +104,10 @@ class Heart:
 
             excitation_level = 0
             for setup_cells in self.file_data[self.t - self.__rp + 1:self.t + 1]:
-                excitation_level += 1
                 for individual_cells in setup_cells.tolist():
                     self.initial_grid[individual_cells] = excitation_level
 
-            self.cell_grid = np.array(self.initial_grid)
+            self.cell_grid = np.array(self.initial_grid).astype('bool')
 
             excited_marker = self.t % self.__rp     # This is currently broken (compare excited cell lists for both.)
             self.excited = origin[0][seed_frame:seed_frame+1] + origin[0][seed_frame - self.__rp + 1:seed_frame - excited_marker]
@@ -263,4 +265,4 @@ class Heart:
         np.save(str(file_name), (self.exc_total, self.shape, self.__rp,
                                  self.__n, self.__d, self.__e, self.state_history,
                                  self.cell_vert, self.cell_dys, self.destroyed, self.starting_t,
-                                 self.pulse_rate, self.pulse_history))
+                                 self.pulse_rate, self.pulse_history, self.cell_alive, self.any_ablate))

@@ -53,7 +53,7 @@ class Visual:
         :return:
         """
         self.animation_grid = np.zeros(self.shape, dtype=np.int8)
-        count = 50
+        count = self.rp
         for refractory_data in self.raw_refractory_data[::-1]:
             if refractory_data == []:
                 pass
@@ -68,13 +68,13 @@ class Visual:
         Converts all the file data into arrays that can be animated.
         :return:
         """
-
+        count = self.starting_t
         for individual_data in data:
-            if self.starting_t in self.destroyed:
-                indices = Visual.unravel(self, self.destroyed[self.starting_t])
+            if count in self.destroyed:
+                indices = Visual.unravel(self, self.destroyed[count])
                 for i in range(len(indices[0])):
                     self.__animation_grid[indices[0][i]][indices[1][i]] = self.rp + 1
-            self.starting_t += 1
+            count += 1
             self.__animation_grid[(self.__animation_grid > 0) & (self.__animation_grid <= self.rp)] -= 1
             if individual_data == []:            # could use <if not individual_data.any():> but this is more readable.
                 current_state = self.__animation_grid.copy()
@@ -100,16 +100,11 @@ class Visual:
         self.AF_states = ["All", "Custom"]
 
         for exc_list in self.file_data:
+
             if state == 'NORMAL' and len(exc_list) > (1.1 * self.shape[0]):
                 state = 'AF'
                 entry[0] = count
-            """
-            if state == 'AF' and len(exc_list) <= (1.1 * self.shape[0]):
-                    state = 'NORMAL'
-                    entry[1] = count
-                    self.AF_states.append(entry)
-                    entry = [0] * 2
-            """
+
             if state == 'AF' and len(exc_list) <= (1.1 * self.shape[0]):
                 state = 'TEST'
                 test_count = count
@@ -122,9 +117,15 @@ class Visual:
                 entry[1] = count
                 self.AF_states.append(entry)
                 entry = [0] * 2
+
+            if (state == 'TEST' or 'AF') and (count + 1) == len(self.file_data):
+                entry[1] = count + 1
+                self.AF_states.append(entry)
+
             count += 1
 
-        range_inquire = [inquirer.List('Range', message="Please select a range to animate", choices=self.AF_states,),]
+        print("Simulation Length: %s" % len(self.file_data))
+        range_inquire = [inquirer.List('Range', message="Please select a range to animate", choices=self.AF_states,), ]
         answer = inquirer.prompt(range_inquire)
 
         #  Whole animation data
