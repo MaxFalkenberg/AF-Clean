@@ -3,7 +3,7 @@ import numpy as np
 
 class Heart:
 
-    def __init__(self, nu=0.13, delta=0.05, eps=0.05, rp=50,seed_file=None):
+    def __init__(self, nu=0.13, delta=0.05, eps=0.05, rp=50,seed_file=None, count_excited = False):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
@@ -29,6 +29,7 @@ class Heart:
             self.state_history = {}
             self.pulse_history = {}
             self.starting_t = 0
+            self.count_excited = count_excited
 
             self.cell_grid = np.ones(self.size,
                                       dtype='bool')  # Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
@@ -192,12 +193,12 @@ class Heart:
                     dys_fire = dys[rand > self.__e]  # Indices of dys which do fire
                     self.cell_grid[dys_fire] = False  # Excite dys cells
                 else:
-                    dys_fire = np.array([], dtype='int32')
+                    dys_fire = np.array([], dtype='uint32')
                 exc += [norm, dys_fire]
         try:
             return np.concatenate(exc)
         except:
-            return np.array([], dtype='int32')  # Important to ensure no irregularities in datatype
+            return np.array([], dtype='uint32')  # Important to ensure no irregularities in datatype
 
     def propagate(self, t_steps=1):
         if self.t == 0 and len(self.exc_total) == 0:
@@ -233,7 +234,7 @@ class Heart:
 
                 exc = Heart.prop_tool(self, [ind_left, ind_right, ind_up, ind_down])
             else:
-                exc = np.array([], dtype='int32')
+                exc = np.array([], dtype='uint32')
 
             self.t += 1
             try:
@@ -255,6 +256,12 @@ class Heart:
                 self.state_history[self.t] = np.random.get_state()  # Seed recording for generator.
                 self.pulse_history[self.t] = (self.pulse_index, self.pulse_vectors)
             self.exc_total.append(exc)  # List containing all previously excited states
+
+            if self.count_excited:
+                if len(exc) > 1.1 * self.shape[0]:
+                    return True, self.t
+                if i == t_steps - 1:
+                    return False, self.t
 
     def save(self, file_name):
         # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
