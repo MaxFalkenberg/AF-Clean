@@ -14,7 +14,7 @@ def square_ablation(position, x_len, y_len):
 
 class Heart:
 
-    def __init__(self, nu=0.13, delta=0.05, eps=0.05, rp=50,seed_file=None, count_excited = False):
+    def __init__(self, nu=0.13, delta=0.05, eps=0.05, rp=50,seed_file=None, count_excited = False, print_t = True):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
@@ -40,6 +40,7 @@ class Heart:
             self.state_history = {}
             self.starting_t = 0
             self.count_excited = count_excited
+            self.print_t = print_t
 
             self.cell_grid = np.ones(self.size,
                                       dtype='bool')  # Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
@@ -240,7 +241,8 @@ class Heart:
             self.t += 1
             try:
                 if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
-                    print self.t
+                    if self.print_t:
+                        print self.t
                     index = self.pulse_index[self.cell_grid[self.pulse_index]]
                     if self.any_ablate:
                         index = index[self.cell_alive[index]]  # Does not fire dead cells
