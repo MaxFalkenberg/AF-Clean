@@ -25,7 +25,6 @@ class Visual:
         self.epsilon = origin[5]
         self.state_history = origin[6]
         self.destroyed = origin[9]
-        print(self.destroyed[2500])
         self.starting_t = origin[10]
         self.pulse_rate = origin[11]
         self.animation_data = []
