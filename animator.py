@@ -25,6 +25,7 @@ class Visual:
         self.epsilon = origin[5]
         self.state_history = origin[6]
         self.destroyed = origin[9]
+        print(self.destroyed[2500])
         self.starting_t = origin[10]
         self.pulse_rate = origin[11]
         self.animation_data = []
@@ -70,11 +71,6 @@ class Visual:
         """
         count = self.starting_t
         for individual_data in data:
-            if count in self.destroyed:
-                indices = Visual.unravel(self, self.destroyed[count])
-                for i in range(len(indices[0])):
-                    self.__animation_grid[indices[0][i]][indices[1][i]] = self.rp + 1
-            count += 1
             self.__animation_grid[(self.__animation_grid > 0) & (self.__animation_grid <= self.rp)] -= 1
             if individual_data == []:            # could use <if not individual_data.any():> but this is more readable.
                 current_state = self.__animation_grid.copy()
@@ -85,6 +81,14 @@ class Visual:
                     self.__animation_grid[indices[0][i]][indices[1][i]] = self.rp
                 current_state = self.__animation_grid.copy()
                 output_list.append(current_state)
+
+            if count in self.destroyed:
+                destroyed_set = self.destroyed[count]
+                for destroyed_index in range(len(destroyed_set)):
+                    indices = Visual.unravel(self, destroyed_set[destroyed_index])
+                    for i in range(len(indices[0])):
+                        self.__animation_grid[indices[0][i]][indices[1][i]] = self.rp + 10
+            count += 1
 
     def range(self):
         """
@@ -175,7 +179,9 @@ class Visual:
         Initialises the animation. Used in show_animation function.
         :return:
         """
-        self.__im = plt.imshow(np.zeros(self.shape, dtype=np.int8), cmap="gray", interpolation="nearest", vmin=0,
+        c_map_custom = matplotlib.cm.gray
+        c_map_custom.set_over('r')
+        self.__im = plt.imshow(np.zeros(self.shape, dtype=np.int8), cmap=c_map_custom, interpolation="nearest", vmin=0,
                                vmax=self.rp,
                                origin="lower", animated=True)
         return self.__im,

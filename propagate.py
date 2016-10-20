@@ -136,7 +136,8 @@ class Heart:
         index = np.ravel_multi_index(vectors, self.shape)
         self.cell_alive[index] = False
         self.any_ablate = True
-        self.destroyed[self.t] = index
+        self.destroyed.setdefault(self.t, [])  # For when multiple ablations happen at the same time.
+        self.destroyed[self.t].append(index)
 
     def set_pulse(self, rate, vectors=None):
         # Use before self.pulse. Defines the rate at which the pulse fires and if desired
