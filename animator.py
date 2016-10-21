@@ -121,10 +121,9 @@ class Visual:
                 self.AF_states.append(entry)
                 entry = [0] * 2
 
-            if (state == 'TEST' or 'AF') and (count + 1) == len(self.file_data):
+            if (state == 'TEST' or state == 'AF') and (count + 1) == len(self.file_data):
                 entry[1] = count + 1
                 self.AF_states.append(entry)
-
             count += 1
 
         print("Simulation Length: %s" % len(self.file_data))
