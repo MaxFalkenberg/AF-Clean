@@ -14,7 +14,7 @@ def square_ablation(position, x_len, y_len):
 
 class Heart:
 
-    def __init__(self, nu=0.13, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True):
+    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
@@ -32,7 +32,7 @@ class Heart:
             self.__n = nu  # Private vertical fractions variable
             self.__d = delta  # Private cell dysfunction variable
             self.__e = eps  # Private cell depolarisation failure variable
-            self.shape = (1000, 1000)
+            self.shape = (200, 200)
             self.size = self.shape[0] * self.shape[1]
             self.__rp = rp
             self.excited = []
