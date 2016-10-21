@@ -18,7 +18,11 @@ class Heart:
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dystfunctional cells: \'delta\'.
-            Probability of failed firing: \'eps\'."""
+            Probability of failed firing: \'eps\'.
+
+            count_excited used by analysis.
+            To break at AF initiation set count_excited = \'start\'
+            To count time spent in AF set count_excited = \'time\'"""
 
         self.initial_seed = seed
         self.destroyed = {}
@@ -49,6 +53,7 @@ class Heart:
             self.cell_dys = np.zeros(self.size, dtype='bool')  # Defines whether cell is dysfunctional. 1 = Yes, 0 = No.
             self.cell_alive = np.ones(self.size, dtype = 'bool')
             self.any_ablate = False
+
             # The above change from self.cell_type to splitting between dys and vert was necessary for the np.argwhere logic statements later.
 
             for i in range(self.size):
@@ -127,7 +132,7 @@ class Heart:
 
         if str(type) == "square":
             print("Please input square ablation parameters:")
-            print("Enter Position of square (bottom left corner)")
+            print("Enter Position of square (tuple) (bottom left corner)")
             position = tuple(int(x.strip()) for x in input().split(','))
             print("x length:")
             y_len = int(input())  # Need to flip to get desired effect
@@ -207,6 +212,10 @@ class Heart:
     def propagate(self, t_steps=1):
         if self.t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
+            counter = 0 #For determining when system leaves AF in analysis
+            if self.count_excited == 'time':
+                in_af = []
+                exc_count = []
 
         for i in range(t_steps):
             exc_index = self.t % self.__rp  # Defines current index for position in list of list of excited cells
@@ -244,7 +253,9 @@ class Heart:
             try:
                 if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
                     if self.print_t:
+
                         print(self.t)
+                    counter += 1
                     index = self.pulse_index[self.cell_grid[self.pulse_index]]
                     if self.any_ablate:
                         index = index[self.cell_alive[index]]  # Does not fire dead cells
@@ -264,11 +275,25 @@ class Heart:
             self.pulse_history = (self.pulse_index, self.pulse_vectors)
             self.exc_total.append(exc)  # List containing all previously excited states
 
-            if self.count_excited:
+            if self.count_excited == 'start':
                 if len(exc) > 1.1 * self.shape[0]:
                     return True, self.t
                 if i == t_steps - 1:
                     return False, self.t
+            if self.count_excited == 'time':
+                if len(exc) > 1.1 * self.shape[0]:
+                    in_af.append(True)
+                    counter = 0
+                else:
+                    if counter > 1:
+                        in_af.append(False)
+                    else:
+                        in_af.append(True)
+                exc_count.append(len(exc))
+        if self.count_excited == 'time':
+            return in_af, exc_count
+
+
 
     def save(self, file_name):
         # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
