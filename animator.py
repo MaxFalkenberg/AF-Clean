@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib
 import functools
-import inquirer
 import numpy as np
 
 
@@ -100,7 +99,7 @@ class Visual:
         count = 0
         state = 'NORMAL'
         entry = [0, -1]
-        self.AF_states = ["All", "Custom"]
+        self.AF_states = list()
 
         for exc_list in self.file_data:
 
@@ -126,35 +125,62 @@ class Visual:
                 self.AF_states.append(entry)
             count += 1
 
-        print("Simulation Length: %s" % len(self.file_data))
-        range_inquire = [inquirer.List('Range', message="Please select a range to animate", choices=self.AF_states,), ]
-        answer = inquirer.prompt(range_inquire)
+        print '\n'
+        print "Simulation Length: %s" % len(self.file_data)
+        print '\n'
+        print "RANGE OPTIONS"
+        print "------------------------------------------------"
+        print "Basic ranges (a\c):"
+        print "all"
+        print "custom"
+        print "\n"
+        print "Specific AF ranges (s):"
+        for i in self.AF_states:
+            print i
+        print "------------------------------------------------"
+        print '\n'
+        answer = raw_input("Please select a range to animate (a/c/s): ")
 
         #  Whole animation data
-        if answer['Range'] == "All":
+        if answer == "a":
             self.data_range = self.file_data
             self.raw_refractory_data = []
             self.frames = len(self.data_range)
             self.starting_frame_t = 0
+
         #  Custom Range
-        elif answer['Range'] == "Custom":
-            custom_range = [inquirer.Text('Start', message="Starting index"),
-                            inquirer.Text('End', message="Ending index")]
-            custom_answer = inquirer.prompt(custom_range)
-            self.data_range = self.file_data[int(custom_answer['Start']):int(custom_answer['End'])]
-            refractory_start = int(custom_answer['Start']) - self.rp
-            refractory_end = int(custom_answer['Start'])
+        elif answer == "c":
+            start = int(raw_input("Start: "))
+            end = int(raw_input("End: "))
+            self.data_range = self.file_data[start:end]
+            refractory_start = start - self.rp
+            refractory_end = start
             if refractory_start < 0:
                 refractory_start = 0
             self.raw_refractory_data = self.file_data[refractory_start:refractory_end]
             self.frames = len(self.data_range)
-            self.starting_frame_t = int(custom_answer['Start'])
+            self.starting_frame_t = start
+
         #  AF Ranges
-        else:
-            self.data_range = self.file_data[int(answer['Range'][0]):int(answer['Range'][1])]
-            self.raw_refractory_data = self.file_data[int(answer['Range'][0])-self.rp:int(answer['Range'][0])]
+        elif answer == 's':
+            condition_state = False
+            af_range = None
+            while not condition_state:
+                start = raw_input("Start: ")
+                end = raw_input("End: ")
+                answer = [int(start), int(end)]
+                if answer in self.AF_states:
+                    af_range = answer
+                    condition_state = True
+                else:
+                    print "Not valid range"
+                # af_range = raw_input("Enter AF range (e.g --> 250 1000): ").split()
+                # af_range = [int(a) for a in af_range]
+
+            self.data_range = self.file_data[af_range[0]:af_range[1]]
+            self.raw_refractory_data = self.file_data[af_range[0] - self.rp:af_range[0]]
             self.frames = len(self.data_range)
-            self.starting_frame_t = int(answer['Range'][0])
+            self.starting_frame_t = af_range[0]
 
         if self.raw_refractory_data:
             Visual.init_grid(self)
