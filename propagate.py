@@ -1,4 +1,5 @@
 import numpy as np
+import cPickle
 
 
 def square_ablation(position, x_len, y_len):
@@ -113,7 +114,7 @@ class Heart:
             excited_marker = self.t % self.__rp     # This is currently broken (compare excited cell lists for both.)
             self.excited = origin[0][seed_frame:seed_frame+1] + origin[0][seed_frame - self.__rp + 1:seed_frame - excited_marker]
 
-    def destroy_cells(self, type, vectors_custom=None):  # Could set grid values to -1 to speed up propagate loop
+    def destroy_cells(self, type):  # Could set grid values to -1 to speed up propagate loop
         """Input vector of cells to be permanently blocked. Format as list of two lists:
         with y coordinates in list 1 and x coordinates in list 2. x = column, y = row.
 
@@ -122,7 +123,12 @@ class Heart:
         This will permanently block cells (x1,y1),(x2,y2),(x3,y3)..."""
 
         if str(type) == "custom":
-            vectors = vectors_custom
+            print "Please input square ablation parameters:"
+            print "Enter list of x coordinates as list."
+            x = raw_input()
+            print "Enter list of y coordinates as list."
+            y = raw_input()
+            vectors = [y,x]
 
         if str(type) == "square":
             print "Please input square ablation parameters:"
@@ -134,10 +140,33 @@ class Heart:
             x_len = int(raw_input())  # Need to flip to get desired effect
             vectors = square_ablation(position, x_len, y_len)
 
-        index = np.ravel_multi_index(vectors, self.shape)
+        if str(type) == "chevron_right":
+            print "Please input square ablation parameters:"
+            print "Enter x Position of chevron tip"
+            x = int(raw_input())
+            print "Enter y Position of chevron tip"
+            y = int(raw_input())
+            print "chevron length:"
+            chev_len = int(raw_input())  # Need to flip to get desired effect
+
+            ind = int(x + (y * self.shape[0]))
+            u = ind
+            d = ind
+            index = [ind]
+            for i in range(chev_len - 1):
+                u += (1 + self.shape[0])
+                d += (1 - self.shape[0])
+                index.append(u)
+                index.append(d)
+            index = np.array(index)
+            print index
+
+
+        if str(type) != "chevron_right":
+                index = np.ravel_multi_index(vectors, self.shape)
         self.cell_alive[index] = False
         self.any_ablate = True
-        self.destroyed[self.t] = index
+        self.destroyed[self.t] = index #THIS BREAKS FOR ME ON CHEVRON ABLATION.
 
     def set_pulse(self, rate, vectors=None):
         # Use before self.pulse. Defines the rate at which the pulse fires and if desired
@@ -274,3 +303,10 @@ class Heart:
                                  self.__n, self.__d, self.__e, self.state_history,
                                  self.cell_vert, self.cell_dys, self.destroyed, self.starting_t,
                                  self.pulse_rate, self.pulse_history))
+
+def save(filename,obj):
+    """Use to save pile object to chosen directory."""
+    cPickle.dump(obj,open(str(filename)+".pickle", 'wb'))
+def load(filename):
+    """Load pile object (or other pickle file) from chosen directory."""
+    return cPickle.load(open(str(filename)+".pickle", 'rb'))
