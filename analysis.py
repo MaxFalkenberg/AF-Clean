@@ -19,7 +19,7 @@ def af_starts(start,end):
         af_initiated.append(temp1)
         af_start_time.append(temp2)
     return nu,af_initiated,af_start_time
-    
+
 def ecg_data(excitation_grid):
     voltage_grid = []
     twenty = np.ones((200,200))* 20
@@ -33,10 +33,10 @@ def ecg_data(excitation_grid):
     for i in voltage_grid:
         x_dif.append(np.append(np.diff(i),x_zero,axis = 1))
         y_dif.append(np.append(np.diff(i,axis = 0),y_zero, axis = 0))
-    print np.shape(x_dif[0]),np.shape(y_dif[0])    
+    print np.shape(x_dif[0]),np.shape(y_dif[0])
     x_dist = np.zeros((200,200))
     y_dist = np.zeros((200,200))
-    
+
     for i in range(len(x_dist)):
         x_dist[:,i] = i
         y_dist[i] = i
@@ -53,8 +53,5 @@ def ecg_data(excitation_grid):
             ecg_values.append(np.sum(net[i]/den))
         except:
             pass
-    
-    return ecg_values, den, net
-    
-        
-    
+
+    return ecg_values#, den, net
