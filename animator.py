@@ -130,16 +130,16 @@ class Visual:
         print '\n'
         print "RANGE OPTIONS"
         print "------------------------------------------------"
-        print "Basic ranges (a\c):"
+        print "Basic ranges:"
         print "all"
         print "custom"
         print "\n"
-        print "Specific AF ranges (s):"
+        print "Specific AF ranges:"
         for i in self.AF_states:
             print i
         print "------------------------------------------------"
         print '\n'
-        answer = raw_input("Please select a range to animate (a/c/s): ")
+        answer = raw_input("Please select a range to animate (a/c): ")
 
         #  Whole animation data
         if answer == "a":
@@ -160,27 +160,6 @@ class Visual:
             self.raw_refractory_data = self.file_data[refractory_start:refractory_end]
             self.frames = len(self.data_range)
             self.starting_frame_t = start
-
-        #  AF Ranges
-        elif answer == 's':
-            condition_state = False
-            af_range = None
-            while not condition_state:
-                start = raw_input("Start: ")
-                end = raw_input("End: ")
-                answer = [int(start), int(end)]
-                if answer in self.AF_states:
-                    af_range = answer
-                    condition_state = True
-                else:
-                    print "Not valid range"
-                # af_range = raw_input("Enter AF range (e.g --> 250 1000): ").split()
-                # af_range = [int(a) for a in af_range]
-
-            self.data_range = self.file_data[af_range[0]:af_range[1]]
-            self.raw_refractory_data = self.file_data[af_range[0] - self.rp:af_range[0]]
-            self.frames = len(self.data_range)
-            self.starting_frame_t = af_range[0]
 
         if self.raw_refractory_data:
             Visual.init_grid(self)
