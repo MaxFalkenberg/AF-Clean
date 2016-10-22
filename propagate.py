@@ -140,7 +140,34 @@ class Heart:
             x_len = int(input())  # Need to flip to get desired effect
             vectors = square_ablation(position, x_len, y_len)
 
-        index = np.ravel_multi_index(vectors, self.shape)
+        if str(type) == "chevron":
+            print "Please input square ablation parameters:"
+            print "Chevron tip pointing to left (l) or right (r)?"
+            direction = str(raw_input())
+            print "Enter x Position of chevron tip"
+            x = int(raw_input())
+            print "Enter y Position of chevron tip"
+            y = int(raw_input())
+            print "chevron length:"
+            chev_len = int(raw_input())  # Need to flip to get desired effect
+
+            ind = int(x + (y * self.shape[0]))
+            u = ind
+            d = ind
+            index = [ind]
+            if direction == 'r':
+                a = -1
+            if direction == 'l':
+                a = 1
+            for i in range(chev_len - 1):
+                u += (a + self.shape[0])
+                d += (a - self.shape[0])
+                index.append(u)
+                index.append(d)
+            index = np.array(index)
+
+        if str(type) != "chevron":
+            index = np.ravel_multi_index(vectors, self.shape)
         self.cell_alive[index] = False
         self.any_ablate = True
         self.destroyed.setdefault(self.t, [])  # For when multiple ablations happen at the same time.
