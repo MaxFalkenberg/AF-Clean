@@ -146,10 +146,15 @@ class Heart:
             direction = str(raw_input())
             print "Enter x Position of chevron tip"
             x = int(raw_input())
+            if x < 0 or x > self.shape[1] - 1:
+                raise ValueError('x not in tissue range')
             print "Enter y Position of chevron tip"
             y = int(raw_input())
+            if y < 0 or y > self.shape[0] - 1:
+                raise ValueError('y not in tissue range')
             print "chevron length:"
             chev_len = int(raw_input())  # Need to flip to get desired effect
+
 
             ind = int(x + (y * self.shape[0]))
             u = ind
@@ -162,9 +167,18 @@ class Heart:
             for i in range(chev_len - 1):
                 u += (a + self.shape[0])
                 d += (a - self.shape[0])
+                if u % self.shape[1] == 0 and a == 1:
+                    break
+                if u % self.shape[1] == self.shape[1] - 1 and a == -1:
+                    break
                 index.append(u)
                 index.append(d)
             index = np.array(index)
+            for i in range(len(index)):
+                if index[i] < 0:
+                    index[i] += self.size
+                if index[i] >= self.size:
+                    index[i] -= self.size
 
         if str(type) != "chevron":
             index = np.ravel_multi_index(vectors, self.shape)
