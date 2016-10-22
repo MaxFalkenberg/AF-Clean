@@ -133,7 +133,7 @@ class Heart:
         if str(type) == "square":
             print("Please input square ablation parameters:")
             print("Enter Position of square (tuple) (bottom left corner)")
-            position = tuple(int(x.strip()) for x in input().split(','))
+            position = tuple(int(x.strip()) for x in raw_input().split(','))
             print("x length:")
             y_len = int(input())  # Need to flip to get desired effect
             print("y length")
