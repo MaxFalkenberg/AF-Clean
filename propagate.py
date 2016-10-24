@@ -253,7 +253,8 @@ class Heart:
     def propagate(self, t_steps=1):
         if self.t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
-            counter = 0 #For determining when system leaves AF in analysis
+            counter = 2  # For determining when system leaves AF in analysis
+                         # shouldn't it start at 2 since we are assuming AF doesn't occur as start?
             if self.count_excited == 'time':
                 in_af = []
                 exc_count = []
