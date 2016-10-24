@@ -15,7 +15,7 @@ def af_starts(start, end):
         for j in range(1):
             a = propagate.Heart(nu=i, delta=0.05, eps=0.05, rp=50, count_excited='start', print_t=False)
             a.set_pulse(220)
-            x, y = a.propagate(1000000)
+            x, y = a.propagate(100000)
             temp1.append(x)
             temp2.append(y)
         af_initiated.append(temp1)
@@ -32,7 +32,7 @@ def af_duration(nu_list):
         for j in range(1):
             a = propagate.Heart(nu=i, delta=0.05, eps=0.05, rp=50, count_excited='time', print_t=False)
             a.set_pulse(220)
-            x, y = a.propagate(1000000)
+            x, y = a.propagate(100000)
             in_af_temp.append(np.array(x))
             mean_time_temp.append(np.mean(x))
             exc_cell_temp.append(np.array(y))
