@@ -1,4 +1,5 @@
 import numpy as np
+# from numba import jit
 
 
 def square_ablation(position, x_len, y_len):
