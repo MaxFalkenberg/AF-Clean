@@ -1,0 +1,52 @@
+from theano import *
+import theano.tensor as T
+import theano.tensor.nnet.abstract_conv as conv
+import numpy as np
+
+class Heart:
+
+    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True):
+
+        self.shape = (5,5)
+        self.size = self.shape[0] * self.shape[1]
+        self.excited = np.zeros((self.shape[0],self.shape[1]), dtype = 'bool')
+        self.excitable = np.ones((self.shape[0],self.shape[1]), dtype = 'bool')
+        self.cell_alive = np.ones((self.shape[0],self.shape[1]), dtype = 'bool')
+        self.cell_dys = np.random.random((self.shape[0],self.shape[1])) < delta
+        self.cell_up = np.random.random((self.shape[0],self.shape[1])) < nu
+        self.cell_down = np.zeros((self.shape[0],self.shape[1]), dtype = 'bool')
+        self.cell_down[:-1] = self.cell_up[1:]
+        self.cell_down[-1] = self.cell_up[0]
+        self.rp = rp
+        self.eps = eps
+        self.t = 0
+        self.pulse_index = np.zeros((self.shape[0],self.shape[1]), dtype = 'bool')
+        self.pulse_index[:,0] = True
+        self.pulse_initiated = False
+
+    def pulse(self, rate = 220):
+
+        x = T.bmatrix()
+        y = T.bmatrix()
+        z = x * y
+        f = function([x,y],z)
+
+        a = f(self.pulse_index, self.excitable)
+        self.excited += a
+        self.excitable -= a
+        self.pulse_initiated = True
+
+    def propagate(self, t_steps = 1):
+
+        if self.pulse_initiated == False:
+            Heart.pulse(self)
+        u = np.array([[1],[0],[0]], dtype = 'float64')
+        d = np.array([[0],[0],[1]], dtype = 'float64')
+        h = np.array([[1,0,1]], dtype = 'float64')
+        exc = T.dmatrix('exc')
+        convolve_h_base = conv.BaseAbstractConv(convdim = 2, imshp = self.shape, kshp = (1,3), border_mode = self.shape)
+        convolve_h = convolve_h_base.conv2d(exc, h)
+        f = function([exc], convolve_h)
+        return f(self.excited)
+
+        #for i in range(t_steps):
