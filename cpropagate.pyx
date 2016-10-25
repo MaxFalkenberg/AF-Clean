@@ -335,17 +335,17 @@ class Heart:
                 if i == t_steps - 1:
                     return False, self.t
             if self.count_excited == 'time':
-                if len(exc) > 1.1 * self.shape[0]:
-                    in_af.append(True)
-                    counter = 0
-                else:
-                    if counter > 1:
-                        in_af.append(False)
-                    else:
-                        in_af.append(True)
+                # if len(exc) > 1.1 * self.shape[0]:
+                #     in_af.append(True)
+                #     counter = 0
+                # else:
+                #     if counter > 1:
+                #         in_af.append(False)
+                #     else:
+                #         in_af.append(True)
                 exc_count.append(len(exc))
         if self.count_excited == 'time':
-            return in_af, exc_count
+            return exc_count #in_af, exc_count
 
 
 

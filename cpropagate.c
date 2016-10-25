@@ -6440,7 +6440,7 @@ static PyObject *__pyx_pw_10cpropagate_5Heart_11propagate(PyObject *__pyx_self, 
 
 static PyObject *__pyx_pf_10cpropagate_5Heart_10propagate(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_t_steps) {
   PyObject *__pyx_v_counter = NULL;
-  PyObject *__pyx_v_in_af = NULL;
+  CYTHON_UNUSED PyObject *__pyx_v_in_af = NULL;
   PyObject *__pyx_v_exc_count = NULL;
   PyObject *__pyx_v_i = NULL;
   PyObject *__pyx_v_exc_index = NULL;
@@ -7576,7 +7576,7 @@ static PyObject *__pyx_pf_10cpropagate_5Heart_10propagate(CYTHON_UNUSED PyObject
  *                 if i == t_steps - 1:
  *                     return False, self.t             # <<<<<<<<<<<<<<
  *             if self.count_excited == 'time':
- *                 if len(exc) > 1.1 * self.shape[0]:
+ *                 # if len(exc) > 1.1 * self.shape[0]:
  */
         __Pyx_XDECREF(__pyx_r);
         __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_t); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 336, __pyx_L1_error)
@@ -7616,8 +7616,8 @@ static PyObject *__pyx_pf_10cpropagate_5Heart_10propagate(CYTHON_UNUSED PyObject
  *                 if i == t_steps - 1:
  *                     return False, self.t
  *             if self.count_excited == 'time':             # <<<<<<<<<<<<<<
- *                 if len(exc) > 1.1 * self.shape[0]:
- *                     in_af.append(True)
+ *                 # if len(exc) > 1.1 * self.shape[0]:
+ *                 #     in_af.append(True)
  */
     __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_count_excited); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 337, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
@@ -7625,130 +7625,26 @@ static PyObject *__pyx_pf_10cpropagate_5Heart_10propagate(CYTHON_UNUSED PyObject
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     if (__pyx_t_1) {
 
-      /* "cpropagate.pyx":338
- *                     return False, self.t
- *             if self.count_excited == 'time':
- *                 if len(exc) > 1.1 * self.shape[0]:             # <<<<<<<<<<<<<<
- *                     in_af.append(True)
- *                     counter = 0
- */
-      __pyx_t_9 = PyObject_Length(__pyx_v_exc); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 338, __pyx_L1_error)
-      __pyx_t_10 = PyInt_FromSsize_t(__pyx_t_9); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 338, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_10);
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 338, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_6 = __Pyx_GetItemInt(__pyx_t_2, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 338, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = PyNumber_Multiply(__pyx_float_1_1, __pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 338, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = PyObject_RichCompare(__pyx_t_10, __pyx_t_2, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 338, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 338, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (__pyx_t_1) {
-
-        /* "cpropagate.pyx":339
- *             if self.count_excited == 'time':
- *                 if len(exc) > 1.1 * self.shape[0]:
- *                     in_af.append(True)             # <<<<<<<<<<<<<<
- *                     counter = 0
- *                 else:
- */
-        if (unlikely(!__pyx_v_in_af)) { __Pyx_RaiseUnboundLocalError("in_af"); __PYX_ERR(0, 339, __pyx_L1_error) }
-        __pyx_t_15 = __Pyx_PyList_Append(__pyx_v_in_af, Py_True); if (unlikely(__pyx_t_15 == -1)) __PYX_ERR(0, 339, __pyx_L1_error)
-
-        /* "cpropagate.pyx":340
- *                 if len(exc) > 1.1 * self.shape[0]:
- *                     in_af.append(True)
- *                     counter = 0             # <<<<<<<<<<<<<<
- *                 else:
- *                     if counter > 1:
- */
-        __Pyx_INCREF(__pyx_int_0);
-        __Pyx_XDECREF_SET(__pyx_v_counter, __pyx_int_0);
-
-        /* "cpropagate.pyx":338
- *                     return False, self.t
- *             if self.count_excited == 'time':
- *                 if len(exc) > 1.1 * self.shape[0]:             # <<<<<<<<<<<<<<
- *                     in_af.append(True)
- *                     counter = 0
- */
-        goto __pyx_L31;
-      }
-
-      /* "cpropagate.pyx":342
- *                     counter = 0
- *                 else:
- *                     if counter > 1:             # <<<<<<<<<<<<<<
- *                         in_af.append(False)
- *                     else:
- */
-      /*else*/ {
-        if (unlikely(!__pyx_v_counter)) { __Pyx_RaiseUnboundLocalError("counter"); __PYX_ERR(0, 342, __pyx_L1_error) }
-        __pyx_t_6 = PyObject_RichCompare(__pyx_v_counter, __pyx_int_1, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 342, __pyx_L1_error)
-        __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 342, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        if (__pyx_t_1) {
-
-          /* "cpropagate.pyx":343
- *                 else:
- *                     if counter > 1:
- *                         in_af.append(False)             # <<<<<<<<<<<<<<
- *                     else:
- *                         in_af.append(True)
- */
-          if (unlikely(!__pyx_v_in_af)) { __Pyx_RaiseUnboundLocalError("in_af"); __PYX_ERR(0, 343, __pyx_L1_error) }
-          __pyx_t_15 = __Pyx_PyList_Append(__pyx_v_in_af, Py_False); if (unlikely(__pyx_t_15 == -1)) __PYX_ERR(0, 343, __pyx_L1_error)
-
-          /* "cpropagate.pyx":342
- *                     counter = 0
- *                 else:
- *                     if counter > 1:             # <<<<<<<<<<<<<<
- *                         in_af.append(False)
- *                     else:
- */
-          goto __pyx_L32;
-        }
-
-        /* "cpropagate.pyx":345
- *                         in_af.append(False)
- *                     else:
- *                         in_af.append(True)             # <<<<<<<<<<<<<<
- *                 exc_count.append(len(exc))
- *         if self.count_excited == 'time':
- */
-        /*else*/ {
-          if (unlikely(!__pyx_v_in_af)) { __Pyx_RaiseUnboundLocalError("in_af"); __PYX_ERR(0, 345, __pyx_L1_error) }
-          __pyx_t_15 = __Pyx_PyList_Append(__pyx_v_in_af, Py_True); if (unlikely(__pyx_t_15 == -1)) __PYX_ERR(0, 345, __pyx_L1_error)
-        }
-        __pyx_L32:;
-      }
-      __pyx_L31:;
-
       /* "cpropagate.pyx":346
- *                     else:
- *                         in_af.append(True)
+ *                 #     else:
+ *                 #         in_af.append(True)
  *                 exc_count.append(len(exc))             # <<<<<<<<<<<<<<
  *         if self.count_excited == 'time':
- *             return in_af, exc_count
+ *             return exc_count #in_af, exc_count
  */
       if (unlikely(!__pyx_v_exc_count)) { __Pyx_RaiseUnboundLocalError("exc_count"); __PYX_ERR(0, 346, __pyx_L1_error) }
       __pyx_t_9 = PyObject_Length(__pyx_v_exc); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 346, __pyx_L1_error)
-      __pyx_t_6 = PyInt_FromSsize_t(__pyx_t_9); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 346, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_15 = __Pyx_PyList_Append(__pyx_v_exc_count, __pyx_t_6); if (unlikely(__pyx_t_15 == -1)) __PYX_ERR(0, 346, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_10 = PyInt_FromSsize_t(__pyx_t_9); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 346, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_10);
+      __pyx_t_15 = __Pyx_PyList_Append(__pyx_v_exc_count, __pyx_t_10); if (unlikely(__pyx_t_15 == -1)) __PYX_ERR(0, 346, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
       /* "cpropagate.pyx":337
  *                 if i == t_steps - 1:
  *                     return False, self.t
  *             if self.count_excited == 'time':             # <<<<<<<<<<<<<<
- *                 if len(exc) > 1.1 * self.shape[0]:
- *                     in_af.append(True)
+ *                 # if len(exc) > 1.1 * self.shape[0]:
+ *                 #     in_af.append(True)
  */
     }
 
@@ -7763,10 +7659,10 @@ static PyObject *__pyx_pf_10cpropagate_5Heart_10propagate(CYTHON_UNUSED PyObject
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "cpropagate.pyx":347
- *                         in_af.append(True)
+ *                 #         in_af.append(True)
  *                 exc_count.append(len(exc))
  *         if self.count_excited == 'time':             # <<<<<<<<<<<<<<
- *             return in_af, exc_count
+ *             return exc_count #in_af, exc_count
  * 
  */
   __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_count_excited); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 347, __pyx_L1_error)
@@ -7778,30 +7674,21 @@ static PyObject *__pyx_pf_10cpropagate_5Heart_10propagate(CYTHON_UNUSED PyObject
     /* "cpropagate.pyx":348
  *                 exc_count.append(len(exc))
  *         if self.count_excited == 'time':
- *             return in_af, exc_count             # <<<<<<<<<<<<<<
+ *             return exc_count #in_af, exc_count             # <<<<<<<<<<<<<<
  * 
  * 
  */
     __Pyx_XDECREF(__pyx_r);
-    if (unlikely(!__pyx_v_in_af)) { __Pyx_RaiseUnboundLocalError("in_af"); __PYX_ERR(0, 348, __pyx_L1_error) }
     if (unlikely(!__pyx_v_exc_count)) { __Pyx_RaiseUnboundLocalError("exc_count"); __PYX_ERR(0, 348, __pyx_L1_error) }
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 348, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_INCREF(__pyx_v_in_af);
-    __Pyx_GIVEREF(__pyx_v_in_af);
-    PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_in_af);
     __Pyx_INCREF(__pyx_v_exc_count);
-    __Pyx_GIVEREF(__pyx_v_exc_count);
-    PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_exc_count);
-    __pyx_r = __pyx_t_3;
-    __pyx_t_3 = 0;
+    __pyx_r = __pyx_v_exc_count;
     goto __pyx_L0;
 
     /* "cpropagate.pyx":347
- *                         in_af.append(True)
+ *                 #         in_af.append(True)
  *                 exc_count.append(len(exc))
  *         if self.count_excited == 'time':             # <<<<<<<<<<<<<<
- *             return in_af, exc_count
+ *             return exc_count #in_af, exc_count
  * 
  */
   }
