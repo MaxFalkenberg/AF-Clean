@@ -10,14 +10,10 @@ import numpy as np
 import h5py
 import time
 
-
 print '\n'
 
 """
 need to add binary search.
-"""
-
-"""
 Right now, need to enter ranges manually for both delta_range and nu_range
 """
 delta_range = np.array([0.01, 0.05])
@@ -34,11 +30,13 @@ file_name = raw_input("Name of output file: ")
 
 h5f_par = h5py.File('%s_para.h5' % file_name, 'w')
 par_grp = h5f_par.create_group('parameters')
-par_grp.create_dataset('delta', data=delta_range)
-par_grp.create_dataset('nu', data=nu_range)
-par_grp.create_dataset('epsilon', data=eps)
-par_grp.create_dataset('rp', data=rp)
-par_grp.create_dataset('pulse_rate', data=pulse_rate)
+par_grp.create_dataset('Delta', data=delta_range)
+par_grp.create_dataset('Nu', data=nu_range)
+par_grp.create_dataset('Epsilon', data=eps)
+par_grp.create_dataset('Refractory Period', data=rp)
+par_grp.create_dataset('Pulse Rate', data=pulse_rate)
+par_grp.create_dataset('Simulation Size', data=sim_size)
+par_grp.create_dataset('Iterations', data=iteration_N)
 
 h5f = h5py.File('%s.h5' % file_name, 'w')
 start_time1 = time.time()
