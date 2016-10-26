@@ -61,7 +61,9 @@ for i in h5data.iterkeys(): #  Structuring the data into total_data
             data = np.array(s_grp.get(k))
             temp_data.append(data)
 
-    total_data[key1][key2] = temp_data
+        total_data[key1][key2] = temp_data
+
+print total_data[u'delta: 0.05']
 
 """
 groups are in the form: u'delta: 0.01' and the subgroups are in the form u'Nu: 0.13'
