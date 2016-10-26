@@ -2,7 +2,6 @@ import numpy as np
 from libcpp cimport bool
 import cython
 
-
 def square_ablation(position, x_len, y_len):
     x_index = []
     y_index = []
@@ -262,7 +261,8 @@ class Heart:
     def propagate(self, t_steps=1):
         if self.t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
-            counter = 0 #For determining when system leaves AF in analysis
+            counter = 2  # For determining when system leaves AF in analysis
+                         # shouldn't it start at 2 since we are assuming AF doesn't occur as start?
             if self.count_excited == 'time':
                 in_af = []
                 exc_count = []
@@ -335,17 +335,17 @@ class Heart:
                 if i == t_steps - 1:
                     return False, self.t
             if self.count_excited == 'time':
-                # if len(exc) > 1.1 * self.shape[0]:
-                #     in_af.append(True)
-                #     counter = 0
-                # else:
-                #     if counter > 1:
-                #         in_af.append(False)
-                #     else:
-                #         in_af.append(True)
+                if len(exc) > 1.1 * self.shape[0]:
+                    in_af.append(True)
+                    counter = 0
+                else:
+                    if counter > 1:
+                        in_af.append(False)
+                    else:
+                        in_af.append(True)
                 exc_count.append(len(exc))
         if self.count_excited == 'time':
-            return exc_count #in_af, exc_count
+            return in_af, exc_count
 
 
 

@@ -4,8 +4,8 @@ import numpy as np
 
 
 
-setup(name='cpropagate',
+setup(name='cpropagate_basic',
   version='1.0',
-  ext_modules=[Extension('cpropagate', ['cpropagate.pyx'])],
+  ext_modules=[Extension('cpropagate_basic', ['cpropagate_basic.pyx'])],
   include_dirs=[np.get_include()]
   )
