@@ -21,7 +21,7 @@ need to add binary search.
 Right now, need to enter ranges manually for both delta_range and nu_range
 """
 delta_range = np.array([0.01, 0.05])
-nu_range = np.arange(0.11,0.13,0.01)
+nu_range = np.arange(0.10,0.13,0.01)
 
 eps = float(raw_input("Epsilon: "))
 rp = int(raw_input("Refractory Period: "))
@@ -32,8 +32,16 @@ iteration_N = int(raw_input("Number of iterations: "))
 print'\n'
 file_name = raw_input("Name of output file: ")
 
-start_time1 = time.time()
+h5f_par = h5py.File('%s_para.h5' % file_name, 'w')
+par_grp = h5f_par.create_group('parameters')
+par_grp.create_dataset('delta', data=delta_range)
+par_grp.create_dataset('nu', data=nu_range)
+par_grp.create_dataset('epsilon', data=eps)
+par_grp.create_dataset('rp', data=rp)
+par_grp.create_dataset('pulse_rate', data=pulse_rate)
+
 h5f = h5py.File('%s.h5' % file_name, 'w')
+start_time1 = time.time()
 for delta in delta_range:
     grp = h5f.create_group('delta: %s' % delta)
     print "delta: %s" % delta

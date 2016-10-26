@@ -16,7 +16,10 @@ print'\n'
 
 file_name = raw_input("HDF5 to open: ")
 h5data = h5py.File('%s.h5' % file_name, 'r')
+h5par = h5py.File('%s_para.h5' % file_name, 'r')
+
 print('List of items in the base directory:', h5data.items())
+print('List of items in the base directory:', h5par.items())
 
 def af_scan(data, size, pulse_rate):
     """
@@ -49,6 +52,7 @@ def af_scan(data, size, pulse_rate):
 
 total_data = {} #  This is where all the data is stored
 
+
 for i in h5data.iterkeys(): #  Structuring the data into total_data
     grp = h5data.get(i)
     key1 = '%s' % i
@@ -62,8 +66,6 @@ for i in h5data.iterkeys(): #  Structuring the data into total_data
             temp_data.append(data)
 
         total_data[key1][key2] = temp_data
-
-print total_data[u'delta: 0.05']
 
 """
 groups are in the form: u'delta: 0.01' and the subgroups are in the form u'Nu: 0.13'
