@@ -1,3 +1,10 @@
+"""
+Streamlined propagate for use with simulate.py
+Only returns len(exc)
+
+----> Need to check that its still giving the correct data with changes made <-------
+"""
+
 import numpy as np
 
 
