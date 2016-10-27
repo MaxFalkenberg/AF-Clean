@@ -17,7 +17,10 @@ need to add binary search.
 Right now, need to enter ranges manually for both delta_range and nu_range
 """
 delta_range = np.array([0.05])
-nu_range = np.arange(0.08, 0.23, 0.05)
+nu_range = np.arange(0.02, 0.32, 0.02)
+
+print "Delta: %s" % delta_range
+print "Nu: %s" % nu_range
 
 eps = float(raw_input("Epsilon: "))
 rp = int(raw_input("Refractory Period: "))
@@ -55,3 +58,4 @@ for delta in delta_range:
             s_grp.create_dataset('data_set_%s' % i, data=a.lenexc)
         print'\n'
 print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
+h5f.close()

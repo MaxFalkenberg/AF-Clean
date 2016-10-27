@@ -16,14 +16,6 @@ import matplotlib.pyplot as plt
 
 print'\n'
 
-file_name = raw_input("HDF5 to open: ")
-h5data = h5py.File('%s.h5' % file_name, 'r')
-h5par = h5py.File('%s_para.h5' % file_name, 'r')
-
-print('List of items in the base directory:', h5data.items())
-print('List of items in the base directory:', h5par.items())
-print'\n'
-
 
 def af_scan(data_set, size, pulse_rate):
     """
@@ -85,10 +77,12 @@ def af_line_plot(delta_=None, nu_=None, iteration=None, normalised=False, scanne
     if normalised:
         data_ = raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration]/float(
             max(raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration]))
+        label = 'Normalised number of excited cells'
     if scanned:
         data_ = af_scan(
             raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration], 200, np.array(para['Pulse Rate']))
-    plt.plot(x, data_)
+        label = 'AF scan'
+    plt.plot(x, data_, label=label)
 
 
 def af_error_plot(delta_):
@@ -100,8 +94,16 @@ def af_error_plot(delta_):
     y, err = get_risk_data(delta_)
     x = np.array(nu_range)
 
-    plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
+    plt.errorbar(x, y, yerr=err, fmt='-o', label='delta: %s' % delta_)
 
+
+file_name = raw_input("HDF5 to open: ")
+h5data = h5py.File('%s.h5' % file_name, 'r')
+h5par = h5py.File('%s_para.h5' % file_name, 'r')
+
+print('List of items in the base directory:', h5data.items())
+print('List of items in the base directory:', h5par.items())
+print'\n'
 
 # Displaying parameters on load
 print "Parameters:"
@@ -145,14 +147,14 @@ for delta in delta_range:
 
         refined_data['delta: %s' % delta]['nu: %s' % nu] = grouped_risk_data
 
-# plt.figure(1)
-# af_line_plot(0.05, 0.16, 0, normalised=True)
-# af_line_plot(0.05, 0.16, 0, normalised=False, scanned=True)
+plt.figure(1)
+af_line_plot(0.05, 0.14, 1, normalised=True)
+af_line_plot(0.05, 0.14, 1, normalised=False, scanned=True)
 
 plt.figure(2)
-af_error_plot(0.01)
+# af_error_plot(0.01)
 af_error_plot(0.05)
-af_error_plot(0.25)
+# af_error_plot(0.25)
 plt.grid(True)
 plt.ylabel("Risk of AF")
 plt.xlabel("Nu")
@@ -160,3 +162,6 @@ plt.legend()
 plt.show()
 
 plt.close()
+
+h5data.close()
+h5par.close()
