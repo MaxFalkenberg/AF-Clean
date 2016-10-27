@@ -6,7 +6,8 @@ Only returns len(exc)
 """
 
 import numpy as np
-
+from libcpp cimport bool
+import cython
 
 
 def square_ablation(position, x_len, y_len):

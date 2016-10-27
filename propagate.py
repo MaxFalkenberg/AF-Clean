@@ -1,4 +1,5 @@
 import numpy as np
+# from numba import jit
 
 
 def square_ablation(position, x_len, y_len):
@@ -45,6 +46,12 @@ class Heart:
             self.starting_t = 0
             self.count_excited = count_excited
             self.print_t = print_t
+            self.r_true = (np.arange(self.size) % self.shape[1] != self.shape[1] - 1)
+            self.l_true = (np.arange(self.size) % self.shape[1] != 0)
+            self.u = np.ones(self.size, dtype = 'int32') * 200
+            self.u[-self.shape[1]::] = - self.size + self.shape[0]
+            self.d = np.ones(self.size, dtype = 'int32') * -200
+            self.d[:self.shape[1]:] = + self.size - self.shape[0]
 
             self.cell_grid = np.ones(self.size,
                                       dtype='bool')  # Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
@@ -229,6 +236,7 @@ class Heart:
     def prop_tool(self, ind_list):
         # Solely used as part of Heart.propagate() to process signal propagation
         exc = []
+        self.i = ind_list
         for ind in ind_list:
             ind = ind[self.cell_grid[ind]]  # Removes cells which are refractory
             if self.any_ablate:
@@ -273,17 +281,21 @@ class Heart:
             if len(ind) != 0:
 
                 # print len(self.excited)
-                ind_up = ind + self.shape[0]  # Index of cells directly above initially excited cells
-                ind_down = ind - self.shape[0]  # Index of cells below
-                ind_up[ind_up >= self.size] -= self.size
-                ind_down[ind_down < 0] += self.size
+                # ind_up = ind + self.shape[0]  # Index of cells directly above initially excited cells
+                # ind_down = ind - self.shape[0]  # Index of cells below
+                # ind_up[ind_up >= self.size] -= self.size
+                # ind_down[ind_down < 0] += self.size
 
-                ind_right = ind[
-                    ind % self.shape[1] != self.shape[1] - 1]  # Deletes any cells outside of right tissue boundary
-                ind_right += 1  # Above: the entries corresponding to the indices of 'ind' where the remainder when dividing by grid length is not grid length - 1
-                ind_left = ind[ind % self.shape[1] != 0]  # Deletes any cells outside of left tissue boundary
-                ind_left -= 1  # Above: the entries corresponding to the indices of 'ind' where the remainder when dividing by grid length is not 0
+                # ind_right = ind[
+                #     ind % self.shape[1] != self.shape[1] - 1]  # Deletes any cells outside of right tissue boundary
+                ind_right = ind[self.r_true[ind]] + 1
+                #ind_right += 1  # Above: the entries corresponding to the indices of 'ind' where the remainder when dividing by grid length is not grid length - 1
+                # ind_left = ind[ind % self.shape[1] != 0]  # Deletes any cells outside of left tissue boundary
+                ind_left = ind[self.l_true[ind]] -1
+                #ind_left -= 1  # Above: the entries corresponding to the indices of 'ind' where the remainder when dividing by grid length is not 0
 
+                ind_up = ind + self.u[ind]
+                ind_down = ind + self.d[ind]
                 ind_up = ind_up[self.cell_vert[ind]]  # Checks whether initial excited cell has vert connection.
                 ind_down = ind_down[self.cell_vert[ind_down]]  # Checks whether below cell has vert connection.
 
