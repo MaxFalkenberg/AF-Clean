@@ -15,10 +15,10 @@ def square_ablation(position, x_len, y_len):
 
 class Heart:
 
-    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True):
+    def __init__(self, nu=0.05, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
-            Fraction of dystfunctional cells: \'delta\'.
+            Fraction of dysfunctional cells: \'delta\'.
             Probability of failed firing: \'eps\'.
 
             count_excited used by analysis.
@@ -327,7 +327,7 @@ class Heart:
                 self.state_history[self.t] = np.random.get_state()  # Seed recording for generator.
 
             self.pulse_history = (self.pulse_index, self.pulse_vectors)
-            self.exc_total.append(exc)  # List containing all previously excited states
+            self.exc_total.append(exc) # List containing all previously excited states
 
             if self.count_excited == 'start':
                 if len(exc) > 1.1 * self.shape[0]:
@@ -346,7 +346,6 @@ class Heart:
                 exc_count.append(len(exc))
         if self.count_excited == 'time':
             return in_af, exc_count
-
 
 
     def save(self, file_name):

@@ -10,18 +10,19 @@ import numpy as np
 import h5py
 import time
 
-
 print '\n'
 
 """
 need to add binary search.
-"""
-
-"""
 Right now, need to enter ranges manually for both delta_range and nu_range
 """
+
 delta_range = np.array([0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1])
 nu_range = np.array([0.08, 0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21,0.22])#np.arange(0.10,0.13,0.01)
+
+print "Delta: %s" % delta_range
+print "Nu: %s" % nu_range
+
 
 eps = float(raw_input("Epsilon: "))
 rp = int(raw_input("Refractory Period: "))
@@ -34,11 +35,13 @@ file_name = raw_input("Name of output file: ")
 
 h5f_par = h5py.File('%s_para.h5' % file_name, 'w')
 par_grp = h5f_par.create_group('parameters')
-par_grp.create_dataset('delta', data=delta_range)
-par_grp.create_dataset('nu', data=nu_range)
-par_grp.create_dataset('epsilon', data=eps)
-par_grp.create_dataset('rp', data=rp)
-par_grp.create_dataset('pulse_rate', data=pulse_rate)
+par_grp.create_dataset('Delta', data=delta_range)
+par_grp.create_dataset('Nu', data=nu_range)
+par_grp.create_dataset('Epsilon', data=eps)
+par_grp.create_dataset('Refractory Period', data=rp)
+par_grp.create_dataset('Pulse Rate', data=pulse_rate)
+par_grp.create_dataset('Simulation Size', data=sim_size)
+par_grp.create_dataset('Iterations', data=iteration_N)
 
 h5f = h5py.File('%s.h5' % file_name, 'w')
 start_time1 = time.time()
@@ -58,3 +61,4 @@ for delta in delta_range:
         print'\n'
 
 print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
+h5f.close()
