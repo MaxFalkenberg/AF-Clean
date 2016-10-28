@@ -16,7 +16,7 @@ print '\n'
 need to add binary search.
 Right now, need to enter ranges manually for both delta_range and nu_range
 """
-delta_range = np.array([0.05])
+delta_range = np.array([0.00001])
 nu_range = np.arange(0.02, 0.32, 0.02)
 
 print "Delta: %s" % delta_range
