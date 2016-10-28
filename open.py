@@ -16,6 +16,14 @@ import matplotlib.pyplot as plt
 
 print'\n'
 
+kishans_nu = np.array([0.02,0.04,0.06,0.08,0.11,0.13,0.15,0.17,0.19,0.21,0.23,0.25,0.27,
+                       0.29,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.1])
+print len(kishans_nu)
+kishans_values = np.array([0.99981, 0.99983, 0.9998, 0.99968, 0.99772, 0.96099, 0.60984, 0.16381, 0.017807,
+                           0.020737, 4.922e-05, 0.0001084, 0, 0, 0.99152, 0.86184, 0.29714, 0.039206, 0.0056277,
+                           4.834e-05, 0.00082172, 0, 0, 9.406e-05, 0.99919])
+print len(kishans_values)
+
 
 def af_scan(data_set, size, pulse_rate):
     """
@@ -31,7 +39,7 @@ def af_scan(data_set, size, pulse_rate):
     # Assuming the System does not start in AF.
     raw_af = (data_set > 1.1 * size)
     neighbour_af = (raw_af[:-1] != raw_af[1:])
-    neighbour_ind = np.where(neighbour_af == True)[0]  # Needs == even if the IDE says otherwise
+    neighbour_ind = np.where(neighbour_af is True)[0]  # Needs == even if the IDE says otherwise
 
     starting = neighbour_ind[1::2]
     ending = neighbour_ind[2::2]
@@ -94,7 +102,7 @@ def af_error_plot(delta_):
     y, err = get_risk_data(delta_)
     x = np.array(nu_range)
 
-    plt.errorbar(x, y, yerr=err, fmt='-o', label='delta: %s' % delta_)
+    plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
 
 
 file_name = raw_input("HDF5 to open: ")
@@ -147,14 +155,15 @@ for delta in delta_range:
 
         refined_data['delta: %s' % delta]['nu: %s' % nu] = grouped_risk_data
 
-plt.figure(1)
-af_line_plot(0.05, 0.14, 1, normalised=True)
-af_line_plot(0.05, 0.14, 1, normalised=False, scanned=True)
+#plt.figure(1)
+#af_line_plot(0.05, 0.14, 1, normalised=True)
+#af_line_plot(0.05, 0.14, 1, normalised=False, scanned=True)
 
 plt.figure(2)
-# af_error_plot(0.01)
+af_error_plot(0.01)
 af_error_plot(0.05)
-# af_error_plot(0.25)
+af_error_plot(0.25)
+plt.plot(kishans_nu, kishans_values, 'r^', label="kishan")
 plt.grid(True)
 plt.ylabel("Risk of AF")
 plt.xlabel("Nu")

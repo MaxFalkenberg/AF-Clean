@@ -16,11 +16,13 @@ print '\n'
 need to add binary search.
 Right now, need to enter ranges manually for both delta_range and nu_range
 """
-delta_range = np.array([0.00001])
-nu_range = np.arange(0.02, 0.32, 0.02)
+
+delta_range = np.array([0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1])
+nu_range = np.array([0.08, 0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21,0.22])
 
 print "Delta: %s" % delta_range
 print "Nu: %s" % nu_range
+
 
 eps = float(raw_input("Epsilon: "))
 rp = int(raw_input("Refractory Period: "))
@@ -57,5 +59,6 @@ for delta in delta_range:
             print("--- Iteration %s: %s seconds ---" % (i, time.time() - start_time2))
             s_grp.create_dataset('data_set_%s' % i, data=a.lenexc)
         print'\n'
+
 print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
 h5f.close()

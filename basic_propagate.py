@@ -8,7 +8,6 @@ Only returns len(exc)
 import numpy as np
 
 
-
 def square_ablation(position, x_len, y_len):
     x_index = []
     y_index = []
