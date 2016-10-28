@@ -37,7 +37,7 @@ def af_scan(data_set, size, pulse_rate):
     # Assuming the System does not start in AF.
     raw_af = (data_set > 1.1 * size)
     neighbour_af = (raw_af[:-1] != raw_af[1:])
-    neighbour_ind = np.where(neighbour_af is True)[0]  # Needs == even if the IDE says otherwise
+    neighbour_ind = np.where(neighbour_af == True)[0]  # Needs == even if the IDE says otherwise
 
     starting = neighbour_ind[1::2]
     ending = neighbour_ind[2::2]
@@ -153,14 +153,16 @@ for delta in delta_range:
 
         refined_data['delta: %s' % delta]['nu: %s' % nu] = grouped_risk_data
 
-#plt.figure(1)
-#af_line_plot(0.05, 0.14, 1, normalised=True)
-#af_line_plot(0.05, 0.14, 1, normalised=False, scanned=True)
+plt.figure(1)
+af_line_plot(0.05, 0.14, 1, normalised=True)
+af_line_plot(0.05, 0.14, 1, normalised=False, scanned=True)
+plt.hlines((200 * 1.1)/float(
+            max(raw_data[u'delta: %s' % 0.05][u'Nu: %s' % 0.14][1])), 0, sim_size)
 
 plt.figure(2)
-af_error_plot(0.01)
+#af_error_plot(0.01)
 af_error_plot(0.05)
-af_error_plot(0.25)
+#af_error_plot(0.25)
 plt.plot(kishans_nu, kishans_values, 'r^', label="kishan")
 plt.grid(True)
 plt.ylabel("Risk of AF")
