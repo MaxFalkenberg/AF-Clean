@@ -1,6 +1,8 @@
 import numpy as np
 import propagate
 import cPickle
+import theano.tensor as T
+from theano import function
 
 
 def af_starts(start, end):
@@ -46,12 +48,25 @@ def ap_curve(grid):
     return (((((50 - grid) ** 0.3) * np.exp(-(grid**4)/1500000) + np.exp(-grid)) / 4.2) * 110) - 20
 
 def ecg_data(excitation_grid):
-    exc  = excitation_grid.astype(float)
-    twenty = np.ones((200,200), dtype = 'float')* 20
-    rp = np.ones((200,200), dtype = 'float') * 50
+    exc  = excitation_grid.astype('int8')
+    # twenty = np.ones((200,200), dtype = 'float')* 20
+    # rp = np.ones((200,200), dtype = 'float') * 50
+
+    ex = T.btensor3('ex')
+    z1 = 50 - ex
+    z2 = (((((50 - z1) ** 0.3) * T.exp(-(z1**4)/1500000) + T.exp(-z1)) / 4.2) * 110) - 20
+
+    f = function([ex], z2)
+
+    print f(exc)
+    return
+
+    # z = (((((a - c) ** 0.3) * np.exp(-(c**4)/1500000) + np.exp(-c)) / 4.2) * 110) - b
+    # f = function([a,b,c],z)
+
     for i in range(len(exc)):
         exc[i] = rp - exc[i]
-        exc[i] = ap_curve(exc[i])
+        exc[i] = f(rp,exc[i],twenty)    #ap_curve(exc[i])
     # for i in excitation_grid:
     #     voltage_grid.append(twenty - (110./50) * (rp - i))
     x_dif = []
