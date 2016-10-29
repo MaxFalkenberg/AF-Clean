@@ -16,8 +16,10 @@ import matplotlib.pyplot as plt
 
 print'\n'
 
-kishans_nu = np.array([0.02,0.04,0.06,0.08,0.11,0.13,0.15,0.17,0.19,0.21,0.23,0.25,0.27,
-                       0.29,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.1])
+"""Kishans Data sent by Kim (used for reference)"""
+kishans_nu = np.array([0.02, 0.04, 0.06, 0.08, 0.11, 0.13, 0.15, 0.17, 0.19, 0.21, 0.23, 0.25, 0.27,
+                       0.29, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.1])
+
 kishans_values = np.array([0.99981, 0.99983, 0.9998, 0.99968, 0.99772, 0.96099, 0.60984, 0.16381, 0.017807,
                            0.020737, 4.922e-05, 0.0001084, 0, 0, 0.99152, 0.86184, 0.29714, 0.039206, 0.0056277,
                            4.834e-05, 0.00082172, 0, 0, 9.406e-05, 0.99919])
@@ -28,9 +30,9 @@ def af_scan(data_set, size, pulse_rate):
     Function will find where AF occurs in data-set. It will check whether or not the system is actually in AF or not
     by checking the length of the 'Normal heart beat' state.
 
-    :param data_set:
-    :param size:
-    :param pulse_rate:
+    :param data_set: Desired data set to scan.
+    :param size: Size of the grid L.
+    :param pulse_rate: Pulse Rate.
     :return:
     """
 
@@ -55,7 +57,7 @@ def af_scan(data_set, size, pulse_rate):
 
 def get_risk_data(delta_):
     """
-
+    Function which gathers the risk data from refind_data and gives out the risk/errors for each delta.
     :param delta_:
     :return:
     """
@@ -71,11 +73,11 @@ def get_risk_data(delta_):
 def af_line_plot(delta_=None, nu_=None, iteration=None, normalised=False, scanned=False):
     """
     Creates a plot of the number of excited sites.
-    :param delta_:
-    :param nu_:
-    :param iteration:
-    :param normalised:
-    :param scanned
+    :param delta_: The Delta value
+    :param nu_: The Nu value
+    :param iteration: The Iteration that is plotted
+    :param normalised: Normalises the data so that it lies between 0 and 1
+    :param scanned: Scans the data for AF by using af_scan().
     :return:
     """
     x = np.arange(len(raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu][iteration]))
@@ -93,13 +95,12 @@ def af_line_plot(delta_=None, nu_=None, iteration=None, normalised=False, scanne
 
 def af_error_plot(delta_):
     """
-    Creates error bar plots of different deltas
-    :param delta_:
+    Creates error bar plots of different deltas.
+    :param delta_: Delta set you want to plot.
     :return:
     """
     y, err = get_risk_data(delta_)
     x = np.array(nu_range)
-
     plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
 
 
@@ -111,7 +112,7 @@ print('List of items in the base directory:', h5data.items())
 print('List of items in the base directory:', h5par.items())
 print'\n'
 
-# Displaying parameters on load
+# Displaying parameters on load.
 print "Parameters:"
 para = h5par.get('parameters')
 for i in para.iterkeys():
@@ -124,7 +125,7 @@ iterations = np.array(para.get('Iterations'))
 pr = np.array(para.get('Pulse Rate'))
 
 print '\n'
-raw_data = {}  # This is where all the data is stored
+raw_data = {}  # This is where all the raw data is stored.
 
 for i in h5data.iterkeys():  # Structuring the data into total_data
     grp = h5data.get(i)
@@ -140,8 +141,7 @@ for i in h5data.iterkeys():  # Structuring the data into total_data
 
         raw_data[key1][key2] = temp_data
 
-# Stores the data in tuples (mean, std)
-refined_data = {}
+refined_data = {}  # Stores the data in tuples (mean, std)
 
 for delta in delta_range:
     refined_data['delta: %s' % delta] = {}
@@ -153,23 +153,31 @@ for delta in delta_range:
 
         refined_data['delta: %s' % delta]['nu: %s' % nu] = grouped_risk_data
 
+"""
+Plot for number of excited cells in each time step. If you want to plot these, need to change parameters in af_line_plot
+so that it uses the desired delta, nu, iteration. scanned finds where AF occurs.
+"""
 plt.figure(1)
-af_line_plot(0.05, 0.14, 1, normalised=True)
-af_line_plot(0.05, 0.14, 1, normalised=False, scanned=True)
+af_line_plot(0.001, 0.08, 1, normalised=True)
+af_line_plot(0.001, 0.08, 1, normalised=False, scanned=True)
 plt.hlines((200 * 1.1)/float(
-            max(raw_data[u'delta: %s' % 0.05][u'Nu: %s' % 0.14][1])), 0, sim_size)
+            max(raw_data[u'delta: %s' % 0.001][u'Nu: %s' % 0.08][1])), 0, sim_size, 'r', label='Threshold')
+plt.legend()
+plt.ylabel("Normalised number of excited cells")
+plt.xlabel("Time Step")
 
+"""
+Plot showing the risk curve for different delta values. Kishans data is also plotted as reference.
+"""
 plt.figure(2)
-#af_error_plot(0.01)
-af_error_plot(0.05)
-#af_error_plot(0.25)
+for delta_values in delta_range:
+    af_error_plot(delta_values)
 plt.plot(kishans_nu, kishans_values, 'r^', label="kishan")
 plt.grid(True)
 plt.ylabel("Risk of AF")
 plt.xlabel("Nu")
 plt.legend()
 plt.show()
-
 plt.close()
 
 h5data.close()
