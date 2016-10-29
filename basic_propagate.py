@@ -211,7 +211,7 @@ class Heart:
         except:
             return np.array([], dtype='uint32')  # Important to ensure no irregularities in datatype
 
-    def propagate(self, t_steps=1):
+    def propagate(self, t_steps=1, real_time=False):
         self.lenexc = np.zeros(t_steps + 1, dtype='uint32')
         if self.t == 0:
             Heart.pulse(self)
@@ -256,5 +256,9 @@ class Heart:
             else:
                 self.excited[app_index] = exc
 
-            self.pulse_history = (self.pulse_index, self.pulse_vectors)
-            self.lenexc[i+1] = len(exc)
+            if not real_time:
+                self.pulse_history = (self.pulse_index, self.pulse_vectors)
+                self.lenexc[i+1] = len(exc)
+
+        if real_time:
+            return len(exc)
