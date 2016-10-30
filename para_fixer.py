@@ -7,7 +7,7 @@ SAVE THE PARA FILES BEFORE YOU TRY THIS AS IT WILL OVERWRITE THEM.
 import h5py
 print '\n'
 check = 0
-file_convert = raw_input("Enter para file that needs converting (e.g delta_analysis_m1) : ")
+file_convert = raw_input("Enter para file that needs converting (e.g delta_analysis_m1_para) : ")
 while check == 0:
     print "-------------------------------------------"
     print "File being converted: %s" % file_convert
