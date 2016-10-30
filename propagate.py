@@ -48,9 +48,9 @@ class Heart:
             self.print_t = print_t
             self.r_true = (np.arange(self.size) % self.shape[1] != self.shape[1] - 1)
             self.l_true = (np.arange(self.size) % self.shape[1] != 0)
-            self.u = np.ones(self.size, dtype = 'int32') * 200
+            self.u = np.ones(self.size, dtype = 'int32') * self.shape[1]
             self.u[-self.shape[1]::] = - self.size + self.shape[0]
-            self.d = np.ones(self.size, dtype = 'int32') * -200
+            self.d = np.ones(self.size, dtype = 'int32') * - self.shape[1]
             self.d[:self.shape[1]:] = + self.size - self.shape[0]
 
             self.cell_grid = np.ones(self.size,
