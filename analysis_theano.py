@@ -119,6 +119,8 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
 class ECG_single:
 
     def __init__(self,shape, probe_height):
+        """Class for dynamically returning ECG voltage of a particular excitation state
+        at a particular probe position. Initialise before running any animations. """
         self.shape = shape
         self.roll = shape[0] / 2
         self.probe_height = probe_height
@@ -142,6 +144,8 @@ class ECG_single:
         self.g = function([self.xd,self.yd],self.den)
 
     def voltage(self,excitation_matrix, probe_centre):
+        """excitation_matrix is current system excited state matrix imported from animator.Visual.animation_data.
+        Probe centre should be entered as a tuple (y,x)"""
         voltages = np.roll(self.f(excitation_matrix.astype('float')),self.roll - probe_centre[0],axis = 0)
         x_dif = np.gradient(voltages,axis = 1)
         y_dif = np.gradient(voltages,axis = 0)
