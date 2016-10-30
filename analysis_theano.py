@@ -116,6 +116,38 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
             pass
     return ecg_values
 
+class ECG_single:
+
+    def __init__(self,shape, probe_height):
+        self.shape = shape
+        self.roll = shape[0] / 2
+        self.probe_height = probe_height
+        x_dist = np.zeros(shape)
+        y_dist = np.zeros(shape)
+        for i in range(shape[1]):
+            x_dist[:,i] = i
+        for i in range(shape[0]):
+            y_dist[i] = i
+        self.x_dist = x_dist
+        self.y_dist = y_dist - self.roll
+
+        self.ex = T.dmatrix('ex') #Theano variable definition
+        self.z1 = 50 - self.ex #Converts excitation state to time state counter.
+        self.z2 = (((((50 - self.z1) ** 0.3) * T.exp(-(self.z1**4)/1500000) + T.exp(-self.z1)) / 4.2) * 110) - 20
+        self.f = function([self.ex], self.z2)
+
+        self.xd = T.dmatrix('xd')
+        self.yd = T.dmatrix('yd')
+        self.den = (((self.xd) ** 2) + ((self.yd) ** 2) + (self.probe_height ** 2)) ** 1.5
+        self.g = function([self.xd,self.yd],self.den)
+
+    def voltage(self,excitation_matrix, probe_centre):
+        voltages = np.roll(self.f(excitation_matrix.astype('float')),self.roll - probe_centre[0],axis = 0)
+        x_dif = np.gradient(voltages,axis = 1)
+        y_dif = np.gradient(voltages,axis = 0)
+        x_temp = self.x_dist - probe_centre[1]
+        return np.sum(((x_dif * x_temp) + (y_dif * self.y_dist)) / self.g(x_temp,self.y_dist))
+
 
 def save(filename, obj):
     """Use to save pile object to chosen directory."""
