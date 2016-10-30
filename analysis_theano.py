@@ -76,6 +76,8 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
     will be placed in centre of tissue. """
 
     shape = np.shape(excitation_grid)
+    if type(excitation_grid) == list:
+        excitation_grid = np.array(excitation_grid)
     exc  = excitation_grid.astype('float')
     ex = T.dtensor3('ex') #Theano variable definition
     z1 = 50 - ex #Converts excitation state to time state counter.
