@@ -12,10 +12,18 @@ def square_ablation(position, x_len, y_len):
             y_index.append(j)
     return [x_index, y_index]
 
+def fake_af(): #Returns idealised AF inducing heart with single critical circuit initiated by a single dysfunctional cell.
+    a = Heart(1,0.,0.02,50,seed = None, print_t = True)
+    a.cell_vert[20080:20120] = False
+    a.cell_vert[20280:20320] = False
+    a.cell_dys[20280] = True
+    a.cell_norm = np.invert(a.cell_dys)
+    a.set_pulse(220)
+    return a
 
 class Heart:
 
-    def __init__(self, nu=0.05, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True):
+    def __init__(self, nu=0.05, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True, custom_shape = None):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
@@ -37,7 +45,10 @@ class Heart:
             self.__n = nu  # Private vertical fractions variable
             self.__d = delta  # Private cell dysfunction variable
             self.__e = eps  # Private cell depolarisation failure variable
-            self.shape = (200, 200)
+            if custom_shape == None:
+                self.shape = (200, 200)
+            else:
+                self.shape = custom_shape
             self.size = self.shape[0] * self.shape[1]
             self.__rp = rp
             self.excited = []
