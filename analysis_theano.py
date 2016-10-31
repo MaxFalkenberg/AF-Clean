@@ -148,6 +148,8 @@ class ECG_single:
     def voltage(self,excitation_matrix, probe_centre):
         """excitation_matrix is current system excited state matrix imported from animator.Visual.animation_data.
         Probe centre should be entered as a tuple (y,x)"""
+        if type(excitation_matrix) == list:
+            excitation_matrix = np.array(excitation_matrix)
         voltages = np.roll(self.f(excitation_matrix.astype('float')),self.roll - probe_centre[0],axis = 0)
         x_dif = np.gradient(voltages,axis = 1)
         y_dif = np.gradient(voltages,axis = 0)
