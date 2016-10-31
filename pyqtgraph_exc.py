@@ -8,13 +8,12 @@ import time
 from theano import function
 from theano.tensor.signal.conv import conv2d
 
-for outputs in ['ani', 'exc_num', 'ecg']:
-    print outputs
+print '[ani, exc_num, ecg]'
 
 choice = raw_input("Choose output: ")
 
 if choice == 'ani':
-    a = bc.Heart(0.13)
+    a = bc.Heart(0.14)
     a.set_pulse(220)
 
     app = QtGui.QApplication([])
@@ -31,6 +30,12 @@ if choice == 'ani':
     view.setRange(QtCore.QRectF(0, 0, 200, 200))
 
     animation_grid = np.zeros((200, 200))
+
+    win.nextRow()
+    p1 = win.addPlot()
+    data1 = np.zeros(1000)
+    curve = p1.plot(data1, pen=pg.mkPen('w', width=2))
+    ptr1 = 0
 
     def ani_convert(data):
         """
@@ -51,9 +56,15 @@ if choice == 'ani':
     fps = 0
 
     def updateData():
-        global img, animation_grid, updateTime, fps
-        data = ani_convert(a.propagate(ecg=True))
-        time.sleep(1/120.)  # gives larger more stable fps.
+        global img, animation_grid, updateTime, fps, data1, ptr1
+        data1 = np.roll(data1, -1)
+        data, len_data = a.propagate(both=True)
+        data = ani_convert(data)
+        data1[-1] = len_data
+        ptr1 += 1
+        curve.setData(data1)
+        curve.setPos(ptr1, 0)
+        # time.sleep(1/120.)  # gives larger more stable fps.
         img.setImage(data.T, levels=(0, 50))
 
         QtCore.QTimer.singleShot(1, updateData)
