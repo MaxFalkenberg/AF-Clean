@@ -211,7 +211,7 @@ class Heart:
         except:
             return np.array([], dtype='uint32')  # Important to ensure no irregularities in datatype
 
-    def propagate(self, t_steps=1, real_time=False):
+    def propagate(self, t_steps=1, real_time=False, ecg=False ):
         self.lenexc = np.zeros(t_steps + 1, dtype='uint32')
         if self.t == 0:
             Heart.pulse(self)
@@ -262,3 +262,6 @@ class Heart:
 
         if real_time:
             return len(exc)
+
+        if ecg:
+            return exc

@@ -55,7 +55,7 @@ for delta in delta_range:
             a = bp.Heart(nu, delta, eps, rp)
             a.set_pulse(pulse_rate)
             start_time2 = time.time()
-            a.propagate(sim_size, real_time=False)
+            a.propagate(sim_size, real_time=False, ecg=False)
             print("--- Iteration %s: %s seconds ---" % (i, time.time() - start_time2))
             s_grp.create_dataset('data_set_%s' % i, data=a.lenexc)
         print'\n'
