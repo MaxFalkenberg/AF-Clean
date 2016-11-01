@@ -8,6 +8,7 @@ import analysis_theano as at
 
 nu_value = float(raw_input('Choose a Nu value: '))
 a = bc.Heart(nu_value)
+#a = bc.fake_af()
 a.set_pulse(220)
 e = at.ECG_single(a.shape, 3)
 
