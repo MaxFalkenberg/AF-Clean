@@ -75,7 +75,7 @@ if Simulation_type == 'ML-Train':
     Iterations = int(raw_input("Number of iterations: "))
 
 
-    def probe_positions(shape, folds=10):
+    def probe(shape, folds=10):
         position = int(shape[0]/folds)
         if shape[0] % folds != 0:
             print "Invalid fold number. Needs to be a integer factor of the shape."
@@ -108,7 +108,9 @@ if Simulation_type == 'ML-Train':
         a = fp.Heart(fakedata=True)
         e = at.ECG_single(a.shape, 3)  # might move above if the shape doesn't ever change
 
+        probe_positions = probe(a.shape)
         raw_data, crit_position = a.propagate()
+
 
 
 
