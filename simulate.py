@@ -8,6 +8,7 @@ You will need to install h5py. A good package which has a lot of useful modules 
 import basic_propagate as bp
 import propagate_fakedata as fp
 import analysis_theano as at
+from itertools import product
 import numpy as np
 import h5py
 import time
@@ -68,6 +69,49 @@ if Simulation_type == 'Delta':
     print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
     h5f.close()
 
-if Simulation_type == 'ML_train':
+if Simulation_type == 'ML-Train':
 
-    print ""
+    print "Creating training data from propagate_fakedata.py"
+    Iterations = int(raw_input("Number of iterations: "))
+
+
+    def probe_positions(shape, folds=10):
+        position = int(shape[0]/folds)
+        if shape[0] % folds != 0:
+            print "Invalid fold number. Needs to be a integer factor of the shape."
+        else:
+            x_pos = range(position, shape[0], position)
+            y_pos = range(position, shape[1], position)
+            return list(product(x_pos, y_pos))
+
+    def convert(index_data):
+        grid[(grid > 0) & (grid <= 50)] -= 1
+        if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
+            return grid
+        else:
+            indices = np.unravel_index(index_data, a.shape)
+            for ind in range(len(indices[0])):
+                grid[indices[0][ind]][indices[1][ind]] = 50
+            return grid
+
+    file_name = raw_input("Name of output file: ")
+
+    h5f = h5py.File('%s.h5' % file_name, 'w')
+    for index in range(Iterations):
+        # Group Creation
+        index_grp = h5f.create_group('Index: %s' % index)
+        # Subgroups creation
+        probe_sgrp = index_grp.create_group('Probe position')
+        crit_sgrp = index_grp.create_group('Critical Circuit Position')
+        ecg_sgrp = index_grp.create_group('ECG')
+
+        a = fp.Heart(fakedata=True)
+        e = at.ECG_single(a.shape, 3)  # might move above if the shape doesn't ever change
+
+        raw_data, crit_position = a.propagate()
+
+
+
+
+else:
+    print "Invalid Choice"
