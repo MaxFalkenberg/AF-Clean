@@ -3,7 +3,7 @@ import numpy as np
 
 class Heart:
 
-    def __init__(self, nu=1., delta=0., eps=0.2, rp=50, fakedata = False):
+    def __init__(self, nu=1., delta=0., eps=0.2, rp=50, fakedata=False):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
@@ -154,10 +154,3 @@ class Heart:
                         counter += 1
                 else:
                     counter = 0
-
-    def save(self, file_name):
-        # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
-        np.save(str(file_name), (self.exc_total, self.shape, self.__rp,
-                                 self.__n, self.__d, self.__e,
-                                 self.cell_vert, self.cell_dys, self.starting_t,
-                                 self.pulse_rate))
