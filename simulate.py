@@ -6,59 +6,68 @@ You will need to install h5py. A good package which has a lot of useful modules 
 """
 
 import basic_propagate as bp
+import propagate_fakedata as fp
+import analysis_theano as at
 import numpy as np
 import h5py
 import time
 
-print '\n'
+print '[Delta, ML-Train]'
 
-"""
-need to add binary search.
-Right now, need to enter ranges manually for both delta_range and nu_range
-"""
+Simulation_type = raw_input("Please the simulation type: ")
 
-delta_range = np.array([0.05])
-nu_range = np.array([0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22])
+if Simulation_type == 'Delta':
 
-print "Delta: %s" % delta_range
-print "Nu: %s" % nu_range
+    """
+    need to add binary search.
+    Right now, need to enter ranges manually for both delta_range and nu_range
+    """
 
+    delta_range = np.array([0.05])
+    nu_range = np.array([0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22])
 
-eps = float(raw_input("Epsilon: "))
-rp = int(raw_input("Refractory Period: "))
-pulse_rate = int(raw_input("Pulse Rate: "))
-sim_size = int(raw_input("Time Steps: "))
-iteration_N = int(raw_input("Number of iterations: "))
+    print "Delta: %s" % delta_range
+    print "Nu: %s" % nu_range
 
-print'\n'
-file_name = raw_input("Name of output file: ")
+    eps = float(raw_input("Epsilon: "))
+    rp = int(raw_input("Refractory Period: "))
+    pulse_rate = int(raw_input("Pulse Rate: "))
+    sim_size = int(raw_input("Time Steps: "))
+    iteration_N = int(raw_input("Number of iterations: "))
 
-h5f_par = h5py.File('%s_para.h5' % file_name, 'w')
-par_grp = h5f_par.create_group('parameters')
-par_grp.create_dataset('Delta', data=delta_range)
-par_grp.create_dataset('Nu', data=nu_range)
-par_grp.create_dataset('Epsilon', data=eps)
-par_grp.create_dataset('Refractory Period', data=rp)
-par_grp.create_dataset('Pulse Rate', data=pulse_rate)
-par_grp.create_dataset('Simulation Size', data=sim_size)
-par_grp.create_dataset('Iterations', data=iteration_N)
+    print'\n'
+    file_name = raw_input("Name of output file: ")
 
-h5f = h5py.File('%s.h5' % file_name, 'w')
-start_time1 = time.time()
-for delta in delta_range:
-    grp = h5f.create_group('delta: %s' % delta)
-    print "delta: %s" % delta
-    for nu in nu_range:
-        s_grp = grp.create_group('Nu: %s' % nu)
-        print "nu: %s" % nu
-        for i in range(iteration_N):
-            a = bp.Heart(nu, delta, eps, rp)
-            a.set_pulse(pulse_rate)
-            start_time2 = time.time()
-            a.propagate(sim_size, real_time=False, ecg=False)
-            print("--- Iteration %s: %s seconds ---" % (i, time.time() - start_time2))
-            s_grp.create_dataset('data_set_%s' % i, data=a.lenexc)
-        print'\n'
+    h5f_par = h5py.File('%s_para.h5' % file_name, 'w')
+    par_grp = h5f_par.create_group('parameters')
+    par_grp.create_dataset('Delta', data=delta_range)
+    par_grp.create_dataset('Nu', data=nu_range)
+    par_grp.create_dataset('Epsilon', data=eps)
+    par_grp.create_dataset('Refractory Period', data=rp)
+    par_grp.create_dataset('Pulse Rate', data=pulse_rate)
+    par_grp.create_dataset('Simulation Size', data=sim_size)
+    par_grp.create_dataset('Iterations', data=iteration_N)
 
-print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
-h5f.close()
+    h5f = h5py.File('%s.h5' % file_name, 'w')
+    start_time1 = time.time()
+    for delta in delta_range:
+        grp = h5f.create_group('delta: %s' % delta)
+        print "delta: %s" % delta
+        for nu in nu_range:
+            s_grp = grp.create_group('Nu: %s' % nu)
+            print "nu: %s" % nu
+            for i in range(iteration_N):
+                a = bp.Heart(nu, delta, eps, rp)
+                a.set_pulse(pulse_rate)
+                start_time2 = time.time()
+                a.propagate(sim_size, real_time=False, ecg=False)
+                print("--- Iteration %s: %s seconds ---" % (i, time.time() - start_time2))
+                s_grp.create_dataset('data_set_%s' % i, data=a.lenexc)
+            print'\n'
+
+    print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
+    h5f.close()
+
+if Simulation_type == 'ML_train':
+
+    print ""
