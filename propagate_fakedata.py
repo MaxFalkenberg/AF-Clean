@@ -106,7 +106,7 @@ class Heart:
         if self.t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
 
-        for i in range(t_steps):
+        while counter <= 1100:
             exc_index = self.t % self.__rp  # Defines current index for position in list of list of excited cells
             app_index = (self.t + 1) % self.__rp
             ind = self.excited[exc_index]
@@ -144,11 +144,11 @@ class Heart:
                 self.excited.append(exc)
             else:
                 self.excited[app_index] = exc
-            self.exc_total.append(exc) # List containing all previously excited states
+            self.exc_total.append(exc)  # List containing all previously excited states
 
             if self.fakedata:
                 if len(self.exc_total[-1]) > 220:
-                    if counter > 1100:
+                    if counter == 1100:
                         return self.exc_total[-1100:-220], self.x
                     else:
                         counter += 1
