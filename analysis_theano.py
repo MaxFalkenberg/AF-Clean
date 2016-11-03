@@ -79,12 +79,12 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
     if type(excitation_grid) == list:
         excitation_grid = np.array(excitation_grid)
     exc  = excitation_grid.astype('float')
-    ex = T.dtensor3('ex') #Theano variable definition
-    z1 = 50 - ex #Converts excitation state to time state counter.
-    #i.e. excited state = 0, refractory state 40 -> 50 - 40 = 10
-    z2 = (((((50 - z1) ** 0.3) * T.exp(-(z1**4)/1500000) + T.exp(-z1)) / 4.2) * 110) - 20 #State voltage conversion with theano
-    f = function([ex], z2)
-    exc = f(exc) * (cg_factor ** 2)
+    # ex = T.dtensor3('ex') #Theano variable definition
+    # z1 = 50 - ex #Converts excitation state to time state counter.
+    # #i.e. excited state = 0, refractory state 40 -> 50 - 40 = 10
+    # z2 = (((((50 - z1) ** 0.3) * T.exp(-(z1**4)/1500000) + T.exp(-z1)) / 4.2) * 110) - 20 #State voltage conversion with theano
+    # f = function([ex], z2)
+    # exc = f(exc) * (cg_factor ** 2)
 
     if probe_pos != None:
         #If y coordinate of probe is not in tissue centre,
@@ -108,7 +108,7 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
     net_x = x_dist * x_dif
     net_y = y_dist * y_dif
     net = net_x + net_y
-    z = 3
+    z = 5
     den = (((cg_factor * x_dist) ** 2) + ((cg_factor * y_dist) ** 2) + (z ** 2)) ** 1.5
     ecg_values = []
     for i in range(len(net)):
