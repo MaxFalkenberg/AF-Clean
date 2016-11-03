@@ -18,6 +18,14 @@ def square_ablation(position, x_len, y_len):
             y_index.append(j)
     return [x_index, y_index]
 
+def fake_af(): #Returns idealised AF inducing heart with single critical circuit initiated by a single dysfunctional cell.
+    a = Heart(1,0.,0.02,50)
+    a.cell_vert[20080:20120] = False
+    a.cell_vert[20280:20320] = False
+    a.cell_dys[20280] = True
+    a.cell_norm = np.invert(a.cell_dys)
+    a.set_pulse(220)
+    return a
 
 class Heart:
 
