@@ -95,7 +95,6 @@ def mouse_moved(evt):
         temp_index_x = index_x
 
 proxy = pg.SignalProxy(view.scene().sigMouseMoved, rateLimit=60, slot=mouse_moved)
-
 if __name__ == '__main__':
     import sys
 
