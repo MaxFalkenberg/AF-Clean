@@ -122,7 +122,7 @@ if Simulation_type == 'ML-Train':
         convert(raw_data, converted_data)
 
         # Saving the critical circuit position
-        h5f.create_dataset('Crit Position', data=crit_position)
+        index_grp.create_dataset('Crit Position', data=crit_position)
 
         start_time1 = time.time()
         for probe_index, probe_yx in enumerate(probe_positions):
