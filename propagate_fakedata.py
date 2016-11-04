@@ -3,7 +3,7 @@ import numpy as np
 
 class Heart:
 
-    def __init__(self, nu=1., delta=0., eps=0.2, rp=50, fakedata=False):
+    def __init__(self, nu=1., delta=0., eps=1., rp=50, fakedata=False):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
@@ -44,6 +44,7 @@ class Heart:
         else:
             y = (x + 200) % 40000
         self.x = x
+        self.y = y
         self.cell_vert[x:x + 30] = False
         self.cell_vert[y:y + 30] = False
         self.cell_dys[y] = True
@@ -91,7 +92,11 @@ class Heart:
                 if len(dys) != 0:
                     rand = np.random.random(len(
                         dys))  # List of random numbers between 0 and 1 for comparison to failed firing rate self.__e
+
                     dys_fire = dys[rand > self.__e]  # Indices of dys which do fire
+                    if len(dys_fire) != 0:
+                        self.cell_dys[self.y] = False
+                        self.cell_norm = np.invert(self.cell_dys)
                     self.cell_grid[dys_fire] = False  # Excite dys cells
                 else:
                     dys_fire = np.array([], dtype='uint32')
