@@ -76,7 +76,7 @@ if Simulation_type == 'ML-Train':
     Iterations = int(raw_input("Number of iterations: "))
 
 
-    def probe(shape, folds=10):
+    def probe(shape, folds=20):
         position = int(shape[0]/folds)
         if shape[0] % folds != 0:
             print "Invalid fold number. Needs to be a integer factor of the shape."
@@ -87,17 +87,17 @@ if Simulation_type == 'ML-Train':
 
     def convert(data, output):
 
-        for index_data in data:
+        for c_index, index_data in enumerate(data):
             grid[(grid > 0) & (grid <= 50)] -= 1
             if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
                 current_state = grid.copy()
-                output.append(current_state)
+                output[c_index] = current_state
             else:
                 indices = np.unravel_index(index_data, a.shape)
                 for ind in range(len(indices[0])):
                     grid[indices[0][ind]][indices[1][ind]] = 50
                 current_state = grid.copy()
-                output.append(current_state)
+                output[c_index] = current_state
 
         return output
 
@@ -110,29 +110,34 @@ if Simulation_type == 'ML-Train':
         # Group Creation
         index_grp = h5f.create_group('Index: %s' % index)
         # Subgroups creation
-        probe_sgrp = index_grp.create_group('Probe position')
-        ecg_sgrp = index_grp.create_group('ECG')
+        # probe_sgrp = index_grp.create_group('Probe position')
+        # ecg_sgrp = index_grp.create_group('ECG')
 
         a = fp.Heart(fakedata=True)
         probe_positions = probe(a.shape)
         raw_data, crit_position = a.propagate()
         print crit_position
-        converted_data = list()
+        converted_data = np.zeros(880)
         grid = np.zeros(a.shape)
-        convert(raw_data, converted_data)
-
-        # Saving the critical circuit position
-        index_grp.create_dataset('Crit Position', data=crit_position)
-
         start_time1 = time.time()
-        for probe_index, probe_yx in enumerate(probe_positions):
-            print probe_yx
-            ecg = [e.voltage(x, probe_yx) for x in converted_data]
-            probe_sgrp.create_dataset('pIndex: %s' % probe_index, data=probe_yx)
-            ecg_sgrp.create_dataset('eIndex: %s' % probe_index, data=ecg)
+        convert(raw_data, converted_data)
         print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
+        all_ecgs = list()
 
-    h5f.close()
-
-else:
-    print "Invalid Choice"
+#         # Saving the critical circuit position
+#         index_grp.create_dataset('Crit Position', data=crit_position)
+#
+#         # start_time1 = time.time()
+#         for probe_index, probe_yx in enumerate(probe_positions):
+#             print probe_yx
+#             ecg = [e.voltage(x, probe_yx) for x in converted_data]
+#             all_ecgs.append(ecg)
+#         # print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
+#
+#         index_grp.create_dataset('ECG', data=all_ecgs)
+#         index_grp.create_dataset('Probe Positions', data=probe_positions)
+#
+#     h5f.close()
+#
+# else:
+#     print "Invalid Choice"
