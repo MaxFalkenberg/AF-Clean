@@ -70,7 +70,7 @@ def course_grain(excitation_grid, cg_factor):
 
 class ECG:
 
-    def __init__(self, shape, probe_height):
+    def __init__(self, shape = (200,200), probe_height = 3):
         self.shape = shape
         self.y_mid = self.shape[0]/2
         self.y_mid = np.array(self.y_mid, dtype = 'int32')
@@ -125,6 +125,10 @@ class ECG:
 
 
     def solve(self,inp):
+        """inp is 3d numpy array where first dimension is time and remaining dimensions are excitation state of system.
+        Current method of import is inp = np.array(b.animation_data) where b = animator.Visual('file_name').
+
+        Return list of arrays. Each array is ECG data for a particular probe."""
 
         dim = len(np.shape(inp))
         probe_y = T.iscalar('probe_y')
