@@ -29,7 +29,7 @@ def fake_af(): #Returns idealised AF inducing heart with single critical circuit
 
 class Heart:
 
-    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50):
+    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50, shape=(200, 200)):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
@@ -48,7 +48,7 @@ class Heart:
         self.__n = nu  # Private vertical fractions variable
         self.__d = delta  # Private cell dysfunction variable
         self.__e = eps  # Private cell depolarisation failure variable
-        self.shape = (200, 200)
+        self.shape = shape
         self.size = self.shape[0] * self.shape[1]
         self.__rp = rp
         self.excited = []
@@ -219,7 +219,7 @@ class Heart:
         except:
             return np.array([], dtype='uint32')  # Important to ensure no irregularities in datatype
 
-    def propagate(self, t_steps=1, real_time=False, ecg=False, both=False):
+    def propagate(self, t_steps=1, real_time=False, ecg=False, both=False, long_sample=False):
         self.lenexc = np.zeros(t_steps + 1, dtype='uint32')
         if self.t == 0:
             Heart.pulse(self)
