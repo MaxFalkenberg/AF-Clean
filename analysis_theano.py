@@ -4,7 +4,7 @@ import cPickle
 import theano.tensor as T
 from theano import function
 from theano.tensor.signal.conv import conv2d
-import itertools
+from itertools import product
 
 
 def af_starts(start, end):
@@ -75,14 +75,16 @@ class ECG:
         self.y_mid = self.shape[0]/2
         self.y_mid = np.array(self.y_mid, dtype = 'int32')
         self.z = probe_height
+        self.probe_position = None
 
-        mode = str(raw_input('Would you like a range (input = range) of electrodes or a single electrode (input = single)?'))
+        mode = str(raw_input('Would you like a range (input = range) of electrodes or a single electrode (input = single)? '))
 
         if mode == 'range':
             electrode_spacing = int(raw_input('Choose Electrode Spacing: '))
             self.electrode_spacing = electrode_spacing
             self.probe_y = np.arange(electrode_spacing - 1,self.shape[0],electrode_spacing, dtype = 'float32')
             self.probe_x = np.arange(electrode_spacing - 1,self.shape[1],electrode_spacing, dtype = 'float32')
+            self.probe_position = list(product(self.probe_y, self.probe_x))
         if mode == 'single':
             y = raw_input('Electrode y position:')
             x = raw_input('Electrode x position:')
