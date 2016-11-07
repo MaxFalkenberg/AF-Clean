@@ -13,7 +13,7 @@ def square_ablation(position, x_len, y_len):
     return [x_index, y_index]
 
 def fake_af(): #Returns idealised AF inducing heart with single critical circuit initiated by a single dysfunctional cell.
-    a = Heart(1,0.,0.02,50,seed = None, print_t = True)
+    a = Heart(1,0.,0.2,50,seed = None, print_t = True)
     a.cell_vert[20080:20120] = False
     a.cell_vert[20280:20320] = False
     a.cell_dys[20280] = True
@@ -23,7 +23,7 @@ def fake_af(): #Returns idealised AF inducing heart with single critical circuit
 
 class Heart:
 
-    def __init__(self, nu=0.05, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True, custom_shape = None):
+    def __init__(self, nu=0.15, delta=0.05, eps=0.05, rp=50, seed=None, count_excited = False, print_t = True, custom_shape = None):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
