@@ -75,38 +75,37 @@ if Simulation_type == 'ML-Train':
     print "Creating training data from propagate_fakedata.py"
     Iterations = int(raw_input("Number of iterations: "))
 
-
-    def probe(shape, folds=20):
-        position = int(shape[0]/folds)
-        if shape[0] % folds != 0:
-            print "Invalid fold number. Needs to be a integer factor of the shape."
-        else:
-            x_pos = range(position, shape[0], position)
-            y_pos = range(position, shape[1], position)
-            return list(product(x_pos, y_pos))
+    # def probe(shape, folds=20):
+    #     position = int(shape[0]/folds)
+    #     if shape[0] % folds != 0:
+    #         print "Invalid fold number. Needs to be a integer factor of the shape."
+    #     else:
+    #         x_pos = range(position, shape[0], position)
+    #         y_pos = range(position, shape[1], position)
+    #         return list(product(x_pos, y_pos))
 
     def convert(data, output):
 
-        for c_index, index_data in enumerate(data):
+        for index_data in data:
             grid[(grid > 0) & (grid <= 50)] -= 1
             if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
                 current_state = grid.copy()
-                output[c_index] = current_state
+                output.append(current_state)
             else:
                 indices = np.unravel_index(index_data, a.shape)
                 for ind in range(len(indices[0])):
                     grid[indices[0][ind]][indices[1][ind]] = 50
                 current_state = grid.copy()
-                output[c_index] = current_state
+                output.append(current_state)
 
         return output
 
-    e = at.ECG_single((200, 200), 3)  # Assuming shape doesn't change.
-
+    e = at.ECG(shape=(200, 200), probe_height=3)  # Assuming shape/probe height doesn't change.
     file_name = raw_input("Name of output file: ")
 
     h5f = h5py.File('%s.h5' % file_name, 'w')
     for index in range(Iterations):
+        start_time1 = time.time()
         # Group Creation
         index_grp = h5f.create_group('Index: %s' % index)
         # Subgroups creation
@@ -114,30 +113,22 @@ if Simulation_type == 'ML-Train':
         # ecg_sgrp = index_grp.create_group('ECG')
 
         a = fp.Heart(fakedata=True)
-        probe_positions = probe(a.shape)
         raw_data, crit_position = a.propagate()
         print crit_position
-        converted_data = np.zeros(880)
+        converted_data = list()
         grid = np.zeros(a.shape)
-        start_time1 = time.time()
         convert(raw_data, converted_data)
-        print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
-        all_ecgs = list()
 
-#         # Saving the critical circuit position
-#         index_grp.create_dataset('Crit Position', data=crit_position)
-#
-#         # start_time1 = time.time()
-#         for probe_index, probe_yx in enumerate(probe_positions):
-#             print probe_yx
-#             ecg = [e.voltage(x, probe_yx) for x in converted_data]
-#             all_ecgs.append(ecg)
-#         # print("--- Simulation: %s seconds ---" % (time.time() - start_time1))
-#
-#         index_grp.create_dataset('ECG', data=all_ecgs)
-#         index_grp.create_dataset('Probe Positions', data=probe_positions)
-#
-#     h5f.close()
-#
-# else:
-#     print "Invalid Choice"
+        # Saving the critical circuit position
+        index_grp.create_dataset('Crit Position', data=crit_position)
+
+        ecg = e.solve(converted_data)
+
+        index_grp.create_dataset('ECG', data=ecg)
+        index_grp.create_dataset('Probe Positions', data=e.probe_position)
+        print("--- Iteration %s: %s seconds ---" % (index, time.time() - start_time1))
+
+    h5f.close()
+
+else:
+    print "Invalid Choice"
