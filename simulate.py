@@ -3,6 +3,10 @@ Decide on the delta/nu ranges before running this. Will get a series of question
 Right now parameters such as system size and rp are not currently saved so make a note of them.
 
 You will need to install h5py. A good package which has a lot of useful modules for data science is anaconda.
+
+Now has ML-Train option to generate ML training data.
+
+Sampling has been added to explore long simulations of 1000*1000 grids.
 """
 
 import basic_propagate as bp
@@ -14,7 +18,7 @@ import h5py
 import time
 # import matplotlib.pyplot as plt
 
-print '[Delta, ML-Train]'
+print '[Delta, ML-Train, Sampling]'
 
 Simulation_type = raw_input("Please the simulation type: ")
 
@@ -75,15 +79,6 @@ if Simulation_type == 'ML-Train':
     print "Creating training data from propagate_fakedata.py"
     Iterations = int(raw_input("Number of iterations: "))
 
-    # def probe(shape, folds=20):
-    #     position = int(shape[0]/folds)
-    #     if shape[0] % folds != 0:
-    #         print "Invalid fold number. Needs to be a integer factor of the shape."
-    #     else:
-    #         x_pos = range(position, shape[0], position)
-    #         y_pos = range(position, shape[1], position)
-    #         return list(product(x_pos, y_pos))
-
     def convert(data, output):
 
         for index_data in data:
@@ -130,5 +125,46 @@ if Simulation_type == 'ML-Train':
 
     h5f.close()
 
-else:
-    print "Invalid Choice"
+if Simulation_type == 'Sampling':
+
+    # def convert():
+    #
+
+    print "Simulation of heart tissue with defined sample rate."
+    time_steps = int(raw_input("Number of time steps: "))
+    # Needs to be larger than 50.
+    # Should indicate frame difference between sampling.
+    sample_interval = int(raw_input("Sample spacing: "))
+    # sample range (has to over 50)
+    sample_range = int(raw_input("Sample range: "))
+    file_name = raw_input("Name of output file: ")
+
+    h5f = h5py.File('%s.h5' % file_name, 'w')
+
+    a = bp.Heart(nu=0.17, eps=0.05, delta=0.05, shape=(1000, 1000))
+    a.set_pulse(220)
+
+    sample_steps = range(sample_interval, time_steps, sample_interval)
+    animation_grid = np.zeros(a.shape)
+    print sample_steps
+
+    upper_limit = len(sample_steps)
+    count = 0
+
+    for sample in sample_steps:
+
+        unrecorded_jump = sample - a.rp - count
+        count += unrecorded_jump
+        print count
+        start_time1 = time.time()
+        a.propagate(unrecorded_jump)
+        group = h5f.create_group('Sample: %s' % sample)
+        data = a.propagate(sample_range + a.rp, data_range=True)
+        for index, i in enumerate(data):
+            group.create_dataset('dataset: %s' % index, data=i, compression='gzip', compression_opts=9)
+        count += sample_range + a.rp
+        print count
+        print("--- Sample %s: %s seconds ---" % (sample, time.time() - start_time1))
+
+    h5f.close()
+
