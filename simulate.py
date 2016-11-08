@@ -17,9 +17,9 @@ import h5py
 import time
 # import matplotlib.pyplot as plt
 
-print '[Delta, ML-Train, Sampling]'
+print 'Simulation Options: [Delta, ML-Train, Sampling]'
 
-Simulation_type = raw_input("Please the simulation type: ")
+Simulation_type = raw_input("Simulation type: ")
 
 if Simulation_type == 'Delta':
 
@@ -27,6 +27,8 @@ if Simulation_type == 'Delta':
     need to add binary search.
     Right now, need to enter ranges manually for both delta_range and nu_range
     """
+
+    print "Simulating varying delta data."
 
     delta_range = np.array([0.05])
     nu_range = np.array([0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22])
@@ -75,7 +77,7 @@ if Simulation_type == 'Delta':
 
 if Simulation_type == 'ML-Train':
 
-    print "Creating training data from propagate_fakedata.py"
+    print "Creating ML training data from propagate_fakedata.py"
     Iterations = int(raw_input("Number of iterations: "))
 
     def convert(data, output):
