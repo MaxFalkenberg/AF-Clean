@@ -12,7 +12,6 @@ Sampling has been added to explore long simulations of 1000*1000 grids.
 import basic_propagate as bp
 import propagate_fakedata as fp
 import analysis_theano as at
-from itertools import product
 import numpy as np
 import h5py
 import time
@@ -130,6 +129,8 @@ if Simulation_type == 'ML-Train':
 
     if e.mode == 'single':
 
+        print "Test right now. Only returns  converted data."
+
         a = fp.Heart(fakedata=True)
         raw_data, crit_position = a.propagate()
         converted_data = list()
@@ -137,10 +138,7 @@ if Simulation_type == 'ML-Train':
         convert(raw_data, converted_data)
         print converted_data
 
-    if Simulation_type == 'Sampling':
-
-        # def convert():
-        #
+if Simulation_type == 'Sampling':
 
         print "Simulation of heart tissue with defined sample rate."
         time_steps = int(raw_input("Number of time steps: "))
@@ -178,5 +176,5 @@ if Simulation_type == 'ML-Train':
             print count
             print("--- Sample %s: %s seconds ---" % (sample, time.time() - start_time1))
 
-    h5f.close()
+        h5f.close()
 
