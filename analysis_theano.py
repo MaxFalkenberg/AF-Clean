@@ -79,6 +79,8 @@ class ECG:
 
         mode = str(raw_input('Would you like a range (input = range) of electrodes or a single electrode (input = single)? '))
 
+        self.mode = mode
+
         if mode == 'range':
             electrode_spacing = int(raw_input('Choose Electrode Spacing: '))
             self.electrode_spacing = electrode_spacing
