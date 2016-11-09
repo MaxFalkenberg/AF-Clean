@@ -45,9 +45,9 @@ class Heart:
         self.pulse_index = None
         self.pulse_rate = 0
         self.t = 0
-        self.__n = nu  # Private vertical fractions variable
-        self.__d = delta  # Private cell dysfunction variable
-        self.__e = eps  # Private cell depolarisation failure variable
+        self.nu = nu  # Private vertical fractions variable
+        self.delta = delta  # Private cell dysfunction variable
+        self.eps = eps  # Private cell depolarisation failure variable
         self.shape = shape
         self.size = self.shape[0] * self.shape[1]
         self.rp = rp
@@ -66,7 +66,7 @@ class Heart:
         self.l_true = (np.arange(self.size) % self.shape[1] != 0)
         self.u = np.ones(self.size, dtype = 'int32') * 200
         self.u[-self.shape[1]::] = - self.size + self.shape[0]
-        self.d = np.ones(self.size, dtype = 'int32') * -200
+        self.d = np.ones(self.size, dtype ='int32') * -200
         self.d[:self.shape[1]:] = + self.size - self.shape[0]
 
         # The above change from self.cell_type to splitting between dys and vert was necessary for the np.argwhere logic statements later.
@@ -75,14 +75,14 @@ class Heart:
             rand_nu = np.random.random(1)[0]
             rand_delta = np.random.random(1)[0]
 
-            if rand_nu < self.__n:  # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
-                if rand_delta < self.__d:  # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.__e.
+            if rand_nu < self.nu:  # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
+                if rand_delta < self.delta:  # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.eps.
                     self.cell_vert[i] = True  # Both vertically connected and dysfunctional.
                     self.cell_dys[i] = True
                 else:
                     self.cell_vert[i] = True  # Vertically connected but not dysfunctional.
             else:
-                if rand_delta < self.__d:  # Dysfunctional but not vertically connected.
+                if rand_delta < self.delta:  # Dysfunctional but not vertically connected.
                     self.cell_dys[i] = True
 
         self.cell_norm = np.invert(self.cell_dys)
@@ -209,7 +209,7 @@ class Heart:
                 if len(dys) != 0:
                     rand = np.random.random(len(
                         dys))  # List of random numbers between 0 and 1 for comparison to failed firing rate self.__e
-                    dys_fire = dys[rand > self.__e]  # Indices of dys which do fire
+                    dys_fire = dys[rand > self.eps]  # Indices of dys which do fire
                     self.cell_grid[dys_fire] = False  # Excite dys cells
                 else:
                     dys_fire = np.array([], dtype='uint32')

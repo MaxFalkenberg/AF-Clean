@@ -151,11 +151,23 @@ if Simulation_type == 'Sampling':
         sample_range = int(raw_input("Sample range: "))
         file_name = raw_input("Name of output file: ")
 
-        h5f = h5py.File('%s.h5' % file_name, 'w')
+        h5f_par = h5py.File('%s_para.h5' % file_name, 'w')
+
+        h5f_par.create_dataset('Simulation Length', data=time_steps)
+        h5f_par.create_dataset('Sample Interval', data=sample_interval)
+        h5f_par.create_dataset('Sample Range', data=sample_range)
 
         a = bp.Heart(nu=0.17, eps=0.05, delta=0.05, shape=(1000, 1000))
-        a.set_pulse(220)
+        a.set_pulse(1100)
 
+        h5f_par.create_dataset('Delta', data=a.delta)
+        h5f_par.create_dataset('Nu', data=a.nu)
+        h5f_par.create_dataset('Epsilon', data=a.eps)
+        h5f_par.create_dataset('Refractory Period', data=a.rp)
+        h5f_par.create_dataset('Pulse Rate', data=a.pulse_rate)
+        h5f_par.close()
+
+        h5f = h5py.File('%s.h5' % file_name, 'w')
         sample_steps = range(sample_interval, time_steps, sample_interval)
         animation_grid = np.zeros(a.shape)
         print sample_steps
