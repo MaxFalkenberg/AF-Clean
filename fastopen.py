@@ -36,6 +36,7 @@ def sample(number = 0):
     plt.figure()
     plt.plot(sample_ecg)
     plt.show()
+    return sample_ecg
 
 def plot_ecg(number = 0,save = False):
     global ecg_0
