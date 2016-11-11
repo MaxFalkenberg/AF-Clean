@@ -64,9 +64,9 @@ class Heart:
         self.any_ablate = False
         self.r_true = (np.arange(self.size) % self.shape[1] != self.shape[1] - 1)
         self.l_true = (np.arange(self.size) % self.shape[1] != 0)
-        self.u = np.ones(self.size, dtype = 'int32') * 200
+        self.u = np.ones(self.size, dtype = 'int32') * self.shape[0]
         self.u[-self.shape[1]::] = - self.size + self.shape[0]
-        self.d = np.ones(self.size, dtype ='int32') * -200
+        self.d = np.ones(self.size, dtype ='int32') * - self.shape[0]
         self.d[:self.shape[1]:] = + self.size - self.shape[0]
 
         # The above change from self.cell_type to splitting between dys and vert was necessary for the np.argwhere logic statements later.
