@@ -11,6 +11,9 @@ groups are in the form: u'delta: 0.01' and the subgroups are in the form u'Nu: 0
 
 import numpy as np
 import h5py
+from Functions import af_scan
+from Functions import af_line_plot
+from Functions import af_error_plot
 
 print'\n'
 
@@ -29,86 +32,6 @@ if choice == 'Delta':
     kishans_values = np.array([0.99981, 0.99983, 0.9998, 0.99968, 0.99772, 0.96099, 0.60984, 0.16381, 0.017807,
                                0.020737, 4.922e-05, 0.0001084, 0, 0, 0.99152, 0.86184, 0.29714, 0.039206, 0.0056277,
                                4.834e-05, 0.00082172, 0, 0, 9.406e-05, 0.99919])
-
-
-    def af_scan(data_set, size, pulse_rate):
-        """
-        Function will find where AF occurs in data-set. It will check whether or not the system is actually in AF or not
-        by checking the length of the 'Normal heart beat' state.
-
-        :param data_set: Desired data set to scan.
-        :param size: Size of the grid L.
-        :param pulse_rate: Pulse Rate.
-        :return:
-        """
-
-        # Assuming the System does not start in AF.
-        raw_af = (data_set > 1.1 * size)
-        neighbour_af = (raw_af[:-1] != raw_af[1:])
-        neighbour_ind = np.where(neighbour_af == True)[0]  # Needs == even if the IDE says otherwise
-
-        starting = neighbour_ind[1::2]
-        ending = neighbour_ind[2::2]
-        test_regions = np.array(zip(starting, ending))
-        af_diff = np.diff(neighbour_ind)[1::2]
-        filtered = (af_diff < 2 * pulse_rate)
-        af_overwrite = test_regions[filtered]
-
-        for region in af_overwrite:
-            for loc in range(region[0], region[1] + 1):
-                raw_af[loc] = True
-
-        return raw_af
-
-
-    def get_risk_data(delta_):
-        """
-        Function which gathers the risk data from refind_data and gives out the risk/errors for each delta.
-        :param delta_:
-        :return:
-        """
-        risk = []
-        error_bars = []
-        for nu_key in nu_range:
-            risk.append(refined_data['delta: %s' % delta_]['nu: %s' % nu_key][0])
-            error_bars.append(refined_data['delta: %s' % delta_]['nu: %s' % nu_key][1] / np.sqrt(iterations))
-
-        return np.array(risk), np.array(error_bars)
-
-
-    def af_line_plot(delta_=None, nu_=None, iteration=None, normalised=False, scanned=False):
-        """
-        Creates a plot of the number of excited sites.
-        :param delta_: The Delta value
-        :param nu_: The Nu value
-        :param iteration: The Iteration that is plotted
-        :param normalised: Normalises the data so that it lies between 0 and 1
-        :param scanned: Scans the data for AF by using af_scan().
-        :return:
-        """
-        x = np.arange(len(raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu][iteration]))
-        data_ = raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration]
-        if normalised:
-            data_ = raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration] / float(
-                max(raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration]))
-            label = 'Normalised number of excited cells'
-        if scanned:
-            data_ = af_scan(
-                raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration], 200, np.array(para['Pulse Rate']))
-            label = 'AF scan'
-        plt.plot(x, data_, label=label)
-
-
-    def af_error_plot(delta_):
-        """
-        Creates error bar plots of different deltas.
-        :param delta_: Delta set you want to plot.
-        :return:
-        """
-        y, err = get_risk_data(delta_)
-        x = np.array(nu_range)
-        plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
-
 
     file_name = raw_input("HDF5 to open: ")
     h5data = h5py.File('%s.h5' % file_name, 'r')
@@ -160,11 +83,11 @@ if choice == 'Delta':
             refined_data['delta: %s' % delta]['nu: %s' % nu] = grouped_risk_data
 
     """
-    Plot for number of excited cells in each time step. If you want to plot these, need to change parameters in af_line_plot
-    so that it uses the desired delta, nu, iteration. scanned finds where AF occurs.
+    Plot for number of excited cells in each time step. If you want to plot these, need to change parameters in
+    af_line_plot so that it uses the desired delta, nu, iteration. scanned finds where AF occurs.
     """
     # plt.figure(1)
-    # af_line_plot(0.001, 0.08, 1, normalised=True)
+    # af_line_plot(raw_data=raw_data, para=para, delta_=0.001, nu_=0.08, iteration=1, normalised=True)
     # af_line_plot(0.001, 0.08, 1, normalised=False, scanned=True)
     # plt.hlines((200 * 1.1)/float(
     #             max(raw_data[u'delta: %s' % 0.001][u'Nu: %s' % 0.08][1])), 0, sim_size, 'r', label='Threshold')
@@ -177,7 +100,7 @@ if choice == 'Delta':
     """
     plt.figure(2)
     for delta_values in delta_range:
-        af_error_plot(delta_values)
+        af_error_plot(delta_values, nu_range=nu_range, refined_data=refined_data, iterations=iterations)
     plt.plot(kishans_nu, kishans_values, 'r^', label="kishan")
     plt.grid(True)
     plt.ylabel("Risk of AF")
@@ -213,7 +136,6 @@ if choice == 'Sampling':
 
 
     def convert(data, output):
-
         for index_data in data:
             grid[(grid > 0) & (grid <= 50)] -= 1
             if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
@@ -225,9 +147,7 @@ if choice == 'Sampling':
                     grid[indices[0][ind]][indices[1][ind]] = 50
                 current_state = grid.copy()
                 output.append(current_state)
-
         return output
-
 
     sample = int(raw_input("Please pick a sample to display: "))
     sample_range = range(np.array(h5par['Sample Range']) + np.array(h5par['Refractory Period']))
