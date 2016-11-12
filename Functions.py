@@ -106,3 +106,26 @@ def af_error_plot(delta_, nu_range, refined_data, iterations):
     plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
 
 ##############################################################################################################
+"""
+Functions for rt_ecg.py animations
+"""
+
+
+def ani_convert(data, shape, rp, animation_grid):
+    """
+    Converts all the file data into arrays that can be animated.
+    :param data: Data to convert into animation format.
+    :param shape: shape of the animation grid.
+    :param rp: Refractory period.
+    :param animation_grid: The grid which the animation is built on.
+    :return:
+    """
+
+    animation_grid[(animation_grid > 0) & (animation_grid <= rp)] -= 1
+    if data == []:  # could use <if not individual_data.any():> but this is more readable.
+        return animation_grid
+    else:
+        indices = np.unravel_index(data, shape)
+        for ind in range(len(indices[0])):
+            animation_grid[indices[0][ind]][indices[1][ind]] = rp
+        return animation_grid
