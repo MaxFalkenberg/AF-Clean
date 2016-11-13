@@ -105,7 +105,35 @@ def af_error_plot(delta_, nu_range, refined_data, iterations):
     x = np.array(nu_range)
     plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
 
+"""
+Option: Sampling
+"""
+
+
+def sampling_convert(data, output, shape, rp, animation_grid):
+    """
+    :param data: Data to convert into animation format
+    :param output: Output list containing data
+    :param shape: Shape of grid
+    :param rp: Refractory Period
+    :param animation_grid: Animation grid that the animation is built on
+    :return:
+    """
+    for index_data in data:
+        animation_grid[(animation_grid > 0) & (animation_grid <= 50)] -= 1
+        if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
+            current_state = animation_grid.copy()
+            output.append(current_state)
+        else:
+            indices = np.unravel_index(index_data, shape)
+            for ind in range(len(indices[0])):
+                animation_grid[indices[0][ind]][indices[1][ind]] = rp
+            current_state = animation_grid.copy()
+            output.append(current_state)
+    return output
+
 ##############################################################################################################
+
 """
 Functions for rt_ecg.py animations
 """
