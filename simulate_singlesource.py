@@ -115,6 +115,7 @@ if Simulation_type == 'ML-Train':
         a = fp.Heart(fakedata=True)
         crit_position = np.random.randint(40000)
         y_rand,x_rand = np.unravel_index(crit_position,(200,200))
+        print crit_position, y_rand, x_rand
         a.set_pulse(60,[[y_rand],[x_rand]])
         raw_data = a.propagate(960)
         print crit_position

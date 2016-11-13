@@ -96,6 +96,13 @@ class Heart:
         except:
             return np.array([], dtype='uint32')  # Important to ensure no irregularities in datatype
 
+    def save(self, file_name):
+        # pickle.dump((self.exc_total,self.shape,self.__rp), open("%s.p" % file_name, 'wb'))
+        np.save(str(file_name), (self.exc_total, self.shape, self.__rp,
+                                 self.__n, self.__d, self.__e, self.state_history,
+                                 self.cell_vert, self.cell_dys, self.destroyed, self.starting_t,
+                                 self.pulse_rate, self.pulse_history, self.cell_alive, self.any_ablate))
+
     def propagate(self, t_steps = 1):
         if self.t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
