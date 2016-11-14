@@ -98,7 +98,7 @@ class ECG:
             self.probe_position = list(product(self.probe_y, self.probe_x))
         if mode == 'c':
             self.probe_y = np.array([100], dtype='int32')
-            self.probe_x = np.linspace(20, 100, 5, dtype='int32')
+            self.probe_x = np.linspace(80, 120, 5, dtype='int32')
             self.probe_position = list(product(self.probe_y, self.probe_x))
 
         self.base_y_x = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')

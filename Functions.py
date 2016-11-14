@@ -106,9 +106,8 @@ def af_error_plot(delta_, nu_range, refined_data, iterations):
     plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
 
 """
-Option: Sampling
+general convert function
 """
-
 
 def sampling_convert(data, output, shape, rp, animation_grid):
     """

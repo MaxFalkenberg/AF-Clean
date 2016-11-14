@@ -31,7 +31,7 @@ def fake_af(): #Returns idealised AF inducing heart with single critical circuit
 
 class Heart:
 
-    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50, shape=(200, 200)):
+    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50, x_size=200, y_size=200, fakedata=False):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
@@ -42,52 +42,79 @@ class Heart:
             To count time spent in AF set count_excited = \'time\'"""
 
         self.destroyed = {}
-
         self.pulse_vectors = None
         self.pulse_index = None
+        self.pulse_history = None
+        self.cell_alive = None
         self.pulse_rate = 0
         self.t = 0
         self.nu = nu  # Private vertical fractions variable
         self.delta = delta  # Private cell dysfunction variable
         self.eps = eps  # Private cell depolarisation failure variable
-        self.shape = shape
-        self.size = self.shape[0] * self.shape[1]
+        self.shape = (y_size, x_size)
+        self.size = x_size * y_size
         self.rp = rp
         self.excited = []
-        self.starting_t = np.empty(0, dtype='uint32')
         self.exc_total = []
-
-        self.cell_grid = np.ones(self.size,
-                                  dtype='bool')  # Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
-        self.cell_vert = np.zeros(self.size,
-                                  dtype='bool')  # Defines whether cell has vertical connection. 1 = Yes, 0 = No.
-        self.cell_dys = np.zeros(self.size, dtype='bool')  # Defines whether cell is dysfunctional. 1 = Yes, 0 = No.
-        self.cell_alive = np.ones(self.size, dtype = 'bool')
-        self.any_ablate = False
         self.r_true = (np.arange(self.size) % self.shape[1] != self.shape[1] - 1)
         self.l_true = (np.arange(self.size) % self.shape[1] != 0)
-        self.u = np.ones(self.size, dtype = 'int32') * self.shape[0]
+        self.u = np.ones(self.size, dtype='int32') * self.shape[0]
         self.u[-self.shape[1]::] = - self.size + self.shape[0]
-        self.d = np.ones(self.size, dtype ='int32') * - self.shape[0]
+        self.d = np.ones(self.size, dtype='int32') * - self.shape[0]
         self.d[:self.shape[1]:] = + self.size - self.shape[0]
 
-        # The above change from self.cell_type to splitting between dys and vert was necessary for the np.argwhere logic statements later.
+        # Grid on which signal will propagate.
+        # Defines whether cell is at rest, excited or refractory.
+        self.cell_grid = np.ones(self.size,
+                                 dtype='bool')
+        # Defines whether cell has vertical connection. 1 = Yes, 0 = No.
+        self.cell_vert = np.zeros(self.size,
+                                  dtype='bool')
+        # Defines whether cell is dysfunctional. 1 = Yes, 0 = No.
+        self.cell_dys = np.zeros(self.size, dtype='bool')
 
-        for i in range(self.size):
-            rand_nu = np.random.random(1)[0]
-            rand_delta = np.random.random(1)[0]
+        if not fakedata:
+            self.starting_t = np.empty(0, dtype='uint32')
+            self.cell_alive = np.ones(self.size, dtype='bool')
+            self.any_ablate = False
+            self.lenexc = None
+            self.fakedata = False
 
-            if rand_nu < self.nu:  # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
-                if rand_delta < self.delta:  # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.eps.
-                    self.cell_vert[i] = True  # Both vertically connected and dysfunctional.
-                    self.cell_dys[i] = True
+            """The above change from self.cell_type to splitting between dys and vert was necessary
+             for the np.argwhere logic statements later."""
+
+            for i in range(self.size):
+                rand_nu = np.random.random(1)[0]
+                rand_delta = np.random.random(1)[0]
+
+                # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
+                if rand_nu < self.nu:
+                    # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.eps.
+                    if rand_delta < self.delta:
+                        self.cell_vert[i] = True  # Both vertically connected and dysfunctional.
+                        self.cell_dys[i] = True
+                    else:
+                        self.cell_vert[i] = True  # Vertically connected but not dysfunctional.
                 else:
-                    self.cell_vert[i] = True  # Vertically connected but not dysfunctional.
-            else:
-                if rand_delta < self.delta:  # Dysfunctional but not vertically connected.
-                    self.cell_dys[i] = True
+                    if rand_delta < self.delta:  # Dysfunctional but not vertically connected.
+                        self.cell_dys[i] = True
 
-        self.cell_norm = np.invert(self.cell_dys)
+            self.cell_norm = np.invert(self.cell_dys)
+
+        if fakedata:
+            self.fakedata = fakedata
+            x = np.random.randint(40000)
+            while x % 200 > 160:
+                x = np.random.randint(40000)
+            if x < 39800:
+                y = x + 200
+            else:
+                y = (x + 200) % 40000
+            self.x = x
+            self.cell_vert[x:x + 30] = False
+            self.cell_vert[y:y + 30] = False
+            self.cell_dys[y] = True
+            self.cell_norm = np.invert(self.cell_dys)
 
     def destroy_cells(self, type, vectors_custom=None):  # Could set grid values to -1 to speed up propagate loop
         """Input vector of cells to be permanently blocked. Format as list of two lists:
@@ -124,7 +151,6 @@ class Heart:
                 raise ValueError('y not in tissue range')
             print "chevron length:"
             chev_len = int(raw_input())  # Need to flip to get desired effect
-
 
             ind = int(x + (y * self.shape[0]))
             u = ind
@@ -165,6 +191,7 @@ class Heart:
         self.pulse_rate = rate
 
     def pulse(self):  # Still need to include functionality to avoid exciteing blocked cells
+
         """If cells = None, column x = 0 will be by defaults excited.
             To set custom cells to excite inputs cells as list of two lists
             with first list as y coordinates and second list as x coordinates.
@@ -172,30 +199,56 @@ class Heart:
             i.e. vectors = [[y1,y2,y3...],[x1,x2,x3...]]
 
             This will excite cells (x1,y1),(x2,y2),(x3,y3)..."""
+        if self.cell_alive is None:
 
-        if self.pulse_index == None:  # If pulse hasn't fired before, this will configure the initial pulse and store it.
-            if self.pulse_vectors == None:  # If no custom pulse has been defined
-                index = np.arange(self.size, step=self.shape[1])
-                index = index[self.cell_alive[index]]
-                index = index[self.cell_grid[index]]  # This might cause problems if it adjusts original pulse cells... need to check.
+            # If pulse hasn't fired before, this will configure the initial pulse and store it.
+            if self.pulse_index is None:
+                if self.pulse_vectors is None:  # If no custom pulse has been defined
+                    index = np.arange(self.size, step=self.shape[1])
+                    # This might cause problems if it adjusts original pulse cells... need to check.
+                    index = index[self.cell_grid[index]]
+                    self.cell_grid[index] = False
+                else:  # If custom pulse has been defined
+                    index = np.ravel_multi_index(self.pulse_vectors, self.shape)
+                    index = index[self.cell_grid[index]]
+                    self.cell_grid[index] = False
+                self.pulse_index = index  # Variable under which pulse indices are stored
+                self.exc_total.append(index)  # Appended to list of excited grid cells.
+            else:  # Fires pulse indices using stored list
+                index = self.pulse_index[self.cell_grid[self.pulse_index]]
                 self.cell_grid[index] = False
-            else:  # If custom pulse has been defined
-                index = np.ravel_multi_index(self.pulse_vectors, self.shape)
-                index = index[self.cell_alive[index]]
-                index = index[self.cell_grid[index]]
-                self.cell_grid[index] = False
-            self.pulse_index = index # Variable under which pulse indices are stored
-            self.exc_total = self.exc_total + self.pulse_index.tolist()
-            self.lenexc[0] = len(self.pulse_index)
-        else:  # Fires pulse indices using stored list
-            index = self.pulse_index[self.cell_grid[self.pulse_index]]
-            index = index[self.cell_alive[index]]
-            self.cell_grid[index] = False
 
-        if len(self.excited) < self.rp:
-            self.excited.append(index)
+            if len(self.excited) < self.rp:
+                self.excited.append(index)
+            else:
+                self.excited[self.t % self.rp] = index
+
         else:
-            self.excited[self.t % self.rp] = index
+            # If pulse hasn't fired before, this will configure the initial pulse and store it.
+            if self.pulse_index == None:
+                if self.pulse_vectors == None:  # If no custom pulse has been defined
+                    index = np.arange(self.size, step=self.shape[1])
+                    index = index[self.cell_alive[index]]
+                    # This might cause problems if it adjusts original pulse cells... need to check.
+                    index = index[self.cell_grid[index]]
+                    self.cell_grid[index] = False
+                else:  # If custom pulse has been defined
+                    index = np.ravel_multi_index(self.pulse_vectors, self.shape)
+                    index = index[self.cell_alive[index]]
+                    index = index[self.cell_grid[index]]
+                    self.cell_grid[index] = False
+                self.pulse_index = index  # Variable under which pulse indices are stored
+                self.exc_total = self.exc_total + self.pulse_index.tolist()
+                self.lenexc[0] = len(self.pulse_index)
+            else:  # Fires pulse indices using stored list
+                index = self.pulse_index[self.cell_grid[self.pulse_index]]
+                index = index[self.cell_alive[index]]
+                self.cell_grid[index] = False
+
+            if len(self.excited) < self.rp:
+                self.excited.append(index)
+            else:
+                self.excited[self.t % self.rp] = index
 
     def prop_tool(self, ind_list):
         # Solely used as part of Heart.propagate() to process signal propagation
@@ -222,66 +275,129 @@ class Heart:
             return np.array([], dtype='uint32')  # Important to ensure no irregularities in datatype
 
     def propagate(self, t_steps=1, real_time=False, ecg=False, both=False, data_range=None):
-        temp_data_range = list()
-        self.lenexc = np.zeros(t_steps + 1, dtype='uint32')
-        if self.t == 0:
-            Heart.pulse(self)
 
-        for i in range(t_steps):
-            exc_index = self.t % self.rp  # Defines current index for position in list of list of excited cells
-            app_index = (self.t + 1) % self.rp
-            ind = self.excited[exc_index]
-            if len(ind) == 0 and self.pulse_rate == 0:
-                print(self.t)
-                raise ValueError(
-                    'No excited cells to propagate.')  # Error only raised if there are no excited cells and a future pulse will not excite any cells.
-            if self.t >= self.rp - 1:
-                self.cell_grid[self.excited[app_index]] = True  # Refractory counter for all cells currently in excited list
+        if not self.fakedata:
+            temp_data_range = list()
+            self.lenexc = np.zeros(t_steps + 1, dtype='uint32')
+            if self.t == 0:
+                Heart.pulse(self)
 
-            if len(ind) != 0:
+            for i in range(t_steps):
+                exc_index = self.t % self.rp  # Defines current index for position in list of list of excited cells
+                app_index = (self.t + 1) % self.rp
+                ind = self.excited[exc_index]
+                if len(ind) == 0 and self.pulse_rate == 0:
+                    print(self.t)
+                    # Error only raised if there are no excited cells and a future pulse will not excite any cells.
+                    raise ValueError(
+                        'No excited cells to propagate.')
+                # Refractory counter for all cells currently in excited list
+                if self.t >= self.rp - 1:
+                    self.cell_grid[self.excited[app_index]] = True
 
-                ind_right = ind[self.r_true[ind]] + 1
-                ind_left = ind[self.l_true[ind]] -1
-                ind_up = ind + self.u[ind]
-                ind_down = ind + self.d[ind]
-                ind_up = ind_up[self.cell_vert[ind]]  # Checks whether initial excited cell has vert connection.
-                ind_down = ind_down[self.cell_vert[ind_down]]  # Checks whether below cell has vert connection.
+                if len(ind) != 0:
 
-                exc = Heart.prop_tool(self, [ind_left, ind_right, ind_up, ind_down])
-            else:
-                exc = np.array([], dtype='uint32')
+                    ind_right = ind[self.r_true[ind]] + 1
+                    ind_left = ind[self.l_true[ind]] -1
+                    ind_up = ind + self.u[ind]
+                    ind_down = ind + self.d[ind]
+                    ind_up = ind_up[self.cell_vert[ind]]  # Checks whether initial excited cell has vert connection.
+                    ind_down = ind_down[self.cell_vert[ind_down]]  # Checks whether below cell has vert connection.
 
-            self.t += 1
-            try:
-                if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
-                    index = self.pulse_index[self.cell_grid[self.pulse_index]]
-                    if self.any_ablate:
-                        index = index[self.cell_alive[index]]  # Does not fire dead cells
-                    self.cell_grid[index] = False
-                    exc = np.concatenate([exc, index])
-            except:
-                pass
+                    exc = Heart.prop_tool(self, [ind_left, ind_right, ind_up, ind_down])
+                else:
+                    exc = np.array([], dtype='uint32')
 
-            if len(self.excited) < self.rp:  # Append process for list of last refractory period worth of excitations
-                self.excited.append(exc)
-            else:
-                self.excited[app_index] = exc
+                self.t += 1
+                try:
+                    if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
+                        index = self.pulse_index[self.cell_grid[self.pulse_index]]
+                        if self.any_ablate:
+                            index = index[self.cell_alive[index]]  # Does not fire dead cells
+                        self.cell_grid[index] = False
+                        exc = np.concatenate([exc, index])
+                except:
+                    pass
 
-            if not real_time:
-                self.pulse_history = (self.pulse_index, self.pulse_vectors)
-                self.lenexc[i+1] = len(exc)
+                # Append process for list of last refractory period worth of excitations
+                if len(self.excited) < self.rp:
+                    self.excited.append(exc)
+                else:
+                    self.excited[app_index] = exc
+
+                if not real_time:
+                    self.pulse_history = (self.pulse_index, self.pulse_vectors)
+                    self.lenexc[i+1] = len(exc)
+
+                if data_range:
+                    temp_data_range.append(exc)
+
+            if real_time:
+                return len(exc)
+
+            if ecg:
+                return exc
+
+            if both:
+                return exc, len(exc)
 
             if data_range:
-                temp_data_range.append(exc)
+                return temp_data_range
 
-        if real_time:
-            return len(exc)
+        if self.fakedata:
+            counter = 0
+            if self.t == 0 and len(self.exc_total) == 0:
+                Heart.pulse(self)
 
-        if ecg:
-            return exc
+            while counter <= 1100:
+                exc_index = self.t % self.rp  # Defines current index for position in list of list of excited cells
+                app_index = (self.t + 1) % self.rp
+                ind = self.excited[exc_index]
+                if len(ind) == 0 and self.pulse_rate == 0:
+                    print(self.t)
+                    # Error only raised if there are no excited cells and a future pulse will not excite any cells.
+                    raise ValueError(
+                        'No excited cells to propagate.')
+                if self.t >= self.rp - 1:
+                    self.cell_grid[
+                        self.excited[app_index]] = True  # Refractory counter for all cells currently in excited list
 
-        if both:
-            return exc, len(exc)
+                if len(ind) != 0:
 
-        if data_range:
-            return temp_data_range
+                    ind_right = ind[self.r_true[ind]] + 1
+                    ind_left = ind[self.l_true[ind]] - 1
+
+                    ind_up = ind + self.u[ind]
+                    ind_down = ind + self.d[ind]
+                    ind_up = ind_up[self.cell_vert[ind]]  # Checks whether initial excited cell has vert connection.
+                    ind_down = ind_down[self.cell_vert[ind_down]]  # Checks whether below cell has vert connection.
+
+                    exc = Heart.prop_tool(self, [ind_left, ind_right, ind_up, ind_down])
+                else:
+                    exc = np.array([], dtype='uint32')
+
+                self.t += 1
+                try:
+                    if self.t % self.pulse_rate == 0:
+                        index = self.pulse_index[self.cell_grid[self.pulse_index]]
+                        self.cell_grid[index] = False
+                        exc = np.concatenate([exc, index])
+                except:
+                    pass
+
+                # Append process for list of last refractory period worth of excitations
+                if len(
+                        self.excited) < self.rp:
+                    self.excited.append(exc)
+                else:
+                    self.excited[app_index] = exc
+                self.exc_total.append(exc)  # List containing all previously excited states
+
+                if self.fakedata:
+                    if len(self.exc_total[-1]) > 220:
+                        if counter == 1100:
+                            return self.exc_total[-1100:-220], self.x
+                        else:
+                            counter += 1
+                    else:
+                        counter = 0
