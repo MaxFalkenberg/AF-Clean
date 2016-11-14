@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import animator as an
 import propagate as pr
 
-testfile = h5py.File('SingleSource_Dataset1_ITT100_P60.h5','r')
-group = testfile.get('Index: 902')
+testfile = h5py.File('SingleSource_ECGData_Itt1000_P60.h5','r')
+group = testfile.get('Index: 0')
 cp = np.array(group['Crit Position'])
 probes = np.array(group['Probe Positions'])
 ecg_vals = np.array(group['ECG'])
@@ -35,6 +35,8 @@ def sample(number = 0):
     plt.plot(ift)
     plt.figure()
     plt.plot(sample_ecg)
+    plt.figure()
+    plt.plot(np.gradient(sample_ecg))
     plt.show()
     return sample_ecg
 
@@ -114,3 +116,42 @@ def remove_highf(number, filter = None):
         plt.ylabel('Voltage', fontsize = 18)
         plt.plot(b)
     plt.show()
+
+def feature_extract(number):
+    ecg = ecg_vals[number]
+
+    ft = rfft(ecg)
+    ft_abs = np.absolute(ft)
+    ft_max10 = np.argsort(ft_abs)[-10:]
+    ft_max = np.min(ft_max10)
+    freq = np.fft.rfftfreq(ft.size, d = 1.)
+    freq_main = np.fft.rfftfreq(ft.size, d = 1.)[ft_max]
+    period = int(1. / freq_main)
+    ft2 = np.copy(ft)
+    ft2[ft_max + 1:] = 0
+    ift = irfft(ft2)
+    start = np.argmax(ift[:(2*period) - 1])
+    end = start + (2 * period)
+    sample = ecg[start:end]
+
+    grad = np.gradient(sample)
+
+    max_value = np.max(sample)
+    min_value = np.min(sample)
+    minmax_dif = max_value - min_value
+    sample_int = np.sum(np.absolute(sample))
+    sample_len = len(sample_len)
+
+    grad_max = np.max(grad)
+    grad_min = np.min(grad)
+    grad_dif = grad_max - grad_min
+    grad_argmin = np.argmin(grad)
+    grad_argmax = np.argmax(grad)
+    grad_argdif = grad_argmax - grad_argmin
+
+    largest_ft_freq = freq[ft_max10[::-1]]
+    largest_ft_mag = ft_abs[ft_max10[::-1]]
+    largest_sum = np.sum(ft_abs[ft_max10[::-1]])
+    largest_ft_rel_mag = largest_ft_mag / largest_sum
+
+    return largest_ft_freq
