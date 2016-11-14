@@ -118,40 +118,48 @@ def remove_highf(number, filter = None):
     plt.show()
 
 def feature_extract(number):
+    '''Extracts features for the current itteration's ECG at the probe position
+    corresponding to probes[number]. Not currently written to return values in a
+    particular format. '''
     ecg = ecg_vals[number]
 
-    ft = rfft(ecg)
-    ft_abs = np.absolute(ft)
-    ft_max10 = np.argsort(ft_abs)[-10:]
+    ft = rfft(ecg) #Real valued FT of original ECG
+    ft_abs = np.absolute(ft) #Takes absolute value of FT
+    ft_max10 = np.argsort(ft_abs)[-10:] #Finds 10 largest frequency fundamentals
     ft_max = np.min(ft_max10)
     freq = np.fft.rfftfreq(ft.size, d = 1.)
     freq_main = np.fft.rfftfreq(ft.size, d = 1.)[ft_max]
-    period = int(1. / freq_main)
+    period = int(1. / freq_main) #FEATURE (Should be the same for all ECGs if correctly sampled.)
     ft2 = np.copy(ft)
     ft2[ft_max + 1:] = 0
     ift = irfft(ft2)
     start = np.argmax(ift[:(2*period) - 1])
     end = start + (2 * period)
-    sample = ecg[start:end]
+    sample = ecg[start:end] #Crops original ECG according to fundamental frequency.
+
+    ft_samp = rfft(sample) #Real valued FT of sample ECG
+    freq_samp = np.fft.rfftfreq(ft.size, d = 1.)
+    ft_samp_abs = np.absolute(ft) #Takes absolute value of FT
+    ft_samp_max10 = np.argsort(ft_abs)[-10:] #Finds 10 largest frequency fundamentals
 
     grad = np.gradient(sample)
 
-    max_value = np.max(sample)
-    min_value = np.min(sample)
-    minmax_dif = max_value - min_value
-    sample_int = np.sum(np.absolute(sample))
-    sample_len = len(sample_len)
+    max_value = np.max(sample)  #FEATURE: Maximum value of sample ECG
+    min_value = np.min(sample)  #FEATURE: Minimum value of sample ECG
+    minmax_dif = max_value - min_value  #FEATURE: Difference of the above
+    sample_int = np.sum(np.absolute(sample))  #FEATURE: Sample ECG intensity defined as sum of absolute voltages
+    sample_len = len(sample_len)  #FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
 
-    grad_max = np.max(grad)
-    grad_min = np.min(grad)
-    grad_dif = grad_max - grad_min
-    grad_argmin = np.argmin(grad)
-    grad_argmax = np.argmax(grad)
-    grad_argdif = grad_argmax - grad_argmin
+    grad_max = np.max(grad)  #FEATURE: Maximum of first order gradient of ECG
+    grad_min = np.min(grad)  #FEATURE: Minimum of first order gradient of ECG
+    grad_dif = grad_max - grad_min  #FEATURE: Difference of the above
+    grad_argmin = np.argmin(grad)  #FEATURE: Argument at gradient Minimum
+    grad_argmax = np.argmax(grad)  #FEATURE: Argument at gradient Maximum
+    grad_argdif = grad_argmax - grad_argmin  #FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
 
-    largest_ft_freq = freq[ft_max10[::-1]]
-    largest_ft_mag = ft_abs[ft_max10[::-1]]
-    largest_sum = np.sum(ft_abs[ft_max10[::-1]])
-    largest_ft_rel_mag = largest_ft_mag / largest_sum
+    largest_ft_freq = freq_samp[ft_samp_max10[::-1]]  #FEATURE: Largest 10 frequencies in sample ECG. Largest first.
+    largest_ft_mag = ft_samp_abs[ft_samp_max10[::-1]]  #FEATURE: Absolute values of largest 10 freqs
+    largest_sum = np.sum(ft_samp_abs[ft_samp_max10[::-1]])  #FEATURE: Sum of absolute values
+    largest_ft_rel_mag = largest_ft_mag / largest_sum  #FEATURE: Absolute values normalised by sum.
 
     return largest_ft_freq
