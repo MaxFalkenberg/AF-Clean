@@ -73,15 +73,18 @@ class Heart:
         # Defines whether cell is dysfunctional. 1 = Yes, 0 = No.
         self.cell_dys = np.zeros(self.size, dtype='bool')
 
+        # The above change from self.cell_type to splitting between dys and vert was necessary
+        # for the np.argwhere logic statements later.
+
         if not fakedata:
+            """
+            Regular propagate.
+            """
             self.starting_t = np.empty(0, dtype='uint32')
             self.cell_alive = np.ones(self.size, dtype='bool')
             self.any_ablate = False
             self.lenexc = None
             self.fakedata = False
-
-            """The above change from self.cell_type to splitting between dys and vert was necessary
-             for the np.argwhere logic statements later."""
 
             for i in range(self.size):
                 rand_nu = np.random.random(1)[0]
@@ -102,6 +105,9 @@ class Heart:
             self.cell_norm = np.invert(self.cell_dys)
 
         if fakedata:
+            """
+            Ideal AF is formed in this propagate.
+            """
             self.fakedata = fakedata
             x = np.random.randint(40000)
             while x % 200 > 160:

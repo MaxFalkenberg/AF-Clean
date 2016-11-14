@@ -41,8 +41,7 @@ def sample(number = 0):
     plt.show()
     return sample_ecg
 
-<<<<<<< HEAD
-=======
+
 def fft_sample(number = 0):
     sam = sample(number = number)
     ft = rfft(sam)
@@ -53,7 +52,7 @@ def fft_sample(number = 0):
     plt.xlabel('Frequency, Hz', fontsize = 18)
     plt.ylabel('Amplitude', fontsize = 18)
     plt.show()
->>>>>>> 33c25d9b2405336cf8beb1a2d4e224bbffbb9030
+
 
 def plot_ecg(number = 0,save = False):
     global ecg_0
@@ -152,11 +151,11 @@ def feature_extract(number):
 
     grad = np.gradient(sample)
 
-    max_value = np.max(sample)  #FEATURE: Maximum value of sample ECG
-    min_value = np.min(sample)  #FEATURE: Minimum value of sample ECG
-    minmax_dif = max_value - min_value  #FEATURE: Difference of the above
+    max_value = np.max(sample)  # FEATURE: Maximum value of sample ECG
+    min_value = np.min(sample)  # FEATURE: Minimum value of sample ECG
+    minmax_dif = max_value - min_value  # FEATURE: Difference of the above
     sample_int = np.sum(np.absolute(sample))  #FEATURE: Sample ECG intensity defined as sum of absolute voltages
-    sample_len = len(sample_len)  #FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
+    sample_len = len(sample)  # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
 
     grad_max = np.max(grad)  #FEATURE: Maximum of first order gradient of ECG
     grad_min = np.min(grad)  #FEATURE: Minimum of first order gradient of ECG
