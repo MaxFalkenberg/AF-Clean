@@ -7,7 +7,7 @@ import animator as an
 import propagate as pr
 
 testfile = h5py.File('SingleSource_Dataset1_ITT100_P60.h5','r')
-group = testfile.get('Index: 4')
+group = testfile.get('Index: 902')
 cp = np.array(group['Crit Position'])
 probes = np.array(group['Probe Positions'])
 ecg_vals = np.array(group['ECG'])
@@ -39,6 +39,19 @@ def sample(number = 0):
     plt.show()
     return sample_ecg
 
+<<<<<<< HEAD
+=======
+def fft_sample(number = 0):
+    sam = sample(number = number)
+    ft = rfft(sam)
+    plot_fft(number = number)
+    plt.figure()
+    x = np.fft.rfftfreq(sam.size, d = 1.)
+    plt.stem(x, np.abs(ft)/np.sum(np.abs(ft)))
+    plt.xlabel('Frequency, Hz', fontsize = 18)
+    plt.ylabel('Amplitude', fontsize = 18)
+    plt.show()
+>>>>>>> 33c25d9b2405336cf8beb1a2d4e224bbffbb9030
 
 def plot_ecg(number = 0,save = False):
     global ecg_0
@@ -58,7 +71,8 @@ def plot_ecg(number = 0,save = False):
 def plot_fft(number = 0,save = False):
     global ecg_0
     f = rfft(ecg_vals[number])
-    plt.plot(f)
+    x = np.fft.rfftfreq(ecg_vals[number].size, d = 1.)
+    plt.stem(x,np.abs(f)/np.sum(np.abs(f)))
     plt.xlabel('Frequency, Hz', fontsize = 18)
     plt.ylabel('Amplitude', fontsize = 18)
     if save != False:
