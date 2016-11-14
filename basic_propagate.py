@@ -29,7 +29,7 @@ def fake_af(): #Returns idealised AF inducing heart with single critical circuit
 
 class Heart:
 
-    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50):
+    def __init__(self, nu=0.5, delta=0.05, eps=0.05, rp=50, shape=(200, 200)):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
@@ -45,12 +45,12 @@ class Heart:
         self.pulse_index = None
         self.pulse_rate = 0
         self.t = 0
-        self.__n = nu  # Private vertical fractions variable
-        self.__d = delta  # Private cell dysfunction variable
-        self.__e = eps  # Private cell depolarisation failure variable
-        self.shape = (200, 200)
+        self.nu = nu  # Private vertical fractions variable
+        self.delta = delta  # Private cell dysfunction variable
+        self.eps = eps  # Private cell depolarisation failure variable
+        self.shape = shape
         self.size = self.shape[0] * self.shape[1]
-        self.__rp = rp
+        self.rp = rp
         self.excited = []
         self.starting_t = np.empty(0, dtype='uint32')
         self.exc_total = []
@@ -64,9 +64,9 @@ class Heart:
         self.any_ablate = False
         self.r_true = (np.arange(self.size) % self.shape[1] != self.shape[1] - 1)
         self.l_true = (np.arange(self.size) % self.shape[1] != 0)
-        self.u = np.ones(self.size, dtype = 'int32') * 200
+        self.u = np.ones(self.size, dtype = 'int32') * self.shape[0]
         self.u[-self.shape[1]::] = - self.size + self.shape[0]
-        self.d = np.ones(self.size, dtype = 'int32') * -200
+        self.d = np.ones(self.size, dtype ='int32') * - self.shape[0]
         self.d[:self.shape[1]:] = + self.size - self.shape[0]
 
         # The above change from self.cell_type to splitting between dys and vert was necessary for the np.argwhere logic statements later.
@@ -75,14 +75,14 @@ class Heart:
             rand_nu = np.random.random(1)[0]
             rand_delta = np.random.random(1)[0]
 
-            if rand_nu < self.__n:  # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
-                if rand_delta < self.__d:  # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.__e.
+            if rand_nu < self.nu:  # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
+                if rand_delta < self.delta:  # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.eps.
                     self.cell_vert[i] = True  # Both vertically connected and dysfunctional.
                     self.cell_dys[i] = True
                 else:
                     self.cell_vert[i] = True  # Vertically connected but not dysfunctional.
             else:
-                if rand_delta < self.__d:  # Dysfunctional but not vertically connected.
+                if rand_delta < self.delta:  # Dysfunctional but not vertically connected.
                     self.cell_dys[i] = True
 
         self.cell_norm = np.invert(self.cell_dys)
@@ -190,10 +190,10 @@ class Heart:
             index = index[self.cell_alive[index]]
             self.cell_grid[index] = False
 
-        if len(self.excited) < self.__rp:
+        if len(self.excited) < self.rp:
             self.excited.append(index)
         else:
-            self.excited[self.t % self.__rp] = index
+            self.excited[self.t % self.rp] = index
 
     def prop_tool(self, ind_list):
         # Solely used as part of Heart.propagate() to process signal propagation
@@ -209,7 +209,7 @@ class Heart:
                 if len(dys) != 0:
                     rand = np.random.random(len(
                         dys))  # List of random numbers between 0 and 1 for comparison to failed firing rate self.__e
-                    dys_fire = dys[rand > self.__e]  # Indices of dys which do fire
+                    dys_fire = dys[rand > self.eps]  # Indices of dys which do fire
                     self.cell_grid[dys_fire] = False  # Excite dys cells
                 else:
                     dys_fire = np.array([], dtype='uint32')
@@ -219,20 +219,21 @@ class Heart:
         except:
             return np.array([], dtype='uint32')  # Important to ensure no irregularities in datatype
 
-    def propagate(self, t_steps=1, real_time=False, ecg=False, both=False):
+    def propagate(self, t_steps=1, real_time=False, ecg=False, both=False, data_range=None):
+        temp_data_range = list()
         self.lenexc = np.zeros(t_steps + 1, dtype='uint32')
         if self.t == 0:
             Heart.pulse(self)
 
         for i in range(t_steps):
-            exc_index = self.t % self.__rp  # Defines current index for position in list of list of excited cells
-            app_index = (self.t + 1) % self.__rp
+            exc_index = self.t % self.rp  # Defines current index for position in list of list of excited cells
+            app_index = (self.t + 1) % self.rp
             ind = self.excited[exc_index]
             if len(ind) == 0 and self.pulse_rate == 0:
                 print(self.t)
                 raise ValueError(
                     'No excited cells to propagate.')  # Error only raised if there are no excited cells and a future pulse will not excite any cells.
-            if self.t >= self.__rp - 1:
+            if self.t >= self.rp - 1:
                 self.cell_grid[self.excited[app_index]] = True  # Refractory counter for all cells currently in excited list
 
             if len(ind) != 0:
@@ -259,7 +260,7 @@ class Heart:
             except:
                 pass
 
-            if len(self.excited) < self.__rp:  # Append process for list of last refractory period worth of excitations
+            if len(self.excited) < self.rp:  # Append process for list of last refractory period worth of excitations
                 self.excited.append(exc)
             else:
                 self.excited[app_index] = exc
@@ -267,6 +268,9 @@ class Heart:
             if not real_time:
                 self.pulse_history = (self.pulse_index, self.pulse_vectors)
                 self.lenexc[i+1] = len(exc)
+
+            if data_range:
+                temp_data_range.append(exc)
 
         if real_time:
             return len(exc)
@@ -276,3 +280,6 @@ class Heart:
 
         if both:
             return exc, len(exc)
+
+        if data_range:
+            return temp_data_range

@@ -3,20 +3,23 @@ Decide on the delta/nu ranges before running this. Will get a series of question
 Right now parameters such as system size and rp are not currently saved so make a note of them.
 
 You will need to install h5py. A good package which has a lot of useful modules for data science is anaconda.
+
+Now has ML-Train option to generate ML training data.
+
+Sampling has been added to explore long simulations of 1000*1000 grids.
 """
 
 import basic_propagate as bp
 import propagate_fakedata as fp
 import analysis_theano as at
-from itertools import product
 import numpy as np
 import h5py
 import time
 # import matplotlib.pyplot as plt
 
-print '[Delta, ML-Train]'
+print 'Simulation Options: [Delta, ML-Train, Sampling]'
 
-Simulation_type = raw_input("Please the simulation type: ")
+Simulation_type = raw_input("Simulation type: ")
 
 if Simulation_type == 'Delta':
 
@@ -24,6 +27,8 @@ if Simulation_type == 'Delta':
     need to add binary search.
     Right now, need to enter ranges manually for both delta_range and nu_range
     """
+
+    print "Simulating varying delta data."
 
     delta_range = np.array([0.05])
     nu_range = np.array([0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22])
@@ -72,17 +77,8 @@ if Simulation_type == 'Delta':
 
 if Simulation_type == 'ML-Train':
 
-    print "Creating training data from propagate_fakedata.py"
+    print "Creating ML training data from propagate_fakedata.py"
     Iterations = int(raw_input("Number of iterations: "))
-
-    # def probe(shape, folds=20):
-    #     position = int(shape[0]/folds)
-    #     if shape[0] % folds != 0:
-    #         print "Invalid fold number. Needs to be a integer factor of the shape."
-    #     else:
-    #         x_pos = range(position, shape[0], position)
-    #         y_pos = range(position, shape[1], position)
-    #         return list(product(x_pos, y_pos))
 
     def convert(data, output):
 
@@ -103,32 +99,96 @@ if Simulation_type == 'ML-Train':
     e = at.ECG(shape=(200, 200), probe_height=3)  # Assuming shape/probe height doesn't change.
     file_name = raw_input("Name of output file: ")
 
-    h5f = h5py.File('%s.h5' % file_name, 'w')
-    for index in range(Iterations):
-        start_time1 = time.time()
-        # Group Creation
-        index_grp = h5f.create_group('Index: %s' % index)
-        # Subgroups creation
-        # probe_sgrp = index_grp.create_group('Probe position')
-        # ecg_sgrp = index_grp.create_group('ECG')
+    if e.mode == 'range':
+
+        h5f = h5py.File('%s.h5' % file_name, 'w')
+        for index in range(Iterations):
+            start_time1 = time.time()
+            # Group Creation
+            index_grp = h5f.create_group('Index: %s' % index)
+            # Subgroups creation
+            # probe_sgrp = index_grp.create_group('Probe position')
+            # ecg_sgrp = index_grp.create_group('ECG')
+
+            a = fp.Heart(fakedata=True)
+            raw_data, crit_position = a.propagate()
+            print crit_position
+            converted_data = list()
+            grid = np.zeros(a.shape)
+            convert(raw_data, converted_data)
+            print converted_data
+
+            # Saving the critical circuit position
+            index_grp.create_dataset('Crit Position', data=crit_position)
+
+            ecg = e.solve(converted_data)
+
+            index_grp.create_dataset('ECG', data=ecg)
+            index_grp.create_dataset('Probe Positions', data=e.probe_position)
+            print("--- Iteration %s: %s seconds ---" % (index, time.time() - start_time1))
+
+        h5f.close()
+
+    if e.mode == 'single':
+
+        print "Test right now. Only returns  converted data."
 
         a = fp.Heart(fakedata=True)
         raw_data, crit_position = a.propagate()
-        print crit_position
         converted_data = list()
         grid = np.zeros(a.shape)
         convert(raw_data, converted_data)
+        print converted_data
 
-        # Saving the critical circuit position
-        index_grp.create_dataset('Crit Position', data=crit_position)
+if Simulation_type == 'Sampling':
 
-        ecg = e.solve(converted_data)
+        print "Simulation of heart tissue with defined sample rate."
+        time_steps = int(raw_input("Number of time steps: "))
+        # Needs to be larger than 50.
+        # Should indicate frame difference between sampling.
+        sample_interval = int(raw_input("Sample spacing: "))
+        # sample range (has to over 50)
+        sample_range = int(raw_input("Sample range: "))
+        file_name = raw_input("Name of output file: ")
 
-        index_grp.create_dataset('ECG', data=ecg)
-        index_grp.create_dataset('Probe Positions', data=e.probe_position)
-        print("--- Iteration %s: %s seconds ---" % (index, time.time() - start_time1))
+        h5f_par = h5py.File('%s_para.h5' % file_name, 'w')
 
-    h5f.close()
+        h5f_par.create_dataset('Simulation Length', data=time_steps)
+        h5f_par.create_dataset('Sample Interval', data=sample_interval)
+        h5f_par.create_dataset('Sample Range', data=sample_range)
 
-else:
-    print "Invalid Choice"
+        a = bp.Heart(nu=0.17, eps=0.05, delta=0.05, shape=(1000, 1000))
+        a.set_pulse(1100)
+
+        h5f_par.create_dataset('Delta', data=a.delta)
+        h5f_par.create_dataset('Nu', data=a.nu)
+        h5f_par.create_dataset('Epsilon', data=a.eps)
+        h5f_par.create_dataset('Refractory Period', data=a.rp)
+        h5f_par.create_dataset('Pulse Rate', data=a.pulse_rate)
+        h5f_par.close()
+
+        h5f = h5py.File('%s.h5' % file_name, 'w')
+        sample_steps = range(sample_interval, time_steps, sample_interval)
+        animation_grid = np.zeros(a.shape)
+        print sample_steps
+
+        upper_limit = len(sample_steps)
+        count = 0
+
+        for sample in sample_steps:
+
+            unrecorded_jump = sample - a.rp - count
+            count += unrecorded_jump
+            print count
+            start_time1 = time.time()
+            a.propagate(unrecorded_jump)
+            group = h5f.create_group('Sample: %s' % sample)
+            data = a.propagate(sample_range + a.rp, data_range=True)
+            for index, i in enumerate(data):
+                group.create_dataset('dataset: %s' % index, data=i, compression='gzip', compression_opts=9)
+            count += sample_range + a.rp
+            print count
+            print("--- Sample %s: %s seconds ---" % (sample, time.time() - start_time1))
+
+        h5f.close()
+

@@ -9,176 +9,198 @@ The data-sets contain the data (number of excited cells in grid for each time st
 groups are in the form: u'delta: 0.01' and the subgroups are in the form u'Nu: 0.13'
 """
 
-
 import numpy as np
 import h5py
-import matplotlib.pyplot as plt
+from Functions import af_scan
+from Functions import af_line_plot
+from Functions import af_error_plot
 
 print'\n'
 
-"""Kishans Data sent by Kim (used for reference)"""
-kishans_nu = np.array([0.02, 0.04, 0.06, 0.08, 0.11, 0.13, 0.15, 0.17, 0.19, 0.21, 0.23, 0.25, 0.27,
-                       0.29, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.1])
+print "Open Options: [Delta, Sampling]"
 
-kishans_values = np.array([0.99981, 0.99983, 0.9998, 0.99968, 0.99772, 0.96099, 0.60984, 0.16381, 0.017807,
-                           0.020737, 4.922e-05, 0.0001084, 0, 0, 0.99152, 0.86184, 0.29714, 0.039206, 0.0056277,
-                           4.834e-05, 0.00082172, 0, 0, 9.406e-05, 0.99919])
+choice = raw_input("Open type: ")
 
+if choice == 'Delta':
 
-def af_scan(data_set, size, pulse_rate):
+    import matplotlib.pyplot as plt
+
+    """Kishans Data sent by Kim (used for reference)"""
+    kishans_nu = np.array([0.02, 0.04, 0.06, 0.08, 0.11, 0.13, 0.15, 0.17, 0.19, 0.21, 0.23, 0.25, 0.27,
+                           0.29, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.1])
+
+    kishans_values = np.array([0.99981, 0.99983, 0.9998, 0.99968, 0.99772, 0.96099, 0.60984, 0.16381, 0.017807,
+                               0.020737, 4.922e-05, 0.0001084, 0, 0, 0.99152, 0.86184, 0.29714, 0.039206, 0.0056277,
+                               4.834e-05, 0.00082172, 0, 0, 9.406e-05, 0.99919])
+
+    file_name = raw_input("HDF5 to open: ")
+    h5data = h5py.File('%s.h5' % file_name, 'r')
+    h5par = h5py.File('%s_para.h5' % file_name, 'r')
+
+    print('List of items in the base directory:', h5data.items())
+    print('List of items in the base directory:', h5par.items())
+    print'\n'
+
+    # Displaying parameters on load.
+    print "Parameters:"
+    para = h5par.get('parameters')
+    for i in para.iterkeys():
+        print "%s: %s" % (i, np.array(para[i]))
+
+    delta_range = np.array(para.get('Delta'))
+    nu_range = np.array(para.get('Nu'))
+    sim_size = np.array(para.get('Simulation Size'))
+    iterations = np.array(para.get('Iterations'))
+    pr = np.array(para.get('Pulse Rate'))
+
+    print '\n'
+    raw_data = {}  # This is where all the raw data is stored.
+
+    for i in h5data.iterkeys():  # Structuring the data into total_data
+        grp = h5data.get(i)
+        key1 = '%s' % i
+        raw_data[key1] = {}
+        for j in grp.iterkeys():
+            s_grp = grp.get(j)
+            key2 = '%s' % j
+            temp_data = []
+            for k in s_grp.iterkeys():
+                data = np.array(s_grp.get(k))
+                temp_data.append(data)
+
+            raw_data[key1][key2] = temp_data
+
+    refined_data = {}  # Stores the data in tuples (mean, std)
+
+    for delta in delta_range:
+        refined_data['delta: %s' % delta] = {}
+        for nu in nu_range:
+            risk_data = np.zeros(iterations)
+            for i in range(iterations):
+                risk_data[i] = np.mean(np.array(af_scan(raw_data[u'delta: %s' % delta][u'Nu: %s' % nu][i], 200, pr)))
+            grouped_risk_data = (np.mean(risk_data), np.std(risk_data))
+
+            refined_data['delta: %s' % delta]['nu: %s' % nu] = grouped_risk_data
+
     """
-    Function will find where AF occurs in data-set. It will check whether or not the system is actually in AF or not
-    by checking the length of the 'Normal heart beat' state.
-
-    :param data_set: Desired data set to scan.
-    :param size: Size of the grid L.
-    :param pulse_rate: Pulse Rate.
-    :return:
+    Plot for number of excited cells in each time step. If you want to plot these, need to change parameters in
+    af_line_plot so that it uses the desired delta, nu, iteration. scanned finds where AF occurs.
     """
+    # plt.figure(1)
+    # af_line_plot(raw_data=raw_data, para=para, delta_=0.001, nu_=0.08, iteration=1, normalised=True)
+    # af_line_plot(0.001, 0.08, 1, normalised=False, scanned=True)
+    # plt.hlines((200 * 1.1)/float(
+    #             max(raw_data[u'delta: %s' % 0.001][u'Nu: %s' % 0.08][1])), 0, sim_size, 'r', label='Threshold')
+    # plt.legend()
+    # plt.ylabel("Normalised number of excited cells")
+    # plt.xlabel("Time Step")
 
-    # Assuming the System does not start in AF.
-    raw_af = (data_set > 1.1 * size)
-    neighbour_af = (raw_af[:-1] != raw_af[1:])
-    neighbour_ind = np.where(neighbour_af == True)[0]  # Needs == even if the IDE says otherwise
-
-    starting = neighbour_ind[1::2]
-    ending = neighbour_ind[2::2]
-    test_regions = np.array(zip(starting, ending))
-    af_diff = np.diff(neighbour_ind)[1::2]
-    filtered = (af_diff < 2 * pulse_rate)
-    af_overwrite = test_regions[filtered]
-
-    for region in af_overwrite:
-        for loc in range(region[0], region[1]+1):
-            raw_af[loc] = True
-
-    return raw_af
-
-
-def get_risk_data(delta_):
     """
-    Function which gathers the risk data from refind_data and gives out the risk/errors for each delta.
-    :param delta_:
-    :return:
+    Plot showing the risk curve for different delta values. Kishans data is also plotted as reference.
     """
-    risk = []
-    error_bars = []
-    for nu_key in nu_range:
-        risk.append(refined_data['delta: %s' % delta_]['nu: %s' % nu_key][0])
-        error_bars.append(refined_data['delta: %s' % delta_]['nu: %s' % nu_key][1]/np.sqrt(iterations))
+    plt.figure(2)
+    for delta_values in delta_range:
+        af_error_plot(delta_values, nu_range=nu_range, refined_data=refined_data, iterations=iterations)
+    plt.plot(kishans_nu, kishans_values, 'r^', label="kishan")
+    plt.grid(True)
+    plt.ylabel("Risk of AF")
+    plt.xlabel("Nu")
+    plt.legend()
+    plt.show()
+    plt.close()
 
-    return np.array(risk), np.array(error_bars)
+    h5data.close()
+    h5par.close()
 
+if choice == 'Sampling':
 
-def af_line_plot(delta_=None, nu_=None, iteration=None, normalised=False, scanned=False):
-    """
-    Creates a plot of the number of excited sites.
-    :param delta_: The Delta value
-    :param nu_: The Nu value
-    :param iteration: The Iteration that is plotted
-    :param normalised: Normalises the data so that it lies between 0 and 1
-    :param scanned: Scans the data for AF by using af_scan().
-    :return:
-    """
-    x = np.arange(len(raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu][iteration]))
-    data_ = raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration]
-    if normalised:
-        data_ = raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration]/float(
-            max(raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration]))
-        label = 'Normalised number of excited cells'
-    if scanned:
-        data_ = af_scan(
-            raw_data[u'delta: %s' % delta_][u'Nu: %s' % nu_][iteration], 200, np.array(para['Pulse Rate']))
-        label = 'AF scan'
-    plt.plot(x, data_, label=label)
+    import pyqtgraph as pg
+    import pyqtgraph.ptime as ptime
+    from pyqtgraph.Qt import QtCore, QtGui
 
+    file_name = raw_input("HDF5 file to open: ")
+    h5data = h5py.File("%s.h5" % file_name, 'r')
+    h5par = h5py.File("%s_para.h5" % file_name, 'r')
+    print '\n'
 
-def af_error_plot(delta_):
-    """
-    Creates error bar plots of different deltas.
-    :param delta_: Delta set you want to plot.
-    :return:
-    """
-    y, err = get_risk_data(delta_)
-    x = np.array(nu_range)
-    plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
+    for i in h5par.iterkeys():
+        print "%s: %s" % (i, np.array(h5par['%s' % i]))
+
+    print '\n'
+
+    print range(np.array(h5par['Sample Interval']),
+                np.array(h5par['Simulation Length']),
+                np.array(h5par['Sample Interval']))
+
+    print '\n'
 
 
-file_name = raw_input("HDF5 to open: ")
-h5data = h5py.File('%s.h5' % file_name, 'r')
-h5par = h5py.File('%s_para.h5' % file_name, 'r')
+    def convert(data, output):
+        for index_data in data:
+            grid[(grid > 0) & (grid <= 50)] -= 1
+            if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
+                current_state = grid.copy()
+                output.append(current_state)
+            else:
+                indices = np.unravel_index(index_data, (1000, 1000))
+                for ind in range(len(indices[0])):
+                    grid[indices[0][ind]][indices[1][ind]] = 50
+                current_state = grid.copy()
+                output.append(current_state)
+        return output
 
-print('List of items in the base directory:', h5data.items())
-print('List of items in the base directory:', h5par.items())
-print'\n'
+    sample = int(raw_input("Please pick a sample to display: "))
+    sample_range = range(np.array(h5par['Sample Range']) + np.array(h5par['Refractory Period']))
+    sample_data = [np.array(h5data['Sample: %s' % sample]['dataset: %s' % i]) for i in sample_range]
 
-# Displaying parameters on load.
-print "Parameters:"
-para = h5par.get('parameters')
-for i in para.iterkeys():
-    print "%s: %s" % (i, np.array(para[i]))
+    converted_data = list()
+    grid = np.zeros((1000, 1000))
+    convert(sample_data, converted_data)
 
-delta_range = np.array(para.get('Delta'))
-nu_range = np.array(para.get('Nu'))
-sim_size = np.array(para.get('Simulation Size'))
-iterations = np.array(para.get('Iterations'))
-pr = np.array(para.get('Pulse Rate'))
+    print len(converted_data)
 
-print '\n'
-raw_data = {}  # This is where all the raw data is stored.
+    app = QtGui.QApplication([])
+    win = pg.GraphicsLayoutWidget()
+    win.show()
+    win.setWindowTitle('Sample: %s' % sample)
+    view = win.addViewBox()
+    view.setAspectLocked(True)
 
-for i in h5data.iterkeys():  # Structuring the data into total_data
-    grp = h5data.get(i)
-    key1 = '%s' % i
-    raw_data[key1] = {}
-    for j in grp.iterkeys():
-        s_grp = grp.get(j)
-        key2 = '%s' % j
-        temp_data = []
-        for k in s_grp.iterkeys():
-            data = np.array(s_grp.get(k))
-            temp_data.append(data)
+    view.setAspectLocked(True)
+    img = pg.ImageItem(border='w')
+    view.addItem(img)
 
-        raw_data[key1][key2] = temp_data
+    view.setRange(QtCore.QRectF(0, 0, 1000, 1000))
+    animation_grid = np.zeros((1000, 1000))
 
-refined_data = {}  # Stores the data in tuples (mean, std)
+    updateTime = ptime.time()
+    fps = 0
+    ptr = 49
 
-for delta in delta_range:
-    refined_data['delta: %s' % delta] = {}
-    for nu in nu_range:
-        risk_data = np.zeros(iterations)
-        for i in range(iterations):
-            risk_data[i] = np.mean(np.array(af_scan(raw_data[u'delta: %s' % delta][u'Nu: %s' % nu][i], 200, pr)))
-        grouped_risk_data = (np.mean(risk_data), np.std(risk_data))
+    def update_data():
+        global img, animation_grid, ptr, updateTime, fps
+        ani_data = converted_data[ptr]
+        # time.sleep(1/120.)  # gives larger more stable fps.
+        img.setImage(ani_data.T, levels=(0, 50))
+        ptr += 1
 
-        refined_data['delta: %s' % delta]['nu: %s' % nu] = grouped_risk_data
+        if ptr == len(converted_data) - np.array(h5par['Refractory Period']) - 1:
+            ptr = 49
 
-"""
-Plot for number of excited cells in each time step. If you want to plot these, need to change parameters in af_line_plot
-so that it uses the desired delta, nu, iteration. scanned finds where AF occurs.
-"""
-# plt.figure(1)
-# af_line_plot(0.001, 0.08, 1, normalised=True)
-# af_line_plot(0.001, 0.08, 1, normalised=False, scanned=True)
-# plt.hlines((200 * 1.1)/float(
-#             max(raw_data[u'delta: %s' % 0.001][u'Nu: %s' % 0.08][1])), 0, sim_size, 'r', label='Threshold')
-# plt.legend()
-# plt.ylabel("Normalised number of excited cells")
-# plt.xlabel("Time Step")
+        QtCore.QTimer.singleShot(1, update_data)
+        now = ptime.time()
+        fps2 = 1.0 / (now - updateTime)
+        updateTime = now
+        fps = fps * 0.9 + fps2 * 0.1
 
-"""
-Plot showing the risk curve for different delta values. Kishans data is also plotted as reference.
-"""
-plt.figure(2)
-for delta_values in delta_range:
-    af_error_plot(delta_values)
-plt.plot(kishans_nu, kishans_values, 'r^', label="kishan")
-plt.grid(True)
-plt.ylabel("Risk of AF")
-plt.xlabel("Nu")
-plt.legend()
-plt.show()
-plt.close()
+        # print "%0.1f fps" % fps
 
-h5data.close()
-h5par.close()
+    update_data()
+
+    if __name__ == '__main__':
+        import sys
+
+        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+            QtGui.QApplication.instance().exec_()
+
+    print "test"

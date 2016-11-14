@@ -6,7 +6,7 @@ import numpy as np
 
 
 class Visual:
-    def __init__(self, file_name=None):
+    def __init__(self, file_name=None, mode = None):
         """
         shape is assumed to be 200 by 200. Will probably need a way to record this in
         main.py and then read it here.
@@ -35,7 +35,7 @@ class Visual:
 
         self.animation_grid = np.zeros(self.shape, dtype=np.int8)
 
-        Visual.range(self)
+        Visual.range(self, mode = mode)
 
     def unravel(self, data):
         """
@@ -88,7 +88,7 @@ class Visual:
                         self.__animation_grid[indices[0][i]][indices[1][i]] = self.rp + 10
             count += 1
 
-    def range(self):
+    def range(self, mode = None):
         """
 
         :return:
@@ -125,21 +125,24 @@ class Visual:
                 self.AF_states.append(entry)
             count += 1
 
-        print '\n'
-        print "Simulation Length: %s" % len(self.file_data)
-        print '\n'
-        print "RANGE OPTIONS"
-        print "------------------------------------------------"
-        print "Basic ranges:"
-        print "all"
-        print "custom"
-        print "\n"
-        print "Specific AF ranges:"
-        for i in self.AF_states:
-            print i
-        print "------------------------------------------------"
-        print '\n'
-        answer = raw_input("Please select a range to animate (a/c): ")
+        if mode == None:
+            print '\n'
+            print "Simulation Length: %s" % len(self.file_data)
+            print '\n'
+            print "RANGE OPTIONS"
+            print "------------------------------------------------"
+            print "Basic ranges:"
+            print "all"
+            print "custom"
+            print "\n"
+            print "Specific AF ranges:"
+            for i in self.AF_states:
+                print i
+            print "------------------------------------------------"
+            print '\n'
+            answer = raw_input("Please select a range to animate (a/c): ")
+        if mode == 'Auto':
+            answer = "a"
 
         #  Whole animation data
         if answer == "a":

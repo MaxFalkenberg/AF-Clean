@@ -2,14 +2,28 @@ import pyqtgraph as pg
 import pyqtgraph.ptime as ptime
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
-import basic_propagate as bc
 import time
 import analysis_theano as at
+from Functions import ani_convert
 
-nu_value = float(raw_input('Choose a Nu value: '))
-a = bc.Heart(nu_value, delta = 0.)
-#a = bc.fake_af()
-a.set_pulse(60, [[100],[100]])
+print "Propagator types: [Normal, Single Crit]"
+
+propagate_choice = raw_input("Propagate type: ")
+a = None
+
+if propagate_choice == 'Normal':
+    import basic_propagate as bc
+    nu_value = float(raw_input('Choose a Nu value: '))
+    a = bc.Heart(nu_value)
+    a.set_pulse(220)
+
+if propagate_choice == 'Single Crit':
+    import propagate_singlesource as ps
+    a = ps.Heart(nu=1, fakedata=True)
+    x_pos = int(raw_input("Crit x position: "))
+    y_pos = int(raw_input("Crit y position: "))
+    a.set_pulse(60, [[y_pos], [x_pos]])
+
 e = at.ECG_single(a.shape, 3)
 
 app = QtGui.QApplication([])
@@ -25,7 +39,7 @@ view.hideAxis('bottom')
 view.addItem(img)
 view.setRange(QtCore.QRectF(0, -20, 200, 220))
 
-animation_grid = np.zeros((200, 200))
+animation_grid = np.zeros(a.shape)
 
 win.nextRow()
 p1 = win.addPlot()
@@ -34,34 +48,17 @@ data1 = np.zeros(1000)
 curve = p1.plot(data1, pen=pg.mkPen('w', width=2))
 ptr1 = 0
 
-
-def ani_convert(data):
-    """
-    Converts all the file data into arrays that can be animated.
-    :return:
-    """
-
-    animation_grid[(animation_grid > 0) & (animation_grid <= 50)] -= 1
-    if data == []:  # could use <if not individual_data.any():> but this is more readable.
-        return animation_grid
-    else:
-        indices = np.unravel_index(data, a.shape)
-        for ind in range(len(indices[0])):
-            animation_grid[indices[0][ind]][indices[1][ind]] = 50
-        return animation_grid
-
-
 updateTime = ptime.time()
 fps = 0
-temp_index_y = 100
-temp_index_x = 100
+temp_index_y = a.shape[1]/2
+temp_index_x = a.shape[0]/2
 
 
 def update_data():
     global img, animation_grid, updateTime, fps, data1, ptr1, temp_index_y, temp_index_x
     data1 = np.roll(data1, -1)
     data = a.propagate(ecg=True)
-    data = ani_convert(data)
+    data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
     voltage = e.voltage(data, (temp_index_y, temp_index_x))
     data1[-1] = voltage
     ptr1 += 1
@@ -75,11 +72,9 @@ def update_data():
     fps2 = 1.0 / (now - updateTime)
     updateTime = now
     fps = fps * 0.9 + fps2 * 0.1
-
     # print "%0.1f fps" % fps
 
 update_data()
-
 vb = view.vb
 
 
@@ -87,9 +82,9 @@ def mouse_moved(evt):
     global temp_index_y, temp_index_x
     pos = evt[0]  # using signal proxy turns original arguments into a tuple
     if view.sceneBoundingRect().contains(pos):
-        mousePoint = vb.mapSceneToView(pos)
-        index_x = int(mousePoint.x())
-        index_y = int(mousePoint.y())
+        mouse_point = vb.mapSceneToView(pos)
+        index_x = int(mouse_point.x())
+        index_y = int(mouse_point.y())
         if index_x >= 0 and index_x <= 200 and index_y >= 0 and index_y <= 200:
             label.setText("y: %s, x: %s" % (index_y, index_x))
         temp_index_y = index_y

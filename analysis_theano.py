@@ -77,19 +77,25 @@ class ECG:
         self.z = probe_height
         self.probe_position = None
 
-        mode = str(raw_input('Would you like a range (input = range) of electrodes or a single electrode (input = single)? '))
+        print '[r,s,c (have to set in code)]'
+        mode = str(raw_input('Ecg position mode: '))
 
-        if mode == 'range':
+        self.mode = mode
+
+        if mode == 'r':
             electrode_spacing = int(raw_input('Choose Electrode Spacing: '))
             self.electrode_spacing = electrode_spacing
             self.probe_y = np.arange(electrode_spacing - 1,self.shape[0],electrode_spacing, dtype = 'float32')
-            self.probe_x = np.arange(electrode_spacing - 1,self.shape[1],electrode_spacing, dtype = 'float32')
+            self.probe_x = np.arange(electrode_spacing - 1,self.shape[1],electrode_spacing, dtype = 'float32') - (electrode_spacing/2)
             self.probe_position = list(product(self.probe_y, self.probe_x))
-        if mode == 'single':
+        if mode == 's':
             y = raw_input('Electrode y position:')
             x = raw_input('Electrode x position:')
             self.probe_y = np.array([y],dtype = 'int32')
             self.probe_x = np.array([x],dtype = 'int32')
+        if mode == 'c':
+            self.probe_y = np.array([99], dtype='int32')
+            self.probe_x = np.arange(10, 200, 10, dtype='int32')
 
         self.base_y_x = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
         self.base_y_y = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
