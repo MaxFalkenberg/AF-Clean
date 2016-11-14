@@ -14,6 +14,7 @@ ecg_vals = np.array(group['ECG'])
 ecg_0 = ecg_vals[0]
 fft_0 = rfft(ecg_0)
 
+
 def sample(number = 0):
     ecg = ecg_vals[number]
     plt.figure()
@@ -38,6 +39,7 @@ def sample(number = 0):
     plt.show()
     return sample_ecg
 
+
 def plot_ecg(number = 0,save = False):
     global ecg_0
     plt.figure()
@@ -52,6 +54,7 @@ def plot_ecg(number = 0,save = False):
         plt.savefig(str(filename.pdf))
     plt.show()
 
+
 def plot_fft(number = 0,save = False):
     global ecg_0
     f = rfft(ecg_vals[number])
@@ -62,11 +65,13 @@ def plot_fft(number = 0,save = False):
         plt.savefig(str(filename.pdf))
     plt.show()
 
+
 def plot_both(number = 0):
     plt.figure()
     plot_ecg(number = number)
     plt.figure()
     plot_fft(number = number)
+
 
 def reverse_animate():
     global cp
@@ -80,6 +85,7 @@ def reverse_animate():
     b = an.Visual('ANIMATE_TEMPORARY', mode = 'Auto')
     b.show_animation()
     plt.show()
+
 
 def remove_highf(number, filter = None):
     a = np.fft.rfft(ecg_vals[number])

@@ -46,6 +46,7 @@ def af_duration(nu_list):
         except:
             return z
 
+
 def course_grain(excitation_grid, cg_factor):
     """ excitation_grid should be list of 2d arrays in time order where each 2d array
     is the animation state of the system at time t. The excitation_grid
@@ -67,6 +68,7 @@ def course_grain(excitation_grid, cg_factor):
     #               Convolution with subsample step length results in course grained matrices
     f = function([a,b],z) #Theano function definition where inputs ([a,b]) and outputs (z) are specified
     return f(exc,filt) #Returns function with excitation_grid and filter as output
+
 
 class ECG:
 
@@ -93,9 +95,11 @@ class ECG:
             x = raw_input('Electrode x position:')
             self.probe_y = np.array([y],dtype = 'int32')
             self.probe_x = np.array([x],dtype = 'int32')
+            self.probe_position = list(product(self.probe_y, self.probe_x))
         if mode == 'c':
-            self.probe_y = np.array([99], dtype='int32')
-            self.probe_x = np.arange(10, 200, 10, dtype='int32')
+            self.probe_y = np.array([100], dtype='int32')
+            self.probe_x = np.linspace(20, 100, 5, dtype='int32')
+            self.probe_position = list(product(self.probe_y, self.probe_x))
 
         self.base_y_x = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
         self.base_y_y = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
@@ -130,7 +134,6 @@ class ECG:
         for i in range(len(self.shifted_x_x)):
             self.ygrad_den.append(((self.shifted_y_x[i] ** 2) + (self.base_y_y ** 2) + (self.z ** 2)) ** 1.5)
             self.xgrad_den.append(((self.shifted_x_x[i] ** 2) + (self.base_x_y ** 2) + (self.z ** 2)) ** 1.5)
-
 
     def solve(self,inp):
         """inp is 3d numpy array where first dimension is time and remaining dimensions are excitation state of system.
@@ -181,6 +184,7 @@ class ECG:
                 ECG_values.append(F_tot(F_subtot(X_grad,self.shifted_x_x[j],self.xgrad_den[j]),F_subtot(Y_grad,self.base_y_y,self.ygrad_den[i])))
 
         return ECG_values
+
 
 def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at (shape[0]/2,shape[1]/2)
     """Returns ECG time series from excitation grid which is list of system state matrix at
@@ -233,6 +237,7 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
         except:
             pass
     return ecg_values
+
 
 class ECG_single:
 
