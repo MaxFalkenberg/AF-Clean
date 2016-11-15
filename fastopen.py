@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import animator as an
 import propagate as pr
 
-testfile = h5py.File('SingleSource_ECGData_Itt1000_P60.h5','r')
+testfile = h5py.File('SingleSource_ECGData_Itt1000_P60.h5', 'r')
 group = testfile.get('Index: 0')
 cp = np.array(group['Crit Position'])
 probes = np.array(group['Probe Positions'])
@@ -125,11 +125,25 @@ def remove_highf(number, filter=None):
     plt.show()
 
 
+def distance_cal(critical_point, ecg_probe, shape):
+    """
+    Returns the distance from
+    :param critical_point:
+    :param ecg_probe:
+    :param shape:
+    :return:
+    """
+    probe = tuple(ecg_probe)
+    cp_ = np.unravel_index(critical_point, shape)
+    return np.sqrt((probe[0] - cp_[0])**2 + (probe[1] - cp_[1])**2)
+
+
 def feature_extract(number):
     """Extracts features for the current itteration's ECG at the probe position
     corresponding to probes[number]. Not currently written to return values in a
     particular format."""
     ecg = ecg_vals[number]
+    distance = distance_cal(cp, probes[number], (200, 200))
 
     ft = rfft(ecg)  # Real valued FT of original ECG
     ft_abs = np.absolute(ft)  # Takes absolute value of FT
@@ -185,4 +199,7 @@ def feature_extract(number):
     # FEATURE: Absolute values normalised by sum.
     largest_ft_rel_mag = largest_ft_mag / largest_sum
 
-    return largest_ft_freq
+    print max_value
+    print distance
+
+feature_extract(6)
