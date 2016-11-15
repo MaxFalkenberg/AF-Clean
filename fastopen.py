@@ -14,6 +14,19 @@ ecg_vals = np.array(group['ECG'])
 ecg_0 = ecg_vals[0]
 fft_0 = rfft(ecg_0)
 
+y,x = np.unravel_index(cp,(200,200))
+pythag = np.zeros((200,200), dtype = 'float')
+x_grid = np.copy(pythag)
+y_grid = np.copy(pythag)
+y_mid = float(len(y_grid) / 2)
+for i in range(len(pythag)):
+    x_grid[:,i] = i
+    y_grid[i] = i
+x_grid -= float(x)
+y_grid -= y_mid
+pythag += ((x_grid ** 2) + (y_grid ** 2)) ** 0.5
+dist_grid = np.roll(pythag,int(y_mid + y),axis = 0)
+
 def sample(number = 0):
     ecg = ecg_vals[number]
     plt.figure()
@@ -122,6 +135,8 @@ def feature_extract(number):
     corresponding to probes[number]. Not currently written to return values in a
     particular format. '''
     ecg = ecg_vals[number]
+    crit_point = cp #Index of critical point
+    dist = dist_grid[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
 
     ft = rfft(ecg) #Real valued FT of original ECG
     ft_abs = np.absolute(ft) #Takes absolute value of FT
@@ -148,7 +163,7 @@ def feature_extract(number):
     min_value = np.min(sample)  #FEATURE: Minimum value of sample ECG
     minmax_dif = max_value - min_value  #FEATURE: Difference of the above
     sample_int = np.sum(np.absolute(sample))  #FEATURE: Sample ECG intensity defined as sum of absolute voltages
-    sample_len = len(sample_len)  #FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
+    sample_len = len(sample)  #FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
 
     grad_max = np.max(grad)  #FEATURE: Maximum of first order gradient of ECG
     grad_min = np.min(grad)  #FEATURE: Minimum of first order gradient of ECG
