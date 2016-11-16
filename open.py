@@ -18,7 +18,7 @@ from Functions import sampling_convert
 
 print'\n'
 
-print "Open Options: [Delta, Sampling]"
+print "Open Options: [Delta, Sampling, ML]"
 
 choice = raw_input("Open type: ")
 
@@ -191,3 +191,32 @@ if choice == 'Sampling':
             QtGui.QApplication.instance().exec_()
 
     print "test"
+
+if choice == 'ML':
+
+    # SingleSource_ECGdata_Itt1000_P60_df
+    import pandas as pd
+    from sklearn.cross_validation import train_test_split
+    from sklearn.tree import DecisionTreeClassifier
+    from Functions import visualize_tree
+    import seaborn as sns
+
+    datafile = raw_input("Pandas dataframe to open: ")
+    X = pd.read_hdf("%s.h5" % datafile)
+    del X['Distance']
+    del X['Crit Position']
+    del X['Probe Position']
+    y = X.pop('Target')
+    y = y.astype(int)
+
+    # Random state 1 (Need to change)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+
+    print X_train.shape
+    print X_test.shape
+    print y_train.shape
+    print y_test.shape
+
+    dtree = DecisionTreeClassifier(random_state=0)
+    dtree.fit(X_train, y_train)
+    visualize_tree(dtree, feature_names=X_train.columns)

@@ -7,6 +7,8 @@ from theano.tensor.signal.conv import conv2d
 from itertools import product
 from numpy.fft import rfft
 from numpy.fft import irfft
+from sklearn.tree import export_graphviz
+import subprocess
 
 
 ##############################################################################################################
@@ -109,6 +111,7 @@ def af_error_plot(delta_, nu_range, refined_data, iterations):
 general convert function
 """
 
+
 def sampling_convert(data, output, shape, rp, animation_grid):
     """
     :param data: Data to convert into animation format
@@ -189,11 +192,11 @@ def feature_extract(number, ecg_vals, cp, probes):
     :param ecg_vals: The ecg voltages.
     :param cp: The position of the critical point.
     :param probes: The probe position.
-    :param dist_grid: The grid of the distances between the ecg probe and the critical point.
     :return:
     """
     ecg = ecg_vals[number]
     crit_point = cp #Index of critical point
+    probe_point = np.ravel_multi_index(probes[number], (200, 200))
     dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
     if dist <= np.sqrt(200):
         target = 1
@@ -257,7 +260,28 @@ def feature_extract(number, ecg_vals, cp, probes):
 
     features = np.array([max_value, min_value, minmax_dif, sample_int, sample_len,
                          grad_max, grad_min, grad_diff, grad_argmax, grad_argmin,
-                         grad_argdiff] + largest_ft_freq + largest_ft_mag + largest_ft_rel_mag + [largest_sum,
-                                                                                                  dist, target])
+                         grad_argdiff]
+                        + largest_ft_freq + largest_ft_mag + largest_ft_rel_mag +
+                        [largest_sum, crit_point, probe_point,  dist, target])
 
     return features
+
+
+def visualize_tree(tree, feature_names):
+    """Create tree png using graphviz.
+
+    Args
+    ----
+    tree -- scikit-learn DecsisionTree.
+    feature_names -- list of feature names.
+    """
+    with open("dt.dot", 'w') as f:
+        export_graphviz(tree, out_file=f,
+                        feature_names=feature_names)
+
+    command = ["dot", "-Tpdf", "dt.dot", "-o", "dt.pdf"]
+    try:
+        subprocess.check_call(command)
+    except:
+        exit("Could not run dot, ie graphviz, to "
+             "produce visualization")
