@@ -297,7 +297,7 @@ class ECG_single:
 
         self.ex = T.dmatrix('ex') #Theano variable definition
         self.z1 = 50 - self.ex #Converts excitation state to time state counter.
-        self.z2 = (((((50 - self.z1) ** 0.3) * T.exp(-(self.z1**4)/1500000) + T.exp(-self.z1)) / 4.2) * 110) - 20
+        self.z2 = self.ex #(((((50 - self.z1) ** 0.3) * T.exp(-(self.z1**4)/1500000) + T.exp(-self.z1)) / 4.2) * 110) - 20
         self.f = function([self.ex], self.z2)
 
         self.xd = T.dmatrix('xd')
