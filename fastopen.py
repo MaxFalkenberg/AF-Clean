@@ -14,8 +14,21 @@ ecg_vals = np.array(group['ECG'])
 ecg_0 = ecg_vals[0]
 fft_0 = rfft(ecg_0)
 
+y, x = np.unravel_index(cp, (200, 200))
+pythag = np.zeros((200, 200), dtype='float')
+x_grid = np.copy(pythag)
+y_grid = np.copy(pythag)
+y_mid = float(len(y_grid) / 2)
+for i in range(len(pythag)):
+    x_grid[:, i] = i
+    y_grid[i] = i
+x_grid -= float(x)
+y_grid -= y_mid
+pythag += ((x_grid ** 2) + (y_grid ** 2)) ** 0.5
+dist_grid = np.roll(pythag, int(y_mid + y), axis=0)
 
-def sample(number=0):
+
+def sample(number = 0):
     ecg = ecg_vals[number]
     plt.figure()
     plt.plot(ecg)
@@ -125,25 +138,13 @@ def remove_highf(number, filter=None):
     plt.show()
 
 
-def distance_cal(critical_point, ecg_probe, shape):
-    """
-    Returns the distance from
-    :param critical_point:
-    :param ecg_probe:
-    :param shape:
-    :return:
-    """
-    probe = tuple(ecg_probe)
-    cp_ = np.unravel_index(critical_point, shape)
-    return np.sqrt((probe[0] - cp_[0])**2 + (probe[1] - cp_[1])**2)
-
-
 def feature_extract(number):
     """Extracts features for the current itteration's ECG at the probe position
     corresponding to probes[number]. Not currently written to return values in a
     particular format."""
     ecg = ecg_vals[number]
-    distance = distance_cal(cp, probes[number], (200, 200))
+    crit_point = cp #Index of critical point
+    dist = dist_grid[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
 
     ft = rfft(ecg)  # Real valued FT of original ECG
     ft_abs = np.absolute(ft)  # Takes absolute value of FT
@@ -151,7 +152,8 @@ def feature_extract(number):
     ft_max = np.min(ft_max10)
     freq = np.fft.rfftfreq(ft.size, d=1.)
     freq_main = np.fft.rfftfreq(ft.size, d=1.)[ft_max]
-    period = int(1. / freq_main)  # FEATURE (Should be the same for all ECGs if correctly sampled.)
+    # FEATURE (Should be the same for all ECGs if correctly sampled.)
+    period = int(1. / freq_main)
     ft2 = np.copy(ft)
     ft2[ft_max + 1:] = 0
     ift = irfft(ft2)
@@ -182,13 +184,13 @@ def feature_extract(number):
     # FEATURE: Minimum of first order gradient of ECG
     grad_min = np.min(grad)
     # FEATURE: Difference of the above
-    grad_dif = grad_max - grad_min
+    grad_diff = grad_max - grad_min
     # FEATURE: Argument at gradient Minimum
     grad_argmin = np.argmin(grad)
     # FEATURE: Argument at gradient Maximum
     grad_argmax = np.argmax(grad)
     # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
-    grad_argdif = grad_argmax - grad_argmin
+    grad_argdiff = grad_argmax - grad_argmin
 
     # FEATURE: Largest 10 frequencies in sample ECG. Largest first.
     largest_ft_freq = freq_samp[ft_samp_max10[::-1]]
@@ -200,6 +202,20 @@ def feature_extract(number):
     largest_ft_rel_mag = largest_ft_mag / largest_sum
 
     print max_value
-    print distance
+    print min_value
+    print minmax_dif
+    print sample_int
+    print sample_len
+    print grad_max
+    print grad_min
+    print grad_diff
+    print grad_argmin
+    print grad_argmax
+    print grad_argdiff
+    print largest_ft_freq
+    print largest_ft_mag
+    print largest_sum
+    print largest_ft_rel_mag
+    print dist
 
 feature_extract(6)
