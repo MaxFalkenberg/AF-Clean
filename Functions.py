@@ -205,7 +205,7 @@ def feature_extract(number, ecg_vals, cp, probes):
 
     ft = rfft(ecg)  # Real valued FT of original ECG
     ft_abs = np.absolute(ft)  # Takes absolute value of FT
-    ft_max10 = np.argsort(ft_abs)[-10:]  # Finds 10 largest frequency fundamentals
+    ft_max10 = np.argsort(ft_abs)[-9:]  # Finds 9 largest frequency fundamentals
     ft_max = np.min(ft_max10)
     freq = np.fft.rfftfreq(ft.size, d=1.)
     freq_main = np.fft.rfftfreq(ft.size, d=1.)[ft_max]
@@ -221,7 +221,7 @@ def feature_extract(number, ecg_vals, cp, probes):
     ft_samp = rfft(sample_)  # Real valued FT of sample ECG
     freq_samp = np.fft.rfftfreq(ft.size, d=1.)
     ft_samp_abs = np.absolute(ft)  # Takes absolute value of FT
-    ft_samp_max10 = np.argsort(ft_abs)[-10:]  # Finds 10 largest frequency fundamentals
+    ft_samp_max10 = np.argsort(ft_abs)[-9:]  # Finds 9 largest frequency fundamentals
 
     grad = np.gradient(sample_)
 
@@ -249,9 +249,9 @@ def feature_extract(number, ecg_vals, cp, probes):
     # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
     grad_argdiff = grad_argmax - grad_argmin
 
-    # FEATURE: Largest 10 frequencies in sample ECG. Largest first.
+    # FEATURE: Largest 9 frequencies in sample ECG. Largest first.
     largest_ft_freq = freq_samp[ft_samp_max10[::-1]].tolist()
-    # FEATURE: Absolute values of largest 10 freqs
+    # FEATURE: Absolute values of largest 9 freqs
     largest_ft_mag = ft_samp_abs[ft_samp_max10[::-1]].tolist()
     # FEATURE: Sum of absolute values
     largest_sum = np.sum(ft_samp_abs[ft_samp_max10[::-1]])

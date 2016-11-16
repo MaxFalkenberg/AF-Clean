@@ -9,7 +9,7 @@ from numpy.fft import rfft
 
 filename = raw_input("Training data to convert into pandas dataframe: ")
 trainfile = h5py.File('%s.h5' % filename, 'r')
-feature_grid = np.zeros((400000, 46))
+feature_grid = np.zeros((400000, 43))
 
 largest_ft_freq_columns = ['Largest FT Freq %s' % x for x in range(1, 11)]
 largest_ft_mag_columns = ['Largest FT Mag %s' % x for x in range(1, 11)]
