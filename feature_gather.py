@@ -11,9 +11,9 @@ filename = raw_input("Training data to convert into pandas dataframe: ")
 trainfile = h5py.File('%s.h5' % filename, 'r')
 feature_grid = np.zeros((400000, 43))
 
-largest_ft_freq_columns = ['Largest FT Freq %s' % x for x in range(1, 11)]
-largest_ft_mag_columns = ['Largest FT Mag %s' % x for x in range(1, 11)]
-largest_ft_rel_mag_columns = ['Largest FT Rel Mag %s' % x for x in range(1, 11)]
+largest_ft_freq_columns = ['Largest FT Freq %s' % x for x in range(1, 10)]
+largest_ft_mag_columns = ['Largest FT Mag %s' % x for x in range(1, 10)]
+largest_ft_rel_mag_columns = ['Largest FT Rel Mag %s' % x for x in range(1, 10)]
 
 columns = ['Max Value', 'Min Value', 'Minmax Diff', 'Sample Intensity', 'Sample Length', 'Grad Max', 'Grad Min',
            'Grad Diff', 'Grad Argmax', 'Grad Argmin', 'Grad Argdiff'] + largest_ft_freq_columns + \
