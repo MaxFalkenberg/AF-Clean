@@ -11,21 +11,22 @@ group = testfile.get('Index: 0')
 cp = np.array(group['Crit Position'])
 probes = np.array(group['Probe Positions'])
 ecg_vals = np.array(group['ECG'])
-ecg_0 = ecg_vals[0]
-fft_0 = rfft(ecg_0)
-
+# ecg_0 = ecg_vals[0]
+# fft_0 = rfft(ecg_0)
 y,x = np.unravel_index(cp,(200,200))
-pythag = np.zeros((200,200), dtype = 'float')
-x_grid = np.copy(pythag)
-y_grid = np.copy(pythag)
-y_mid = float(len(y_grid) / 2)
-for i in range(len(pythag)):
-    x_grid[:,i] = i
-    y_grid[i] = i
-x_grid -= float(x)
-y_grid -= y_mid
-pythag += ((x_grid ** 2) + (y_grid ** 2)) ** 0.5
-dist_grid = np.roll(pythag,int(y_mid + y),axis = 0)
+
+def cp_vector(y_probe,x_probe):
+    x_vector = int(x_probe) - x
+    y_vector = int(y_probe) - y
+    if y_vector > 100:
+        y_vector -= 200
+    elif y_vector <= -100:
+        y_vector += 200
+
+    r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+    c = (x_vector + (1j * y_vector)) /r
+    theta = np.angle(c)
+    return r,c,theta
 
 def sample(number = 0):
     ecg = ecg_vals[number]
@@ -136,7 +137,7 @@ def feature_extract(number):
     particular format. '''
     ecg = ecg_vals[number]
     crit_point = cp #Index of critical point
-    dist = dist_grid[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+    dist, vector, theta = cp_vector(int(probes[number][0]),int(probes[number][1]))
 
     ft = rfft(ecg) #Real valued FT of original ECG
     ft_abs = np.absolute(ft) #Takes absolute value of FT
@@ -177,4 +178,4 @@ def feature_extract(number):
     largest_sum = np.sum(ft_samp_abs[ft_samp_max10[::-1]])  #FEATURE: Sum of absolute values
     largest_ft_rel_mag = largest_ft_mag / largest_sum  #FEATURE: Absolute values normalised by sum.
 
-    return largest_ft_freq
+    return dist, vector, theta
