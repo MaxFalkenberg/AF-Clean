@@ -76,31 +76,18 @@ if Simulation_type == 'Delta':
     h5f.close()
 
 if Simulation_type == 'ML-Train':
+    from Functions import sampling_convert
+
+    print "propagation types: [Normal, Single]"
 
     print "Creating ML training data from propagate_fakedata.py"
-    Iterations = int(raw_input("Number of iterations: "))
-
-    def convert(data, output):
-
-        for index_data in data:
-            grid[(grid > 0) & (grid <= 50)] -= 1
-            if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
-                current_state = grid.copy()
-                output.append(current_state)
-            else:
-                indices = np.unravel_index(index_data, a.shape)
-                for ind in range(len(indices[0])):
-                    grid[indices[0][ind]][indices[1][ind]] = 50
-                current_state = grid.copy()
-                output.append(current_state)
-
-        return output
 
     e = at.ECG(shape=(200, 200), probe_height=3)  # Assuming shape/probe height doesn't change.
     file_name = raw_input("Name of output file: ")
 
-    if e.mode == 'range':
+    if e.mode == 'r':
 
+        Iterations = int(raw_input("Number of iterations: "))
         h5f = h5py.File('%s.h5' % file_name, 'w')
         for index in range(Iterations):
             start_time1 = time.time()
@@ -115,8 +102,7 @@ if Simulation_type == 'ML-Train':
             print crit_position
             converted_data = list()
             grid = np.zeros(a.shape)
-            convert(raw_data, converted_data)
-            print converted_data
+            sampling_convert(raw_data, converted_data, shape=a.shape, rp=a.rp, animation_grid=grid)
 
             # Saving the critical circuit position
             index_grp.create_dataset('Crit Position', data=crit_position)
@@ -129,16 +115,20 @@ if Simulation_type == 'ML-Train':
 
         h5f.close()
 
-    if e.mode == 'single':
+    if e.mode == 's':
 
         print "Test right now. Only returns  converted data."
 
+        h5f = h5py.File('%s.h5' % file_name, 'w')
         a = fp.Heart(fakedata=True)
         raw_data, crit_position = a.propagate()
         converted_data = list()
         grid = np.zeros(a.shape)
-        convert(raw_data, converted_data)
-        print converted_data
+        sampling_convert(raw_data, converted_data, shape=a.shape, rp=a.rp, animation_grid=grid)
+        h5f.create_dataset('Crit Position', data=crit_position)
+        ecg = e.solve(converted_data)
+        h5f.create_dataset('ECG', data=ecg)
+        h5f.create_dataset('Probe Positions', data=e.probe_position)
 
 if Simulation_type == 'Sampling':
 

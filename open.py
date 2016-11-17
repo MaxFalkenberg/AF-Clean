@@ -14,10 +14,11 @@ import h5py
 from Functions import af_scan
 from Functions import af_line_plot
 from Functions import af_error_plot
+from Functions import sampling_convert
 
 print'\n'
 
-print "Open Options: [Delta, Sampling]"
+print "Open Options: [Delta, Sampling, ML]"
 
 choice = raw_input("Open type: ")
 
@@ -86,14 +87,14 @@ if choice == 'Delta':
     Plot for number of excited cells in each time step. If you want to plot these, need to change parameters in
     af_line_plot so that it uses the desired delta, nu, iteration. scanned finds where AF occurs.
     """
-    # plt.figure(1)
-    # af_line_plot(raw_data=raw_data, para=para, delta_=0.001, nu_=0.08, iteration=1, normalised=True)
-    # af_line_plot(0.001, 0.08, 1, normalised=False, scanned=True)
-    # plt.hlines((200 * 1.1)/float(
-    #             max(raw_data[u'delta: %s' % 0.001][u'Nu: %s' % 0.08][1])), 0, sim_size, 'r', label='Threshold')
-    # plt.legend()
-    # plt.ylabel("Normalised number of excited cells")
-    # plt.xlabel("Time Step")
+    plt.figure(1)
+    af_line_plot(raw_data=raw_data, para=para, delta_=0.001, nu_=0.08, iteration=1, normalised=True)
+    af_line_plot(0.001, 0.08, 1, normalised=False, scanned=True)
+    plt.hlines((200 * 1.1)/float(
+                max(raw_data[u'delta: %s' % 0.001][u'Nu: %s' % 0.08][1])), 0, sim_size, 'r', label='Threshold')
+    plt.legend()
+    plt.ylabel("Normalised number of excited cells")
+    plt.xlabel("Time Step")
 
     """
     Plot showing the risk curve for different delta values. Kishans data is also plotted as reference.
@@ -134,28 +135,14 @@ if choice == 'Sampling':
 
     print '\n'
 
-
-    def convert(data, output):
-        for index_data in data:
-            grid[(grid > 0) & (grid <= 50)] -= 1
-            if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
-                current_state = grid.copy()
-                output.append(current_state)
-            else:
-                indices = np.unravel_index(index_data, (1000, 1000))
-                for ind in range(len(indices[0])):
-                    grid[indices[0][ind]][indices[1][ind]] = 50
-                current_state = grid.copy()
-                output.append(current_state)
-        return output
-
     sample = int(raw_input("Please pick a sample to display: "))
     sample_range = range(np.array(h5par['Sample Range']) + np.array(h5par['Refractory Period']))
     sample_data = [np.array(h5data['Sample: %s' % sample]['dataset: %s' % i]) for i in sample_range]
 
     converted_data = list()
     grid = np.zeros((1000, 1000))
-    convert(sample_data, converted_data)
+    sampling_convert(data=sample_data, output=converted_data, shape=grid.shape,
+                     rp=np.array(h5par['Refractory Period']), animation_grid=grid)
 
     print len(converted_data)
 
@@ -204,3 +191,42 @@ if choice == 'Sampling':
             QtGui.QApplication.instance().exec_()
 
     print "test"
+
+if choice == 'ML':
+
+    # SingleSource_ECGdata_Itt1000_P60_df
+    import pandas as pd
+    from sklearn.cross_validation import train_test_split
+    from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+    from sklearn.ensemble import RandomForestClassifier
+    import sklearn.metrics as metrics
+    from Functions import visualize_tree
+
+    datafile = raw_input("Pandas dataframe to open: ")
+    X = pd.read_hdf("%s.h5" % datafile)
+    del X['Target']
+    del X['Crit Position']
+    del X['Probe Position']
+    y = X.pop('Distance')
+    y = y.astype(int)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    # dtree = DecisionTreeClassifier()
+    # dtree2 = RandomForestClassifier(n_estimators=50)
+    # dtree.fit(X_train, y_train)
+    # dtree2.fit(X_train, y_train)
+    # y_pred = dtree.predict(X_test)
+    # y_pred2 = dtree2.predict(X_test)
+    # # visualize_tree(dtree, feature_names=X_train.columns)
+    # print metrics.accuracy_score(y_test, y_pred)
+    # print metrics.accuracy_score(y_test, y_pred2)
+    #
+    # print metrics.classification_report(y_test, y_pred)
+    # print metrics.confusion_matrix(y_test, y_pred)
+    # print metrics.classification_report(y_test, y_pred2)
+    # print metrics.confusion_matrix(y_test, y_pred2)
+
+    dtree = DecisionTreeRegressor(max_depth=8)
+    dtree.fit(X_train, y_train)
+    visualize_tree(dtree, feature_names=X_train.columns)

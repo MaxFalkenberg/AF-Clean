@@ -98,6 +98,7 @@ class Heart:
             return np.array([], dtype='uint32')  # Important to ensure no irregularities in datatype
 
     def propagate(self, t_steps=1, ecg=False):
+
         if self.t == 0 and len(self.exc_total) == 0:
             Heart.pulse(self)
 
@@ -145,7 +146,7 @@ class Heart:
 
                 if self.fakedata:
                     if i == t_steps - 1:
-                        return self.exc_total
+                        return self.exc_total,
 
         if ecg:
             return exc

@@ -7,6 +7,9 @@ from theano.tensor.signal.conv import conv2d
 from itertools import product
 from numpy.fft import rfft
 from numpy.fft import irfft
+from sklearn.tree import export_graphviz
+import subprocess
+import sys
 
 
 ##############################################################################################################
@@ -105,7 +108,35 @@ def af_error_plot(delta_, nu_range, refined_data, iterations):
     x = np.array(nu_range)
     plt.errorbar(x, y, yerr=err, fmt='o', label='delta: %s' % delta_)
 
+"""
+general convert function
+"""
+
+
+def sampling_convert(data, output, shape, rp, animation_grid):
+    """
+    :param data: Data to convert into animation format
+    :param output: Output list containing data
+    :param shape: Shape of grid
+    :param rp: Refractory Period
+    :param animation_grid: Animation grid that the animation is built on
+    :return:
+    """
+    for index_data in data:
+        animation_grid[(animation_grid > 0) & (animation_grid <= 50)] -= 1
+        if index_data == []:  # could use <if not individual_data.any():> but this is more readable.
+            current_state = animation_grid.copy()
+            output.append(current_state)
+        else:
+            indices = np.unravel_index(index_data, shape)
+            for ind in range(len(indices[0])):
+                animation_grid[indices[0][ind]][indices[1][ind]] = rp
+            current_state = animation_grid.copy()
+            output.append(current_state)
+    return output
+
 ##############################################################################################################
+
 """
 Functions for rt_ecg.py animations
 """
@@ -129,3 +160,152 @@ def ani_convert(data, shape, rp, animation_grid):
         for ind in range(len(indices[0])):
             animation_grid[indices[0][ind]][indices[1][ind]] = rp
         return animation_grid
+
+
+##############################################################################################################
+
+def roll_dist(cp):
+    """
+    Returns the a grid of the distances between the critical points and ecg probes.
+    :param cp:
+    :return:
+    """
+    y, x = np.unravel_index(cp, (200, 200))
+    pythag = np.zeros((200, 200), dtype='float')
+    x_grid = np.copy(pythag)
+    y_grid = np.copy(pythag)
+    y_mid = float(len(y_grid) / 2)
+    for i in range(len(pythag)):
+        x_grid[:, i] = i
+        y_grid[i] = i
+    x_grid -= float(x)
+    y_grid -= y_mid
+    pythag += ((x_grid ** 2) + (y_grid ** 2)) ** 0.5
+    return np.roll(pythag, int(y_mid + y), axis=0)
+
+
+def feature_extract(number, ecg_vals, cp, probes):
+    """
+    Extracts features for the current itteration's ECG at the probe position
+    corresponding to probes[number]. Not currently written to return values in a
+    particular format.
+    :param number: Index in data.
+    :param ecg_vals: The ecg voltages.
+    :param cp: The position of the critical point.
+    :param probes: The probe position.
+    :return:
+    """
+    ecg = ecg_vals[number]
+    crit_point = cp #Index of critical point
+    probe_point = np.ravel_multi_index(probes[number], (200, 200))
+    dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+    if dist <= np.sqrt(200):
+        target = 1
+    else:
+        target = 0
+
+    ft = rfft(ecg)  # Real valued FT of original ECG
+    ft_abs = np.absolute(ft)  # Takes absolute value of FT
+    ft_max10 = np.argsort(ft_abs)[-9:]  # Finds 9 largest frequency fundamentals
+    ft_max = np.min(ft_max10)
+    freq = np.fft.rfftfreq(ft.size, d=1.)
+    freq_main = np.fft.rfftfreq(ft.size, d=1.)[ft_max]
+    # FEATURE (Should be the same for all ECGs if correctly sampled.)
+    period = int(1. / freq_main)
+    ft2 = np.copy(ft)
+    ft2[ft_max + 1:] = 0
+    ift = irfft(ft2)
+    start = np.argmax(ift[:(2*period) - 1])
+    end = start + (2 * period)
+    sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
+
+    ft_samp = rfft(sample_)  # Real valued FT of sample ECG
+    freq_samp = np.fft.rfftfreq(ft.size, d=1.)
+    ft_samp_abs = np.absolute(ft)  # Takes absolute value of FT
+    ft_samp_max10 = np.argsort(ft_abs)[-9:]  # Finds 9 largest frequency fundamentals
+
+    grad = np.gradient(sample_)
+
+    # FEATURE: Maximum value of sample ECG
+    max_value = np.max(sample_)
+    # FEATURE: Minimum value of sample ECG
+    min_value = np.min(sample_)
+    # FEATURE: Difference of the above
+    minmax_dif = max_value - min_value
+    # FEATURE: Sample ECG intensity defined as sum of absolute voltages
+    sample_int = np.sum(np.absolute(sample_))
+    # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
+    sample_len = len(sample_)
+
+    # FEATURE: Maximum of first order gradient of ECG
+    grad_max = np.max(grad)
+    # FEATURE: Minimum of first order gradient of ECG
+    grad_min = np.min(grad)
+    # FEATURE: Difference of the above
+    grad_diff = grad_max - grad_min
+    # FEATURE: Argument at gradient Minimum
+    grad_argmin = np.argmin(grad)
+    # FEATURE: Argument at gradient Maximum
+    grad_argmax = np.argmax(grad)
+    # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
+    grad_argdiff = grad_argmax - grad_argmin
+
+    # FEATURE: Largest 9 frequencies in sample ECG. Largest first.
+    largest_ft_freq = freq_samp[ft_samp_max10[::-1]].tolist()
+    # FEATURE: Absolute values of largest 9 freqs
+    largest_ft_mag = ft_samp_abs[ft_samp_max10[::-1]].tolist()
+    # FEATURE: Sum of absolute values
+    largest_sum = np.sum(ft_samp_abs[ft_samp_max10[::-1]])
+    # FEATURE: Absolute values normalised by sum.
+    largest_ft_rel_mag = [mag/largest_sum for mag in largest_ft_mag]
+
+    features = np.array([max_value, min_value, minmax_dif, sample_int, sample_len,
+                         grad_max, grad_min, grad_diff, grad_argmax, grad_argmin,
+                         grad_argdiff]
+                        + largest_ft_freq + largest_ft_mag + largest_ft_rel_mag +
+                        [largest_sum, crit_point, probe_point,  dist, target])
+
+    return features
+
+
+def visualize_tree(tree, feature_names):
+    """Create tree png using graphviz.
+
+    Args
+    ----
+    tree -- scikit-learn DecsisionTree.
+    feature_names -- list of feature names.
+    """
+    with open("dt2.dot", 'w') as f:
+        export_graphviz(tree, out_file=f,
+                        feature_names=feature_names, filled=True, rounded=True)
+
+    command = ["dot", "-Tpdf", "dt2.dot", "-o", "dt2.pdf"]
+    try:
+        subprocess.check_call(command)
+    except:
+        exit("Could not run dot, ie graphviz, to "
+             "produce visualization")
+
+
+# Print iterations progress
+def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_length=100):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        barLength   - Optional  : character length of bar (Int)
+    """
+    format_str = "{0:." + str(decimals) + "f}"
+    percent = format_str.format(100 * (iteration / float(total)))
+    filled_length = int(round(bar_length * iteration / float(total)))
+    bar = '#' * filled_length + '-' * (bar_length - filled_length)
+    sys.stdout.write('\r%s |%s| %s%s %s' % (prefix, bar, percent, '%', suffix)),
+    if iteration == total:
+        sys.stdout.write('\n')
+    sys.stdout.flush()
+
