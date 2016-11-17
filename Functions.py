@@ -276,11 +276,11 @@ def visualize_tree(tree, feature_names):
     tree -- scikit-learn DecsisionTree.
     feature_names -- list of feature names.
     """
-    with open("dt.dot", 'w') as f:
+    with open("dt2.dot", 'w') as f:
         export_graphviz(tree, out_file=f,
-                        feature_names=feature_names)
+                        feature_names=feature_names, filled=True, rounded=True)
 
-    command = ["dot", "-Tpdf", "dt.dot", "-o", "dt.pdf"]
+    command = ["dot", "-Tpdf", "dt2.dot", "-o", "dt2.pdf"]
     try:
         subprocess.check_call(command)
     except:
@@ -289,7 +289,7 @@ def visualize_tree(tree, feature_names):
 
 
 # Print iterations progress
-def print_progress(iteration, total, prefix='', suffix='', decimals=1, barLength=100):
+def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_length=100):
     """
     Call in a loop to create terminal progress bar
     @params:
@@ -302,8 +302,8 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, barLength
     """
     format_str = "{0:." + str(decimals) + "f}"
     percent = format_str.format(100 * (iteration / float(total)))
-    filled_length = int(round(barLength * iteration / float(total)))
-    bar = '#' * filled_length + '-' * (barLength - filled_length)
+    filled_length = int(round(bar_length * iteration / float(total)))
+    bar = '#' * filled_length + '-' * (bar_length - filled_length)
     sys.stdout.write('\r%s |%s| %s%s %s' % (prefix, bar, percent, '%', suffix)),
     if iteration == total:
         sys.stdout.write('\n')

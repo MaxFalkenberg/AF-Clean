@@ -197,26 +197,36 @@ if choice == 'ML':
     # SingleSource_ECGdata_Itt1000_P60_df
     import pandas as pd
     from sklearn.cross_validation import train_test_split
-    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+    from sklearn.ensemble import RandomForestClassifier
+    import sklearn.metrics as metrics
     from Functions import visualize_tree
-    import seaborn as sns
 
     datafile = raw_input("Pandas dataframe to open: ")
     X = pd.read_hdf("%s.h5" % datafile)
-    del X['Distance']
+    del X['Target']
     del X['Crit Position']
     del X['Probe Position']
-    y = X.pop('Target')
+    y = X.pop('Distance')
     y = y.astype(int)
 
-    # Random state 1 (Need to change)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    print X_train.shape
-    print X_test.shape
-    print y_train.shape
-    print y_test.shape
+    # dtree = DecisionTreeClassifier()
+    # dtree2 = RandomForestClassifier(n_estimators=50)
+    # dtree.fit(X_train, y_train)
+    # dtree2.fit(X_train, y_train)
+    # y_pred = dtree.predict(X_test)
+    # y_pred2 = dtree2.predict(X_test)
+    # # visualize_tree(dtree, feature_names=X_train.columns)
+    # print metrics.accuracy_score(y_test, y_pred)
+    # print metrics.accuracy_score(y_test, y_pred2)
+    #
+    # print metrics.classification_report(y_test, y_pred)
+    # print metrics.confusion_matrix(y_test, y_pred)
+    # print metrics.classification_report(y_test, y_pred2)
+    # print metrics.confusion_matrix(y_test, y_pred2)
 
-    dtree = DecisionTreeClassifier(random_state=0)
+    dtree = DecisionTreeRegressor(max_depth=8)
     dtree.fit(X_train, y_train)
     visualize_tree(dtree, feature_names=X_train.columns)
