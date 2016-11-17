@@ -13,6 +13,20 @@ probes = np.array(group['Probe Positions'])
 ecg_vals = np.array(group['ECG'])
 ecg_0 = ecg_vals[0]
 fft_0 = rfft(ecg_0)
+y,x = np.unravel_index(cp,(200,200))
+
+def cp_vector(y_probe,x_probe):
+    x_vector = int(x_probe) - x
+    y_vector = int(y_probe) - y
+    if y_vector > 100:
+        y_vector -= 200
+    elif y_vector <= -100:
+        y_vector += 200
+
+    r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+    c = (x_vector + (1j * y_vector)) /r
+    theta = np.angle(c)
+    return r,c,theta
 
 def sample(number = 0):
     ecg = ecg_vals[number]
