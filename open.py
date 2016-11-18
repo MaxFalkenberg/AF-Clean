@@ -204,13 +204,13 @@ if choice == 'ML':
 
     datafile = raw_input("Pandas dataframe to open: ")
     X = pd.read_hdf("%s.h5" % datafile)
-    del X['Target']
-    del X['Crit Position']
-    del X['Probe Position']
-    y = X.pop('Distance')
-    y = y.astype(int)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    # del X['Target']
+    # del X['Crit Position']
+    # del X['Probe Position']
+    # y = X.pop('Distance')
+    # y = y.astype(int)
+    #
+    # X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     # dtree = DecisionTreeClassifier()
     # dtree2 = RandomForestClassifier(n_estimators=50)
@@ -227,6 +227,6 @@ if choice == 'ML':
     # print metrics.classification_report(y_test, y_pred2)
     # print metrics.confusion_matrix(y_test, y_pred2)
 
-    dtree = DecisionTreeRegressor(max_depth=8)
-    dtree.fit(X_train, y_train)
-    visualize_tree(dtree, feature_names=X_train.columns)
+    # dtree = DecisionTreeRegressor(max_depth=8)
+    # dtree.fit(X_train, y_train)
+    # visualize_tree(dtree, feature_names=X_train.columns)

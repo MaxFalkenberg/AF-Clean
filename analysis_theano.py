@@ -101,6 +101,7 @@ class ECG:
             self.electrode_spacing = electrode_spacing
             self.probe_y = np.arange(electrode_spacing - 1,self.shape[0],electrode_spacing, dtype = 'float32')
             self.probe_x = np.arange(electrode_spacing - 1,self.shape[1],electrode_spacing, dtype = 'float32') - (electrode_spacing/2)
+            self.probe_x[self.probe_x > 99] += 1
             self.probe_position = list(product(self.probe_y, self.probe_x))
         if mode == 's':
             y = raw_input('Electrode y position:')

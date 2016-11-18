@@ -197,8 +197,25 @@ def feature_extract(number, ecg_vals, cp, probes):
     """
     ecg = ecg_vals[number]
     crit_point = cp #Index of critical point
-    probe_point = np.ravel_multi_index(probes[number], (200, 200))
-    dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+    probe_point = np.ravel_multi_index(probes.astype('int')[number], (200, 200))
+    y,x = np.unravel_index(cp,(200,200))
+    # dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+
+    def cp_vector(y_probe,x_probe):
+        x_vector = int(x_probe) - x
+        y_vector = int(y_probe) - y
+        if y_vector > 100:
+            y_vector -= 200
+        elif y_vector <= -100:
+            y_vector += 200
+
+        r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+        c = (x_vector + (1j * y_vector)) /r
+        theta = np.angle(c)
+        return r,float(x_vector)/r,float(y_vector)/r,theta
+
+    dist, unit_vector_x,unit_vector_y, theta = cp_vector(probes[number][0],probes[number][1])
+
     if dist <= np.sqrt(200):
         target = 1
     else:
@@ -263,7 +280,7 @@ def feature_extract(number, ecg_vals, cp, probes):
                          grad_max, grad_min, grad_diff, grad_argmax, grad_argmin,
                          grad_argdiff]
                         + largest_ft_freq + largest_ft_mag + largest_ft_rel_mag +
-                        [largest_sum, crit_point, probe_point,  dist, target])
+                        [largest_sum, crit_point, probe_point,  dist,unit_vector_x,unit_vector_y,theta, target])
 
     return features
 
@@ -309,3 +326,35 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         sys.stdout.write('\n')
     sys.stdout.flush()
 
+def polar_feature(X,feature,title, rmax = None, clim = None, condition = None):
+
+    plt.figure(figsize =(8.5,8.5))
+    if condition == None:
+        r = np.array(X[feature])
+        d = np.array(X['Distance'])
+        theta = np.array(X['Theta'])
+    else:
+        r = np.array(X[feature])[condition]
+        d = np.array(X['Distance'])[condition]
+        theta = np.array(X['Theta'])[condition]
+    if np.max(r) < 0:
+        r = np.absolute(r)
+
+    cm = plt.cm.get_cmap('coolwarm')
+    ax = plt.subplot(111, projection='polar')
+    PCM = ax.scatter(theta, r, c=d,  marker = '.', s = 10.,edgecolors = 'none', alpha = 0.98, cmap = cm)
+    cbar = plt.colorbar(PCM, ax = ax, shrink=0.6, pad = 0.07)
+    if clim != None:
+        PCM.set_clim(vmin = clim[0],vmax = clim[1])
+    ax.set_rmin(np.min(r) - 1)
+    if rmax != None:
+        ax.set_rmax(rmax)
+        ax.set_rticks([int(np.min(r) - 1),(int(rmax) + int(np.min(r) - 1))/2,int(rmax)])
+    else:
+        ax.set_rmax(int(np.max(r) + 1))
+        ax.set_rticks([int(np.min(r) - 1),(int(np.min(r) - 1) + (int(np.max(r) + 1)))/2,int(np.max(r) + 1)])
+    plt.rc('ytick', labelsize=15)
+    plt.rc('xtick', labelsize=15)
+    ax.grid(True)
+    ax.set_title(title, va='bottom', fontsize = 20)
+    plt.show()

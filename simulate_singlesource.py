@@ -115,6 +115,8 @@ if Simulation_type == 'ML-Train':
         a = fp.Heart(fakedata=True)
         crit_position = np.random.randint(40000)
         y_rand,x_rand = np.unravel_index(crit_position,(200,200))
+        # y_rand,x_rand = (100,100)
+        # crit_position = 20100
         print crit_position, y_rand, x_rand
         a.set_pulse(60,[[y_rand],[x_rand]])
         raw_data = a.propagate(960)
@@ -125,8 +127,9 @@ if Simulation_type == 'ML-Train':
 
         # Saving the critical circuit position
         index_grp.create_dataset('Crit Position', data=crit_position)
-
+        print 2
         ecg = e.solve(converted_data[480:])
+        print 2
 
         index_grp.create_dataset('ECG', data=ecg)
         index_grp.create_dataset('Probe Positions', data=e.probe_position)
