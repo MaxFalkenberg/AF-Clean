@@ -5,7 +5,6 @@ from sklearn.cross_validation import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import sklearn.metrics as metrics
-# from Functions import visualize_tree
 from sklearn.cross_validation import cross_val_score
 import cPickle
 
@@ -25,7 +24,6 @@ scores = cross_val_score(dtree, X, y, cv=10, scoring='accuracy')
 print scores
 dtree.fit(X_train, y_train)
 y_pred = dtree.predict(X_test)
-# visualize_tree(dtree, feature_names=X_train.columns)
 print metrics.classification_report(y_test, y_pred)
 print metrics.confusion_matrix(y_test, y_pred)
 print metrics.mean_absolute_error(y_test, y_pred)

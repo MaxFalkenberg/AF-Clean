@@ -2,16 +2,14 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.cross_validation import train_test_split
-import sklearn.metrics as metrics
-from Functions import visualize_tree
 from sklearn.externals import joblib
 import seaborn as sns
 import matplotlib.patches as mpatches
 
 treefile = raw_input("ML file to load: ")
 dtree = joblib.load(os.path.join('ML_models', "%s.p" % treefile))
-# datafile = raw_input("Pandas dataframe to open: ")
-X = pd.read_hdf("SingleSource_ECGdata_Itt1000_P60_df.h5")
+datafile = raw_input("Pandas dataframe to open: ")
+X = pd.read_hdf(os.path.join('Data', "%s.h5" % datafile))
 # del X['Target']
 del X['Distance']
 del X['Crit Position']

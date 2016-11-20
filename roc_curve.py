@@ -1,14 +1,13 @@
 # SingleSource_ECGdata_Itt1000_P60_df
 import pandas as pd
-import numpy as np
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+import os
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.cross_validation import train_test_split
 import sklearn.metrics as metrics
 import seaborn as sns
 
 datafile = raw_input("Pandas dataframe to open: ")
-X = pd.read_hdf("%s.h5" % datafile)
+X = pd.read_hdf(os.path.join('Data', "%s.h5" % datafile))
 del X['Distance']
 del X['Crit Position']
 del X['Probe Position']
@@ -22,8 +21,6 @@ dtree.fit(X_train, y_train)
 prob_pred = dtree.predict_proba(X_test)[:, 1]
 fpr, tpr, _ = metrics.roc_curve(y_test, prob_pred)
 roc_auc = metrics.auc(fpr, tpr)
-# print fpr
-# print tpr
 print roc_auc
 sns.plt.plot(fpr, tpr)
 sns.plt.show()
