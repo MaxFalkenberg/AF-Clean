@@ -41,6 +41,7 @@ class Heart:
             self.pulse_vectors = None
             self.pulse_index = None
             self.pulse_rate = 0
+            self.pulse_norm = None
             self.t = 0
             self.__n = nu  # Private vertical fractions variable
             self.__d = delta  # Private cell dysfunction variable

@@ -242,6 +242,19 @@ def feature_extract(number, ecg_vals, cp, probes):
     ft_samp_max10 = np.argsort(ft_abs)[-9:]  # Finds 9 largest frequency fundamentals
 
     grad = np.gradient(sample_)
+    stat_points = []
+    stat_diffs = []
+    for i in range(len(grad)-1):
+        if grad[i] * grad[i+1] < 0:
+            stat_points.append(i)
+    n_stat_point = len(stat_points)
+    arg_firststat = stat_points[0]
+
+    for i in range(len(stat_points) - 1):
+        try:
+            stat_diffs.append(stat_points[i+1] - stat_points[i])
+        except:
+            break
 
     # FEATURE: Maximum value of sample ECG
     max_value = np.max(sample_)
@@ -251,6 +264,8 @@ def feature_extract(number, ecg_vals, cp, probes):
     minmax_dif = max_value - min_value
     # FEATURE: Sample ECG intensity defined as sum of absolute voltages
     sample_int = np.sum(np.absolute(sample_))
+    sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    sample_int_neg = np.sum(sample_[sample_ < 0.])
     # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
     sample_len = len(sample_)
 

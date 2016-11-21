@@ -193,12 +193,9 @@ class ECG:
         roll_compiledy = function(inputs = [roll_vals,output_model], outputs = resulty)
 
         roll_y = np.full_like(self.probe_y, self.y_mid) - self.probe_y
-        print(np.shape(roll_y))
         roll_y = roll_y.astype(np.int32)
         Xgrad = roll_compiledx(roll_y, Xgrad_base)
         Ygrad = roll_compiledy(roll_y, inp)
-
-        print(np.shape(Xgrad), np.shape(Ygrad))
 
         ecg_out = T.fvector('ecg_output')
         probe_var = T.imatrix('probe_ind')
@@ -211,7 +208,7 @@ class ECG:
 
         result, updates = theano.map(fn = ecg_fn,
             sequences = [probe_var], non_sequences = [xg_var,yg_var,xden_var,yden_var,xdif_var,ydif_var])
-        F_ECG = function(inputs = [probe_var,xg_var,yg_var,xden_var,yden_var,xdif_var,ydif_var], outputs = result, profile = True)
+        F_ECG = function(inputs = [probe_var,xg_var,yg_var,xden_var,yden_var,xdif_var,ydif_var], outputs = result)
 
         return F_ECG(probe_index, Xgrad, Ygrad, self.xgrad_den,self.ygrad_den,self.shifted_x_x,self.base_y_y)
 

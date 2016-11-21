@@ -36,17 +36,20 @@ e = at.ECG(shape=(200, 200), probe_height=3)  # Assuming shape/probe height does
 file_name = input("Name of output file: ")
 print("Nu Value:")
 nu = float(input())
-print(nu)
 
 h5f = h5py.File('%s.h5' % file_name, 'w')
 for index in range(Iterations):
     start_time1 = time.time()
     index_grp = h5f.create_group('Index: %s' % index)
 
-
     a = fp.Heart(nu = nu, fakedata=True)
-    crit_position = np.random.randint(40000)
-    y_rand,x_rand = np.unravel_index(crit_position,(200,200))
+    rand_true = True
+    while rand_true:
+        crit_position = np.random.randint(0,40000,2)
+        y_rand,x_rand = np.unravel_index(crit_position,(200,200))
+        if (((y_rand[1] - y_rand[0]) ** 2) + ((x_rand[1] - x_rand[0]) ** 2)) ** 0.5 > 50.:
+            rand_true = False
+
     a.set_pulse(60,[[y_rand],[x_rand]])
     raw_data = a.propagate(960)
     converted_data = list()
@@ -55,7 +58,7 @@ for index in range(Iterations):
 
     # Saving the critical circuit position
     index_grp.create_dataset('Crit Position', data=crit_position)
-    ecg = e.solve(converted_data[480:])
+    ecg = e.solve(converted_data[661:])
 
     index_grp.create_dataset('ECG', data=ecg)
     index_grp.create_dataset('Probe Positions', data=e.probe_position)

@@ -4,7 +4,7 @@ import numpy as np
 
 class Heart:
 
-    def __init__(self, nu=0.2, delta=0., eps=0.2, rp=50, fakedata=False):
+    def __init__(self, nu=1.0, delta=0., eps=0.2, rp=50, fakedata=False):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
@@ -13,6 +13,7 @@ class Heart:
         self.pulse_vectors = None
         self.pulse_index = None
         self.pulse_rate = 220
+        self.pulse_norm = None
         self.t = 0
         self.__n = nu  # Private vertical fractions variable
         self.__d = delta  # Private cell dysfunction variable
@@ -60,6 +61,14 @@ class Heart:
         if vectors is not None:
             self.pulse_vectors = vectors
         self.pulse_rate = rate
+        self.pulse_norm = True
+
+    def set_doublepulse(self, rate1, vectors1, rate2, vectors2):
+        self.pulse_vectors1 = vectors1
+        self.pulse_vectors2 = vectors2
+        self.pulse_rate1 = rate1
+        self.pulse_rate2 = rate2
+        self.pulse_norm = False
 
     def pulse(self):  # Still need to include functionality to avoid exciteing blocked cells
         """If cells = None, column x = 0 will be by defaults excited.
@@ -71,14 +80,25 @@ class Heart:
             This will excite cells (x1,y1),(x2,y2),(x3,y3)..."""
 
         if self.pulse_index == None:  # If pulse hasn't fired before, this will configure the initial pulse and store it.
-            if self.pulse_vectors == None:  # If no custom pulse has been defined
+            if self.pulse_norm == None:  # If no custom pulse has been defined
                 index = np.arange(self.size, step=self.shape[1])
                 index = index[self.cell_grid[index]]  # This might cause problems if it adjusts original pulse cells... need to check.
                 self.cell_grid[index] = False
-            else:  # If custom pulse has been defined
+            elif self.pulse_norm == True:  # If custom pulse has been defined
                 index = np.ravel_multi_index(self.pulse_vectors, self.shape)
                 index = index[self.cell_grid[index]]
                 self.cell_grid[index] = False
+            else:
+                index1 = np.ravel_multi_index(self.pulse_vectors1, self.shape)
+                index1 = index1[self.cell_grid[index1]]
+                self.cell_grid[index1] = False
+                index2 = np.ravel_multi_index(self.pulse_vectors2, self.shape)
+                index2 = index2[self.cell_grid[index2]]
+                self.cell_grid[index2] = False
+                self.pulse_index1 = index1
+                self.pulse_index2 = index2
+                index = np.concatenate([index1,index2])
+
             self.pulse_index = index  # Variable under which pulse indices are stored
             self.exc_total.append(index)  # Appended to list of excited grid cells.
         else:  # Fires pulse indices using stored list
@@ -145,10 +165,20 @@ class Heart:
 
             self.t += 1
             try:
-                if self.t % self.pulse_rate == 0:
-                    index = self.pulse_index[self.cell_grid[self.pulse_index]]
-                    self.cell_grid[index] = False
-                    exc = np.concatenate([exc, index])
+                if self.pulse_norm:
+                    if self.t % self.pulse_rate == 0:
+                        index = self.pulse_index[self.cell_grid[self.pulse_index]]
+                        self.cell_grid[index] = False
+                        exc = np.concatenate([exc, index])
+                else:
+                    if self.t % self.pulse_rate1 == 0:
+                        index = self.pulse_index1[self.cell_grid[self.pulse_index1]]
+                        self.cell_grid[index] = False
+                        exc = np.concatenate([exc, index])
+                    if self.t % self.pulse_rate2 == 0:
+                        index = self.pulse_index2[self.cell_grid[self.pulse_index2]]
+                        self.cell_grid[index] = False
+                        exc = np.concatenate([exc, index])
             except:
                 pass
 
