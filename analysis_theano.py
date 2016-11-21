@@ -1,6 +1,6 @@
 import numpy as np
 import propagate
-import cPickle
+#import cPickle
 import theano
 import theano.tensor as T
 from theano import function
@@ -18,7 +18,7 @@ def af_starts(start, end):
         temp1 = []
         temp2 = []
         nu.append(i)
-        print 'nu = ', i
+        print( 'nu = ', i)
         for j in range(1):
             a = propagate.Heart(nu=i, delta=0.05, eps=0.05, rp=50, count_excited='start', print_t=False)
             a.set_pulse(220)
@@ -32,7 +32,7 @@ def af_starts(start, end):
 
 def af_duration(nu_list):
     for i in nu_list:
-        print 'nu = ', i
+        print( 'nu = ', i)
         in_af_temp = []
         mean_time_temp = []
         exc_cell_temp = []
@@ -93,21 +93,21 @@ class ECG:
         self.z = probe_height
         self.probe_position = None
 
-        print '[r,s,c (have to set in code)]'
-        mode = str(raw_input('Ecg position mode: '))
+        print( '[r,s,c (have to set in code)]')
+        mode = str(input('Ecg position mode: '))
 
         self.mode = mode
 
         if mode == 'r':
-            electrode_spacing = int(raw_input('Choose Electrode Spacing: '))
+            electrode_spacing = int(input('Choose Electrode Spacing: '))
             self.electrode_spacing = electrode_spacing
             self.probe_y = np.arange(electrode_spacing - 1,self.shape[0],electrode_spacing, dtype = 'float32')
             self.probe_x = np.arange(electrode_spacing - 1,self.shape[1],electrode_spacing, dtype = 'float32') - (electrode_spacing/2)
             self.probe_x[self.probe_x > 99] += 1
             self.probe_position = list(product(self.probe_y, self.probe_x))
         if mode == 's':
-            y = raw_input('Electrode y position:')
-            x = raw_input('Electrode x position:')
+            y = input('Electrode y position:')
+            x = input('Electrode x position:')
             self.probe_y = np.array([y],dtype = 'int32')
             self.probe_x = np.array([x],dtype = 'int32')
             self.probe_position = list(product(self.probe_y, self.probe_x))

@@ -13,7 +13,6 @@ import h5py
 import time
 # import matplotlib.pyplot as plt
 
-
 Iterations = int(input("Number of iterations: "))
 
 def convert(data, output):

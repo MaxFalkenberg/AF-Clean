@@ -97,8 +97,8 @@ class Heart:
 
             origin = np.load("%s.npy" % self.initial_seed)
 
-            print("Length of original simulation: %s" % len(origin[0]))
-            print("Please specify frame to start simulation from: (save rate: %s)" % origin[2])
+            print(("Length of original simulation: %s" % len(origin[0])))
+            print(("Please specify frame to start simulation from: (save rate: %s)" % origin[2]))
             seed_frame = int(input())
 
             self.shape = origin[1]
@@ -124,7 +124,7 @@ class Heart:
             self.pulse_index = self.pulse_history[0]
 
 #            self.past_exc_seed = origin[0][seed_frame - self.__rp:seed_frame]
-#            print(len(self.past_exc_seed))
+#            print((len(self.past_exc_seed)))
             self.t = seed_frame
             np.random.set_state(self.state_history[self.t])
 
@@ -150,29 +150,29 @@ class Heart:
             vectors = vectors_custom
 
         if str(type) == "square":
-            print("Please input square ablation parameters:")
-            print("Enter Position of square (tuple) (bottom left corner)")
-            position = tuple(int(x.strip()) for x in raw_input().split(','))
-            print("x length:")
+            print(("Please input square ablation parameters:"))
+            print(("Enter Position of square (tuple) (bottom left corner)"))
+            position = tuple(int(x.strip()) for x in input().split(','))
+            print(("x length:"))
             y_len = int(input())  # Need to flip to get desired effect
-            print("y length")
+            print(("y length"))
             x_len = int(input())  # Need to flip to get desired effect
             vectors = square_ablation(position, x_len, y_len)
 
         if str(type) == "chevron":
-            print "Please input square ablation parameters:"
-            print "Chevron tip pointing to left (l) or right (r)?"
-            direction = str(raw_input())
-            print "Enter x Position of chevron tip"
-            x = int(raw_input())
+            print( "Please input square ablation parameters:")
+            print( "Chevron tip pointing to left (l) or right (r)?")
+            direction = str(input())
+            print( "Enter x Position of chevron tip")
+            x = int(input())
             if x < 0 or x > self.shape[1] - 1:
                 raise ValueError('x not in tissue range')
-            print "Enter y Position of chevron tip"
-            y = int(raw_input())
+            print( "Enter y Position of chevron tip")
+            y = int(input())
             if y < 0 or y > self.shape[0] - 1:
                 raise ValueError('y not in tissue range')
-            print "chevron length:"
-            chev_len = int(raw_input())  # Need to flip to get desired effect
+            print( "chevron length:")
+            chev_len = int(input())  # Need to flip to get desired effect
 
 
             ind = int(x + (y * self.shape[0]))
@@ -284,7 +284,7 @@ class Heart:
             app_index = (self.t + 1) % self.__rp
             ind = self.excited[exc_index]
             if len(ind) == 0 and self.pulse_rate == 0:
-                print(self.t)
+                print((self.t))
                 raise ValueError(
                     'No excited cells to propagate.')  # Error only raised if there are no excited cells and a future pulse will not excite any cells.
             if self.t >= self.__rp - 1:
@@ -292,7 +292,7 @@ class Heart:
 
             if len(ind) != 0:
 
-                # print len(self.excited)
+                # print( len(self.excited))
                 # ind_up = ind + self.shape[0]  # Index of cells directly above initially excited cells
                 # ind_down = ind - self.shape[0]  # Index of cells below
                 # ind_up[ind_up >= self.size] -= self.size
@@ -320,7 +320,7 @@ class Heart:
                 if self.t % self.pulse_rate == 0:  # If time is multiple of pulse rate, pulse cells fire
                     if self.print_t:
 
-                        print(self.t)
+                        print((self.t))
                     counter += 1
                     index = self.pulse_index[self.cell_grid[self.pulse_index]]
                     if self.any_ablate:
