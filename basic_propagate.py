@@ -134,29 +134,29 @@ class Heart:
             vectors = vectors_custom
 
         if str(type) == "square":
-            print("Please input square ablation parameters:")
-            print("Enter Position of square (tuple) (bottom left corner)")
-            position = tuple(int(x.strip()) for x in raw_input().split(','))
-            print("x length:")
+            print(("Please input square ablation parameters:"))
+            print(("Enter Position of square (tuple) (bottom left corner)"))
+            position = tuple(int(x.strip()) for x in input().split(','))
+            print(("x length:"))
             y_len = int(input())  # Need to flip to get desired effect
-            print("y length")
+            print(("y length"))
             x_len = int(input())  # Need to flip to get desired effect
             vectors = square_ablation(position, x_len, y_len)
 
         if str(type) == "chevron":
-            print "Please input square ablation parameters:"
-            print "Chevron tip pointing to left (l) or right (r)?"
-            direction = str(raw_input())
-            print "Enter x Position of chevron tip"
-            x = int(raw_input())
+            print( "Please input square ablation parameters:")
+            print( "Chevron tip pointing to left (l) or right (r)?")
+            direction = str(input())
+            print( "Enter x Position of chevron tip")
+            x = int(input())
             if x < 0 or x > self.shape[1] - 1:
                 raise ValueError('x not in tissue range')
-            print "Enter y Position of chevron tip"
-            y = int(raw_input())
+            print( "Enter y Position of chevron tip")
+            y = int(input())
             if y < 0 or y > self.shape[0] - 1:
                 raise ValueError('y not in tissue range')
-            print "chevron length:"
-            chev_len = int(raw_input())  # Need to flip to get desired effect
+            print( "chevron length:")
+            chev_len = int(input())  # Need to flip to get desired effect
 
             ind = int(x + (y * self.shape[0]))
             u = ind
@@ -293,7 +293,7 @@ class Heart:
                 app_index = (self.t + 1) % self.rp
                 ind = self.excited[exc_index]
                 if len(ind) == 0 and self.pulse_rate == 0:
-                    print(self.t)
+                    print((self.t))
                     # Error only raised if there are no excited cells and a future pulse will not excite any cells.
                     raise ValueError(
                         'No excited cells to propagate.')
@@ -360,7 +360,7 @@ class Heart:
                 app_index = (self.t + 1) % self.rp
                 ind = self.excited[exc_index]
                 if len(ind) == 0 and self.pulse_rate == 0:
-                    print(self.t)
+                    print((self.t))
                     # Error only raised if there are no excited cells and a future pulse will not excite any cells.
                     raise ValueError(
                         'No excited cells to propagate.')

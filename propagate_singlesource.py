@@ -146,7 +146,7 @@ class Heart:
 
                 if self.fakedata:
                     if i == t_steps - 1:
-                        return self.exc_total,
+                        return self.exc_total
 
         if ecg:
             return exc
