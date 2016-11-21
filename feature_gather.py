@@ -9,7 +9,7 @@ from Functions import print_progress
 
 filename = raw_input("Training data to convert into pandas dataframe: ")
 trainfile = h5py.File('%s.h5' % filename, 'r')
-feature_grid = np.zeros((400000, 46))
+feature_grid = np.zeros((1000000, 46))
 
 largest_ft_freq_columns = ['Largest FT Freq %s' % x for x in range(1, 10)]
 largest_ft_mag_columns = ['Largest FT Mag %s' % x for x in range(1, 10)]
@@ -25,18 +25,21 @@ i = 0
 l = len(trainfile.keys())
 
 for index_num, index in enumerate(trainfile.iterkeys()):
-    group = trainfile.get('%s' % index)
-    cp = np.array(group['Crit Position'])
-    probes = np.array(group['Probe Positions']).astype(int)
-    ecg_vals = np.array(group['ECG'])
-    ecg_0 = ecg_vals[0]
-    fft_0 = rfft(ecg_0)
-    i += 1
-    print_progress(i, l, prefix='Progress:', suffix='Complete', bar_length=50)
-    for number in range(400):
-        feature_grid[count] = feature_extract(number, ecg_vals=ecg_vals, cp=cp, probes=probes)
-        count += 1
+    try:
+        group = trainfile.get('%s' % index)
+        cp = np.array(group['Crit Position'])
+        probes = np.array(group['Probe Positions']).astype(int)
+        ecg_vals = np.array(group['ECG'])
+        ecg_0 = ecg_vals[0]
+        fft_0 = rfft(ecg_0)
+        i += 1
+        print_progress(i, l, prefix='Progress:', suffix='Complete', bar_length=50)
+        for number in range(400):
+            feature_grid[count] = feature_extract(number, ecg_vals=ecg_vals, cp=cp, probes=probes)
+            count += 1
+    except:
+        break
 
-df_index = range(400000)
+df_index = range(1000000)
 df = pd.DataFrame(data=feature_grid, index=df_index, columns=columns)
 df.to_hdf("%s_df.h5" % filename, 'w')

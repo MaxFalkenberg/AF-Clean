@@ -358,3 +358,107 @@ def polar_feature(X,feature,title, rmax = None, clim = None, condition = None):
     ax.grid(True)
     ax.set_title(title, va='bottom', fontsize = 20)
     plt.show()
+
+def fcplot(X, feature, clim = None, condition = None):
+    plt.figure(figsize =(8.5,8.5))
+    if condition == None:
+        rad = np.array(X['Distance'])
+        theta = np.array(X['Theta'])
+        fea = np.array(X[feature])
+    else:
+        rad = np.array(X['Distance'])[condition]
+        theta = np.array(X['Theta'])[condition]
+        fea = np.array(X[feature])[condition]
+
+    rad = rad[np.logical_not(np.isnan(theta))]
+    fea = fea[np.logical_not(np.isnan(theta))]
+    theta = theta[np.logical_not(np.isnan(theta))]
+
+    x = rad * np.cos(theta)
+    y = rad * np.sin(theta)
+
+    cm = plt.cm.get_cmap('coolwarm')
+    ax = plt.subplot()
+    PCM = ax.scatter(x, y, c=fea,  marker = '.', s = 10.,edgecolors = 'none', alpha = 0.98, cmap = cm)
+    if clim != None:
+        PCM.set_clim(vmin = clim[0],vmax = clim[1])
+    cbar = plt.colorbar(PCM, ax = ax, shrink=0.4, pad = 0.07)
+    plt.xlim([-200,200])
+    plt.ylim([-100,100])
+    plt.axes().set_aspect('equal')
+
+    ax.grid(True)
+    ax.set_title(str(feature), va='bottom', fontsize = 20)
+    plt.show()
+    return x,y,fea
+
+def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'mid'):
+
+    if condition == None:
+        rad = np.array(X['Distance'])
+        theta = np.array(X['Theta'])
+        f = np.array(X[feature])
+
+        p = np.array(X['Probe Position'])
+        if split == 'mid':
+            p = (p%200 > 30) * (p%200 < 170)
+        else:
+            p = (p%200 < 30) + (p%200 > 170)
+
+    else:
+        rad = np.array(X['Distance'])[condition]
+        theta = np.array(X['Theta'])[condition]
+        f = np.array(X[feature])[condition]
+
+        p = np.array(X['Probe Position'])[condition]
+        if split == 'mid':
+            p = (p%200 > 10) * (p%200 < 190)
+        else:
+            p = (p%200 < 10) + (p%200 > 190)
+
+    if split == 'mid' or split == 'out':
+        rad =  rad[p]
+        theta = theta[p]
+        f = f[p]
+
+    rad = rad[np.logical_not(np.isnan(theta))]
+    f = f[np.logical_not(np.isnan(theta))]
+    theta = theta[np.logical_not(np.isnan(theta))]
+
+
+    x = rad * np.cos(theta)
+    y = rad * np.sin(theta)
+
+    x = x.astype('int')
+    y = y.astype('int')
+    x /= binsize
+    y /= binsize
+    x += np.absolute(np.min(x))
+    y += np.absolute(np.min(y))
+    z = np.zeros((np.max(y) + 1, np.max(x) + 1), dtype = 'float')
+    count = np.copy(z)
+
+    for i in range(len(x)):
+        z[y[i]][x[i]] += float(f[i])
+        count[y[i]][x[i]] += 1.
+    z /= count
+
+
+    # y_grad, x_grad = np.gradient(z)
+    cm = plt.cm.get_cmap('coolwarm')
+    # plt.figure()
+    # plt.imshow(x_grad, interpolation="nearest", origin="lower", cmap = cm)
+    # plt.colorbar(shrink=0.4, pad = 0.07)
+    # plt.figure()
+    # plt.imshow(y_grad, interpolation="nearest", origin="lower", cmap = cm)
+    # plt.colorbar(shrink=0.4, pad = 0.07)
+
+    if clim == None:
+        clim = [np.nanmin(z),np.nanmax(z)]
+        print(clim)
+    plt.figure(figsize =(10.,10.))
+    plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
+    plt.colorbar(shrink=0.4, pad = 0.07)
+    plt.xlabel('x', fontsize = 18)
+    plt.ylabel('y', fontsize = 18)
+    plt.show()

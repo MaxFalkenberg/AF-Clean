@@ -4,7 +4,7 @@ import numpy as np
 
 class Heart:
 
-    def __init__(self, nu=1., delta=0., eps=0.2, rp=50, fakedata=False):
+    def __init__(self, nu=0.2, delta=0., eps=0.2, rp=50, fakedata=False):
         """Fraction of vertical connections given: \'nu\'.
             Vertical connections are randomly filled.
             Fraction of dysfunctional cells: \'delta\'.
@@ -33,9 +33,25 @@ class Heart:
 
         self.cell_grid = np.ones(self.size,
                                   dtype='bool')  # Grid on which signal will propagate. Defines whether cell is at rest, excited or refractory.
-        self.cell_vert = np.ones(self.size,
+        self.cell_vert = np.zeros(self.size,
                                   dtype='bool')  # Defines whether cell has vertical connection. 1 = Yes, 0 = No.
         self.cell_dys = np.zeros(self.size, dtype='bool')  # Defines whether cell is dysfunctional. 1 = Yes, 0 = No.
+        self.cell_norm = np.invert(self.cell_dys)
+
+        for i in range(self.size):
+            rand_nu = np.random.random(1)[0]
+            rand_delta = np.random.random(1)[0]
+
+            if rand_nu < self.__n:  # If rand_nu < self.__n, cell (x,y) has connection to (x,y+1)
+                if rand_delta < self.__d:  # If rand_delta < self.__d, cell (x,y) is dyfunctional. Failes to fire with P = self.__e.
+                    self.cell_vert[i] = True  # Both vertically connected and dysfunctional.
+                    self.cell_dys[i] = True
+                else:
+                    self.cell_vert[i] = True  # Vertically connected but not dysfunctional.
+            else:
+                if rand_delta < self.__d:  # Dysfunctional but not vertically connected.
+                    self.cell_dys[i] = True
+
         self.cell_norm = np.invert(self.cell_dys)
 
     def set_pulse(self, rate, vectors=None):
