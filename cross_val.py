@@ -8,7 +8,7 @@ import os
 import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
-X = pd.read_hdf(os.path.join('Data, '"%s.h5" % datafile))
+X = pd.read_hdf(os.path.join('Data', "%s.h5" % datafile))
 del X['Distance']
 del X['Crit Position']
 del X['Probe Position']
