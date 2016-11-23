@@ -254,17 +254,6 @@ def feature_extract(number, ecg_vals, cp, probes):
     grad = np.gradient(sample_)
     stat_points = []
     stat_diffs = []
-    for i in range(len(grad)-1):
-        if grad[i] * grad[i+1] < 0:
-            stat_points.append(i)
-    n_stat_point = len(stat_points)
-    arg_firststat = stat_points[0]
-
-    for i in range(len(stat_points) - 1):
-        try:
-            stat_diffs.append(stat_points[i+1] - stat_points[i])
-        except:
-            break
 
     # FEATURE: Maximum value of sample ECG
     max_value = np.max(sample_)
@@ -278,6 +267,10 @@ def feature_extract(number, ecg_vals, cp, probes):
     sample_int_neg = np.sum(sample_[sample_ < 0.])
     # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
     sample_len = len(sample_)
+    # FEATURE: Sum of all positive voltages
+    sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # Feature: Sum of all negative voltages
+    sample_int_neg = np.sum(sample_[sample_ < 0.])
 
     # FEATURE: Maximum of first order gradient of ECG
     grad_max = np.max(grad)
@@ -292,6 +285,27 @@ def feature_extract(number, ecg_vals, cp, probes):
     # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
     grad_argdiff = grad_argmax - grad_argmin
 
+    for i in range(len(grad) - 1):
+        if grad[i] * grad[i + 1] < 0:
+            stat_points.append(i)
+    # FEATURE: The number of stationary points
+    n_stat_point = len(stat_points)
+    # FEATURE: The position of the first stationary point
+    arg_firststat = stat_points[0]
+
+    """
+    Think about a way to deal with nans in RFC (might not matter)
+    """
+    # for i in range(len(stat_points) - 1):
+    #     try:
+    #         stat_diffs.append(stat_points[i + 1] - stat_points[i])
+    #         if len(stat_diffs) < 6:
+    #             np.pad(stat_diffs, (0, 6 - len(stat_diffs)), 'constant')
+    #     except:
+    #         break
+
+
+
     # FEATURE: Largest 9 frequencies in sample ECG. Largest first.
     largest_ft_freq = freq_samp[ft_samp_max10[::-1]].tolist()
     # FEATURE: Absolute values of largest 9 freqs
@@ -301,11 +315,11 @@ def feature_extract(number, ecg_vals, cp, probes):
     # FEATURE: Absolute values normalised by sum.
     largest_ft_rel_mag = [mag/largest_sum for mag in largest_ft_mag]
 
-    features = np.array([max_value, min_value, minmax_dif, sample_int, sample_len,
-                         grad_max, grad_min, grad_diff, grad_argmax, grad_argmin,
-                         grad_argdiff]
+    features = np.array([max_value, min_value, minmax_dif, sample_int, sample_len, grad_max, grad_min, grad_diff,
+                         grad_argmax, grad_argmin, grad_argdiff, n_stat_point, arg_firststat]
                         + largest_ft_freq + largest_ft_mag + largest_ft_rel_mag +
                         [largest_sum] + crit_point + [probe_point] + dist + unit_vector_x + unit_vector_y + theta + target + nearest)
+
 
     return features
 
@@ -351,9 +365,10 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         sys.stdout.write('\n')
     sys.stdout.flush()
 
-def polar_feature(X,feature,title, rmax = None, clim = None, condition = None):
 
-    plt.figure(figsize =(8.5,8.5))
+def polar_feature(X, feature, title, rmax=None, clim=None, condition=None):
+
+    plt.figure(figsize=(8.5, 8.5))
     if condition == None:
         r = np.array(X[feature])
         d = np.array(X['Distance'])
@@ -367,17 +382,17 @@ def polar_feature(X,feature,title, rmax = None, clim = None, condition = None):
 
     cm = plt.cm.get_cmap('coolwarm')
     ax = plt.subplot(111, projection='polar')
-    PCM = ax.scatter(theta, r, c=d,  marker = '.', s = 10.,edgecolors = 'none', alpha = 0.98, cmap = cm)
-    cbar = plt.colorbar(PCM, ax = ax, shrink=0.6, pad = 0.07)
+    PCM = ax.scatter(theta, r, c=d,  marker='.', s=10., edgecolors='none', alpha=0.98, cmap=cm)
+    cbar = plt.colorbar(PCM, ax=ax, shrink=0.6, pad=0.07)
     if clim != None:
-        PCM.set_clim(vmin = clim[0],vmax = clim[1])
+        PCM.set_clim(vmin=clim[0], vmax=clim[1])
     ax.set_rmin(np.min(r) - 1)
     if rmax != None:
         ax.set_rmax(rmax)
-        ax.set_rticks([int(np.min(r) - 1),(int(rmax) + int(np.min(r) - 1))/2,int(rmax)])
+        ax.set_rticks([int(np.min(r) - 1), (int(rmax) + int(np.min(r) - 1))/2, int(rmax)])
     else:
         ax.set_rmax(int(np.max(r) + 1))
-        ax.set_rticks([int(np.min(r) - 1),(int(np.min(r) - 1) + (int(np.max(r) + 1)))/2,int(np.max(r) + 1)])
+        ax.set_rticks([int(np.min(r) - 1), (int(np.min(r) - 1) + (int(np.max(r) + 1)))/2, int(np.max(r) + 1)])
     plt.rc('ytick', labelsize=15)
     plt.rc('xtick', labelsize=15)
     ax.grid(True)
@@ -493,3 +508,14 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'mid
     plt.xlabel('x', fontsize = 18)
     plt.ylabel('y', fontsize = 18)
     plt.show()
+
+
+def feature_prune(dataframe, delete_list):
+    """
+    Function that will delete the desired features from pandas dataframe before ML model/analysis is made.
+    :param: dataframe (Required): Pandas dataframe
+    :param: delete_list (Required): List
+    :return:
+    """
+    for column in delete_list:
+        del dataframe['%s' % column]

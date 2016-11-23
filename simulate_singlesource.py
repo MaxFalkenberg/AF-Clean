@@ -42,7 +42,6 @@ for index in range(Iterations):
     start_time1 = time.time()
     index_grp = h5f.create_group('Index: %s' % index)
 
-
     a = fp.Heart(nu = nu, fakedata=True)
     crit_position = np.random.randint(40000)
     y_rand,x_rand = np.unravel_index(crit_position,(200,200))
@@ -55,6 +54,7 @@ for index in range(Iterations):
     # Saving the critical circuit position
     index_grp.create_dataset('Crit Position', data=crit_position)
     ecg = e.solve(converted_data[480:])
+
 
     index_grp.create_dataset('ECG', data=ecg)
     index_grp.create_dataset('Probe Positions', data=e.probe_position)

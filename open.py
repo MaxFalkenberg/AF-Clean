@@ -194,39 +194,52 @@ if choice == 'Sampling':
 
 if choice == 'ML':
 
-    # SingleSource_ECGdata_Itt1000_P60_df
+    import os
     import pandas as pd
     from sklearn.cross_validation import train_test_split
-    from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-    from sklearn.ensemble import RandomForestClassifier
     import sklearn.metrics as metrics
     from Functions import visualize_tree
+    from sklearn.externals import joblib
+    import seaborn as sns
+    import matplotlib.patches as mpatches
 
-    datafile = raw_input("Pandas dataframe to open: ")
-    X = pd.read_hdf("%s.h5" % datafile)
+    treefile = raw_input("ML file to load: ")
+    dtree = joblib.load(os.path.join('ML_models', "%s.p" % treefile))
+    # datafile = raw_input("Pandas dataframe to open: ")
+    X = pd.read_hdf("SingleSource_ECGdata_Itt1000_P60_df.h5")
     # del X['Target']
-    # del X['Crit Position']
-    # del X['Probe Position']
+    del X['Distance']
+    del X['Crit Position']
+    del X['Probe Position']
     # y = X.pop('Distance')
-    # y = y.astype(int)
-    #
-    # X_train, X_test, y_train, y_test = train_test_split(X, y)
+    y = X.pop('Target')
+    y = y.astype(int)
 
-    # dtree = DecisionTreeClassifier()
-    # dtree2 = RandomForestClassifier(n_estimators=50)
-    # dtree.fit(X_train, y_train)
-    # dtree2.fit(X_train, y_train)
-    # y_pred = dtree.predict(X_test)
-    # y_pred2 = dtree2.predict(X_test)
-    # # visualize_tree(dtree, feature_names=X_train.columns)
-    # print metrics.accuracy_score(y_test, y_pred)
-    # print metrics.accuracy_score(y_test, y_pred2)
-    #
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+
+    y_pred = dtree.predict(X_test)
     # print metrics.classification_report(y_test, y_pred)
     # print metrics.confusion_matrix(y_test, y_pred)
-    # print metrics.classification_report(y_test, y_pred2)
-    # print metrics.confusion_matrix(y_test, y_pred2)
+    # print metrics.mean_absolute_error(y_test, y_pred)
 
-    # dtree = DecisionTreeRegressor(max_depth=8)
-    # dtree.fit(X_train, y_train)
-    # visualize_tree(dtree, feature_names=X_train.columns)
+    feature_imp = np.sort(dtree.feature_importances_/np.max(dtree.feature_importances_))[::1]
+    indicies = np.argsort(dtree.feature_importances_)[::1]
+    feature_names_sorted = [X_train.columns[ind] for ind in indicies]
+
+    # feature_importance_df = pd.DataFrame()
+
+    fig = sns.plt.figure()
+    colors = ['orange' if feat > np.mean(feature_imp) else 'blue' for feat in feature_imp]
+    sns.set(style="white")
+    sns.barplot(feature_imp, feature_names_sorted, palette=colors)
+    # plt.barh(range(len(feature_imp)), feature_imp[indicies], align='center')
+    # plt.yticks(range(len(feature_imp)), X_train.columns[indicies])
+    # sns.plt.axvline(x=np.mean(feature_imp), color='r')
+    sns.plt.title("Feature Importance for %s" % treefile, fontsize=16)
+    sns.plt.xlabel("Feature Importance (Gini, Normalised)", fontsize=14)
+    sns.despine(left=True, offset=10)
+    orange_patch = mpatches.Patch(color='orange', label='Above Mean')
+    blue_path = mpatches.Patch(color='blue', label='Below Mean')
+    sns.plt.legend(handles=[blue_path, orange_patch], prop={'size': 15})
+    sns.plt.show()
+    sns.plt.close()
