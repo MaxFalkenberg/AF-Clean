@@ -114,28 +114,28 @@ if Simulation_type == 'ML':
 
         a = fp.Heart(fakedata=True)
         crit_position = np.random.randint(40000)
-        y_rand,x_rand = np.unravel_index(crit_position,(200,200))
+        y_rand, x_rand = np.unravel_index(crit_position, (200, 200))
         # y_rand,x_rand = (100,100)
         # crit_position = 20100
-        print( crit_position, y_rand, x_rand)
-        a.set_pulse(60,[[y_rand],[x_rand]])
+        print(crit_position, y_rand, x_rand)
+        a.set_pulse(60, [[y_rand], [x_rand]])
         raw_data = a.propagate(720)
-        print( crit_position)
+        print(crit_position)
         converted_data = list()
         grid = np.zeros(a.shape)
         convert(raw_data, converted_data)
 
         # Saving the critical circuit position
         index_grp.create_dataset('Crit Position', data=crit_position)
-        print( 2)
+        print(2)
         ecg = e.solve(converted_data[481:])
-        print( 2)
+        print(2)
 
         index_grp.create_dataset('ECG', data=ecg)
         index_grp.create_dataset('Probe Positions', data=e.probe_position)
-        print(("--- Iteration %s: %s seconds ---" % (index, time.time() - start_time1)))
+        print("--- Iteration %s: %s seconds ---" % (index, time.time() - start_time1))
 
     h5f.close()
 
 else:
-    print( "Invalid Choice")
+    print("Invalid Choice")
