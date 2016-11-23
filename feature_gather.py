@@ -9,16 +9,27 @@ from Functions import print_progress
 
 filename = raw_input("Training data to convert into pandas dataframe: ")
 trainfile = h5py.File('%s.h5' % filename, 'r')
-feature_grid = np.zeros((1000000, 46))
+group = trainfile.get('Index: 0')
+cp_number = len(np.array(group['Crit Position']))
+
 
 largest_ft_freq_columns = ['Largest FT Freq %s' % x for x in range(1, 10)]
 largest_ft_mag_columns = ['Largest FT Mag %s' % x for x in range(1, 10)]
 largest_ft_rel_mag_columns = ['Largest FT Rel Mag %s' % x for x in range(1, 10)]
+crit_pos = ['Crit Position %s' % x for x in range(cp_number)]
+dist = ['Distance %s' % x for x in range(cp_number)]
+vecx = ['Unit Vector X %s' % x for x in range(cp_number)]
+vecy = ['Unit Vector Y %s' % x for x in range(cp_number)]
+theta = ['Theta %s' % x for x in range(cp_number)]
+targ = ['Target %s' % x for x in range(cp_number)]
 
 columns = ['Max Value', 'Min Value', 'Minmax Diff', 'Sample Intensity', 'Sample Length', 'Grad Max', 'Grad Min',
            'Grad Diff', 'Grad Argmax', 'Grad Argmin', 'Grad Argdiff'] + largest_ft_freq_columns + \
-          largest_ft_mag_columns + largest_ft_rel_mag_columns + ['Largest Sum', 'Crit Position',
-                                                                 'Probe Position', 'Distance', 'Unit Vector X','Unit Vector Y','Theta', 'Target']
+          largest_ft_mag_columns + largest_ft_rel_mag_columns + ['Largest Sum'] + crit_pos + \
+                                                                 ['Probe Position'] + dist + vecx + vecy + theta + targ + ['Nearest Crit Position']
+
+feature_grid = np.zeros((1000000, len(columns)))
+
 
 count = 0
 i = 0

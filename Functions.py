@@ -196,30 +196,40 @@ def feature_extract(number, ecg_vals, cp, probes):
     :return:
     """
     ecg = ecg_vals[number]
-    crit_point = cp #Index of critical point
+    crit_point = cp.tolist() #Index of critical point
     probe_point = np.ravel_multi_index(probes.astype('int')[number], (200, 200))
     y,x = np.unravel_index(cp,(200,200))
     # dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
 
-    def cp_vector(y_probe,x_probe):
-        x_vector = int(x_probe) - x
-        y_vector = int(y_probe) - y
-        if y_vector > 100:
-            y_vector -= 200
-        elif y_vector <= -100:
-            y_vector += 200
+    dist = []
+    unit_vector_x = []
+    unit_vector_y = []
+    theta = []
+    target = []
+    for i in range(len(cp)):
+        def cp_vector(y_probe,x_probe):
+            x_vector = int(x_probe) - x[i]
+            y_vector = int(y_probe) - y[i]
+            if y_vector > 100:
+                y_vector -= 200
+            elif y_vector <= -100:
+                y_vector += 200
 
-        r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
-        c = (x_vector + (1j * y_vector)) /r
-        theta = np.angle(c)
-        return r,float(x_vector)/r,float(y_vector)/r,theta
-
-    dist, unit_vector_x,unit_vector_y, theta = cp_vector(probes[number][0],probes[number][1])
-
-    if dist <= np.sqrt(200):
-        target = 1
-    else:
-        target = 0
+            r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+            c = (x_vector + (1j * y_vector)) /r
+            theta = np.angle(c)
+            return r,float(x_vector)/r,float(y_vector)/r,theta
+        a,b,c,d = cp_vector(probes[number][0],probes[number][1])
+        if a <= np.sqrt(200):
+            t = 1
+        else:
+            t = 0
+        dist.append(a)
+        unit_vector_x.append(b)
+        unit_vector_y.append(c)
+        theta.append(d)
+        target.append(t)
+    nearest = [np.argmin(dist)]
 
     ft = rfft(ecg)  # Real valued FT of original ECG
     ft_abs = np.absolute(ft)  # Takes absolute value of FT
@@ -295,7 +305,7 @@ def feature_extract(number, ecg_vals, cp, probes):
                          grad_max, grad_min, grad_diff, grad_argmax, grad_argmin,
                          grad_argdiff]
                         + largest_ft_freq + largest_ft_mag + largest_ft_rel_mag +
-                        [largest_sum, crit_point, probe_point,  dist,unit_vector_x,unit_vector_y,theta, target])
+                        [largest_sum] + crit_point + [probe_point] + dist + unit_vector_x + unit_vector_y + theta + target + nearest)
 
     return features
 
@@ -409,9 +419,15 @@ def fcplot(X, feature, clim = None, condition = None):
 
 def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'mid'):
 
+    try:
+        d = X['Distance']
+        t = X['Theta']
+    except:
+        d = X['Distance 1']
+        t = X['Theta 1']
     if condition == None:
-        rad = np.array(X['Distance'])
-        theta = np.array(X['Theta'])
+        rad = np.array(d)
+        theta = np.array(t)
         f = np.array(X[feature])
 
         p = np.array(X['Probe Position'])
@@ -421,8 +437,8 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'mid
             p = (p%200 < 30) + (p%200 > 170)
 
     else:
-        rad = np.array(X['Distance'])[condition]
-        theta = np.array(X['Theta'])[condition]
+        rad = np.array(d)[condition]
+        theta = np.array(t)[condition]
         f = np.array(X[feature])[condition]
 
         p = np.array(X['Probe Position'])[condition]
