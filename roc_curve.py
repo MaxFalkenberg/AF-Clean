@@ -1,16 +1,18 @@
 # SingleSource_ECGdata_Itt1000_P60_df
 import pandas as pd
 import os
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import train_test_split
 import sklearn.metrics as metrics
 import seaborn as sns
+from Functions import feature_prune
 
 datafile = raw_input("Pandas dataframe to open: ")
 X = pd.read_hdf(os.path.join('Data', "%s.h5" % datafile))
-del X['Distance']
-del X['Crit Position']
-del X['Probe Position']
+feature_prune(X, ['Distance', 'Crit Position', 'Probe Position',
+                  'Unit Vector X', 'Unit Vector Y', 'Theta', 'Sample Length'])
+feature_prune(X, ['Largest FT Mag %s' % x for x in range(1, 10)])
+feature_prune(X, ['Largest FT Freq %s' % x for x in range(1, 10)])
 y = X.pop('Target')
 y = y.astype(int)
 
