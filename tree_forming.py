@@ -12,14 +12,10 @@ save_deci = raw_input("Save model (y/n): ")
 modelname = None
 if save_deci == 'y':
     modelname = raw_input("filename: ")
-feature_prune(X, ['Largest FT Mag %s' % x for x in range(1, 10)])
-feature_prune(X, ['Largest FT Freq %s' % x for x in range(1, 10)])
 dtree = None
 
 if model_choice == 'r':
     from sklearn.ensemble import RandomForestRegressor
-    feature_prune(X, ['Target', 'Crit Position', 'Probe Position',
-                      'Unit Vector X', 'Unit Vector Y', 'Theta', 'Sample Length'])
     y = X.pop('Distance')
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
     dtree = RandomForestRegressor(n_estimators=15)
@@ -29,8 +25,6 @@ if model_choice == 'r':
 
 if model_choice == 'c':
     from sklearn.ensemble import RandomForestClassifier
-    feature_prune(X, ['Distance', 'Crit Position', 'Probe Position',
-                      'Unit Vector X', 'Unit Vector Y', 'Theta', 'Sample Length'])
     y = X.pop('Target')
     y = y.astype(int)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
