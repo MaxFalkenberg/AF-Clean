@@ -2,8 +2,15 @@ import pandas as pd
 import os
 from Functions import feature_prune
 
+print "\n"
 datafile = raw_input("Pandas dataframe to open: ")
 dataframe = pd.read_hdf(os.path.join('Dataframes', "%s.h5" % datafile))
+
+print "\n"
+print "Dataframe description:"
+with open(os.path.join('Data_desc', '%s.txt' % datafile)) as f:
+    print f.read()
+print "\n"
 
 # Depending on the RF type, removes one of the target observations.
 prune_style = raw_input("Classisfication or Regression (c/r): ")
