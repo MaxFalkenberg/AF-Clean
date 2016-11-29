@@ -390,9 +390,32 @@ def polar_feature(X, feature, title, rmax=None, clim=None, condition=None):
 def feature_prune(dataframe, delete_list):
     """
     Function that will delete the desired features from pandas dataframe before ML model/analysis is made.
-    :param: dataframe (Required): Pandas dataframe
-    :param: delete_list (Required): List
+    :param dataframe: Pandas dataframe (Required)
+    :param delete_list: List (Required)
     :return:
     """
     for column in delete_list:
         del dataframe['%s' % column]
+
+
+def target_distance_creation(row):
+    """
+    For use with the 2 beat case (Creates a column of the True distance from the ECG probe.)
+    :param row: row of the dataframe (Required)
+    :return:
+    """
+    nearest_cp = str(int(row['Nearest Crit Position']))
+    return row['Distance %s' % nearest_cp]
+
+
+def target_creation(row):
+    """
+    For use with the 2 beat case (Creates a column for the target.)
+    :param row: row of the dataframe (Required)
+    :return:
+    """
+    nearest_cp = str(int(row['Nearest Crit Position']))
+    if row['Distance %s' % nearest_cp] <= np.sqrt(200):
+        return 1
+    else:
+        return 0

@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-from Functions import feature_prune
 from sklearn.cross_validation import train_test_split
 import sklearn.metrics as metrics
 import cPickle

@@ -1,0 +1,5 @@
+Original Pandas dataframe created from simulated data by Max F.
+Ideal Double source (rule which defined that sources cant be within 50 cells distance from each other)
+Iterations: 3000
+Probes: 400
+Beat period: 60

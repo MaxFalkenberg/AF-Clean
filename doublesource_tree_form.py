@@ -12,14 +12,14 @@ save_deci = raw_input("Save model (y/n): ")
 modelname = None
 if save_deci == 'y':
     modelname = raw_input("filename: ")
-# feature_prune(X, ['Largest FT Mag %s' % x for x in range(1, 10)])
-# feature_prune(X, ['Largest FT Freq %s' % x for x in range(1, 10)])
+feature_prune(X, ['Largest FT Mag %s' % x for x in range(1, 10)])
+feature_prune(X, ['Largest FT Freq %s' % x for x in range(1, 10)])
 dtree = None
 
 if model_choice == 'r':
     from sklearn.ensemble import RandomForestRegressor
-    feature_prune(X, ['Crit Position 0', 'Crit Position 1', 'Probe Position', 'Distance 0', 'Distance 1',
-                      'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y 0',
+    feature_prune(X, ['Sample Length', 'Crit Position 0', 'Crit Position 1', 'Probe Position', 'Distance 0',
+                      'Distance 1', 'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y 0',
                       'Unit Vector Y 1', 'Theta 0', 'Theta 1', 'Target 0', 'Target 1',
                       'Nearest Crit Position', 'True Target'])
     y = X.pop('True Distance')
@@ -31,8 +31,8 @@ if model_choice == 'r':
 
 if model_choice == 'c':
     from sklearn.ensemble import RandomForestClassifier
-    feature_prune(X, ['Crit Position 0', 'Crit Position 1', 'Probe Position', 'Distance 0', 'Distance 1',
-                      'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y 0',
+    feature_prune(X, ['Sample Length', 'Crit Position 0', 'Crit Position 1', 'Probe Position', 'Distance 0',
+                      'Distance 1', 'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y 0',
                       'Unit Vector Y 1', 'Theta 0', 'Theta 1', 'Target 0', 'Target 1',
                       'Nearest Crit Position', 'True Distance'])
     y = X.pop('True Target')

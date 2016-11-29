@@ -5,7 +5,6 @@ from sklearn.cross_validation import train_test_split
 from sklearn.externals import joblib
 import seaborn as sns
 import matplotlib.patches as mpatches
-from Functions import feature_prune
 
 treefile = raw_input("ML file to load: ")
 dtree = joblib.load(os.path.join('ML_models', "%s.p" % treefile))

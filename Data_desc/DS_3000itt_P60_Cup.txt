@@ -1,0 +1,5 @@
+Pandas dataframe for ML created from DS_3000itt_P60_df. It is used for classification.
+Ideal Double Source
+Iterations: 3000
+Probes: 400
+Beat period: 60

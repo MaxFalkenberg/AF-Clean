@@ -1,0 +1,5 @@
+Pandas dataframe for ML created from SS_1000itt_P60_df. It is used for classification.
+Ideal single source
+Iterations: 4503
+Probes: 400
+Beat period: 60
