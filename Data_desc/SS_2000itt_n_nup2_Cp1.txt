@@ -1,0 +1,10 @@
+Pandas dataframe for ML created from SS_2000itt_n_nup2_df. It is used for classification.
+Noisy single source
+Pruned features: ['Crit Position', 'Crit Position 0', 'Crit Position 1', 'Probe Position', 'Distance 0', 'Distance 1',
+                  'Unit Vector X', 'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y', 'Unit Vector Y 0',
+                  'Unit Vector Y 1', 'Theta', 'Theta 0', 'Theta 1',
+                  'Target 0', 'Target 1', 'Nearest Crit Position', 'Largest FT Mag', 'Largest FT Freq']
+Nu: 0.2
+Iterations: 4503
+Probes: 400
+Beat period: ?

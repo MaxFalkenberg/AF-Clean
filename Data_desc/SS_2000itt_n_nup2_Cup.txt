@@ -1,0 +1,6 @@
+Pandas dataframe for ML created from SS_2000itt_n_nup2_df. It is used for classification.
+Noisy single source
+Nu: 0.2
+Iterations: 4503
+Probes: 400
+Beat period: ?
