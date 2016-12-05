@@ -164,6 +164,10 @@ def ani_convert(data, shape, rp, animation_grid):
 
 ##############################################################################################################
 
+"""
+Function which involve the use of pandas dataframes
+"""
+
 def roll_dist(cp):
     """
     Returns the a grid of the distances between the critical points and ecg probes.
