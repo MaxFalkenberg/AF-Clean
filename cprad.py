@@ -1,6 +1,7 @@
 """
 First created - 5th Dec 2016
-File which alters the radius at which the cp is defined from the electrode probe posistion.
+File which alters the radius at which the cp is defined from the electrode probe posistion. It then works out the recall
+for both groups and records them (this metric can be changed).
 """
 
 import pandas as pd
@@ -23,10 +24,9 @@ print_progress(progress, len(thresholds), prefix='Progress', suffix='Complete', 
 for t in thresholds:
     y = cross_ref.apply(lambda x: 1.0 if x <= t else 0.0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    dtree = RandomForestClassifier(n_estimators=3)
+    dtree = RandomForestClassifier(n_estimators=15)
     dtree.fit(X_train, y_train)
     y_pred = dtree.predict(X_test)
-
     score = metrics.recall_score(y_test, y_pred, average=None)
     recalls.append(score)
     progress += 1
