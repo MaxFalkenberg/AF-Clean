@@ -5,7 +5,7 @@ import sklearn.metrics as metrics
 import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
-X = pd.read_hdf(os.path.join('Data', "%s.h5" % datafile))
+X = pd.read_hdf(os.path.join('Dataframes', "%s.h5" % datafile))
 model_choice = raw_input("Regressor or Classifier (r\c): ")
 save_deci = raw_input("Save model (y/n): ")
 modelname = None
@@ -32,7 +32,6 @@ if model_choice == 'c':
     y_pred = dtree.predict(X_test)
     print(metrics.classification_report(y_test, y_pred))
     print(metrics.confusion_matrix(y_test, y_pred))
-    print(metrics.mean_absolute_error(y_test, y_pred))
 
 print '\n'
 if save_deci == 'y':
