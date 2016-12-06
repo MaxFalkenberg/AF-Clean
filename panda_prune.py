@@ -13,7 +13,7 @@ with open(os.path.join('Data_desc', '%s.txt' % datafile)) as f:
 print "\n"
 
 # Depending on the RF type, removes one of the target observations.
-observation_style = raw_input("Classisfication/Regression/Custom (c/r/cus): ")
+observation_style = raw_input("Classisfication/Regression (c/r): ")
 prune = raw_input("Prune features? (y/n): ")
 
 # filename
@@ -41,8 +41,5 @@ if observation_style == 'c':
 
 if observation_style == 'r':
     del dataframe['Target']
-
-if observation_style== 'cus':
-    print "Dataframe is designed to test the how the classification changes with changing cp radius."
 
 dataframe.to_hdf(os.path.join('Dataframes', "%s.h5" % filename), 'w')
