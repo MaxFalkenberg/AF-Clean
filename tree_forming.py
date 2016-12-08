@@ -1,3 +1,6 @@
+"""
+File to create the Random Forest models.
+"""
 import os
 import pandas as pd
 from sklearn.cross_validation import train_test_split

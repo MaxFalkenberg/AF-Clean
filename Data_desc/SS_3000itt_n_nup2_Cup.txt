@@ -1,0 +1,9 @@
+Pandas dataframe for ML created from SS_3000itt_n_nup2_df. It is used for classification.
+Noisy single source
+Contains new features.
+Nan values are replaced with -99999.
+
+Nu: 0.2
+Iterations: 3000
+Probes: 400
+Beat period: ?

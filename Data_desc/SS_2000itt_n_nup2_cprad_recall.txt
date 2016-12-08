@@ -1,0 +1,4 @@
+Recall data for SS_2000itt_n_nup2_cprad.
+
+n_estimators = 15 for the random forests.
+range for cp thresholds = range(5, 25, 1)

@@ -423,3 +423,18 @@ def target_creation(row):
         return 1
     else:
         return 0
+
+
+def distance(col1, col2):
+    """
+    Function used to rework out the distance in a pandas dataframe (use in ipython). Need to convert the columns into
+    tuples via np.unravel_index.
+    The y value is multiplied by 3.
+    :param col1: df['Crit Position']
+    :param col2: df['Probe Position']
+    :return:
+    """
+    x_vectors = [(value1[1]-value2[1]) for value1, value2 in zip(col1,col2)]
+    y_vectors = [(3*value1[0]-3*value2[0]) for value1, value2 in zip(col1,col2)]
+    y_vectors = [y-200 if y>100 else y+200 if y<=-100 else y for y in y_vectors]
+    return [np.sqrt(y**2 + x**2) for y, x in zip(y_vectors,x_vectors)]
