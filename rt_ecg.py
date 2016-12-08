@@ -19,7 +19,7 @@ if propagate_choice == 'Normal':
 
 if propagate_choice == 'Single Crit':
     import propagate_singlesource as ps
-    a = ps.Heart(nu=0.2, fakedata=True)
+    a = ps.Heart(nu=1.0, fakedata=True)
     x_pos = int(raw_input("Crit x position: "))
     y_pos = int(raw_input("Crit y position: "))
     a.set_pulse(60, [[y_pos], [x_pos]])

@@ -18,7 +18,7 @@ from Functions import sampling_convert
 
 print'\n'
 
-print "Open Options: [Delta, Sampling, ML]"
+print "Open Options: [Delta, Sampling, ML, PD]"
 
 choice = raw_input("Open type: ")
 
@@ -243,3 +243,18 @@ if choice == 'ML':
     sns.plt.legend(handles=[blue_path, orange_patch], prop={'size': 15})
     sns.plt.show()
     sns.plt.close()
+
+if choice == 'PD':
+
+    import os
+    import pandas as pd
+    from sklearn.cross_validation import train_test_split
+    import sklearn.metrics as metrics
+    from Functions import visualize_tree
+    from sklearn.externals import joblib
+    import seaborn as sns
+    import matplotlib.patches as mpatches
+
+    rawfile = raw_input("ML file to load: ")
+    # datafile = raw_input("Pandas dataframe to open: ")
+    X = pd.read_hdf(rawfile)

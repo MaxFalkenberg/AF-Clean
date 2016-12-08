@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import animator as an
 import propagate as pr
 
-testfile = h5py.File('test_double.h5', 'r')
+inp = str(raw_input('H5 file to open:'))
+testfile = h5py.File(inp, 'r')
 group = testfile.get('Index: 0')
 cp = np.array(group['Crit Position'])
 probes = np.array(group['Probe Positions'])
