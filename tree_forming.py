@@ -1,14 +1,13 @@
 """
 File to create the Random Forest models.
 """
-import os
 import pandas as pd
 from sklearn.cross_validation import train_test_split
 import sklearn.metrics as metrics
 import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
-X = pd.read_hdf(os.path.join('Dataframes', "%s.h5" % datafile))
+X = pd.read_hdf("%s.h5" % datafile)
 model_choice = raw_input("Regressor or Classifier (r\c): ")
 save_deci = raw_input("Save model (y/n): ")
 modelname = None
@@ -38,10 +37,7 @@ if model_choice == 'c':
 
 print '\n'
 if save_deci == 'y':
-    MY_dIR = os.path.realpath(os.path.dirname(__file__))
-    PICKLE_DIR = os.path.join(MY_dIR, 'ML_models')
-    fname = os.path.join(PICKLE_DIR, '%s.p' % modelname)
-    with open(fname, 'wb') as f:
+    with open('%s.p' % modelname, 'wb') as f:
         cPickle.dump(dtree, f)
 else:
     pass
