@@ -1,5 +1,0 @@
-Original Pandas dataframe created from simulated data by Max F.
-Ideal single source
-Iterations: 1000
-Probes: 400
-Beat period: 60

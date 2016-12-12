@@ -8,7 +8,7 @@ from Functions import feature_prune
 
 print "\n"
 datafile = raw_input("Pandas dataframe to open: ")
-dataframe = pd.read_hdf(os.path.join('Dataframes', "%s.h5" % datafile))
+dataframe = pd.read_hdf("%s.h5" % datafile)
 
 print "\n"
 print "Dataframe description:"
@@ -46,4 +46,4 @@ if observation_style == 'c':
 if observation_style == 'r':
     del dataframe['Target']
 
-dataframe.to_hdf(os.path.join('Dataframes', "%s.h5" % filename), 'w')
+dataframe.to_hdf("%s.h5" % filename, 'w')

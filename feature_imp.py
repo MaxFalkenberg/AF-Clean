@@ -1,4 +1,7 @@
-import os
+"""
+Loads a saved decision tree model and applys test data to it to get feature importance. (feature_robust.py is better)
+"""
+
 import pandas as pd
 import numpy as np
 from sklearn.cross_validation import train_test_split
@@ -7,11 +10,11 @@ import seaborn as sns
 import matplotlib.patches as mpatches
 
 treefile = raw_input("ML file to load: ")
-dtree = joblib.load(os.path.join('ML_models', "%s.p" % treefile))
+dtree = joblib.load("%s.p" % treefile)
 datafile = raw_input("Pandas dataframe to open: ")
 
 # Feature pruning and popping for the train test split
-X = pd.read_hdf(os.path.join('Data', "%s.h5" % datafile))
+X = pd.read_hdf("%s.h5" % datafile)
 y = X.pop('Target')
 y = y.astype(int)
 

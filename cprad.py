@@ -5,7 +5,6 @@ for both groups and records them (this metric can be changed).
 """
 
 import pandas as pd
-import os
 import cPickle
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import train_test_split
@@ -14,7 +13,7 @@ from Functions import print_progress
 
 datafile = raw_input("Pandas dataframe to open: ")
 savefile = raw_input("Save name: ")
-X = pd.read_hdf(os.path.join('Dataframes', "%s.h5" % datafile))
+X = pd.read_hdf("%s.h5" % datafile)
 cross_ref = X.pop('Distance')
 
 recalls = list()
@@ -33,8 +32,5 @@ for t in thresholds:
     print_progress(progress, len(thresholds), prefix='Progress', suffix='Complete', bar_length=50)
 
 output = zip(*recalls)
-MY_dIR = os.path.realpath(os.path.dirname(__file__))
-PICKLE_DIR = os.path.join(MY_dIR, 'Data')
-fname = os.path.join(PICKLE_DIR, '%s.p' % savefile)
-with open(fname, 'wb') as f:
+with open('%s.p' % savefile, 'wb') as f:
     cPickle.dump(output, f)

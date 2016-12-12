@@ -1,4 +1,8 @@
-# SingleSource_ECGdata_Itt1000_P60_df
+"""
+Find the roc curve for the decision tree. (Needs to be updated as the features are pruned before they are entered into
+files now.)
+"""
+
 import pandas as pd
 import os
 from sklearn.ensemble import RandomForestClassifier
@@ -8,7 +12,7 @@ import seaborn as sns
 from Functions import feature_prune
 
 datafile = raw_input("Pandas dataframe to open: ")
-X = pd.read_hdf(os.path.join('Data', "%s.h5" % datafile))
+X = pd.read_hdf("%s.h5" % datafile)
 feature_prune(X, ['Distance', 'Crit Position', 'Probe Position',
                   'Sample Length'])
 # feature_prune(X, ['Distance', 'Crit Position', 'Probe Position',

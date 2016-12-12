@@ -1,4 +1,0 @@
-Pandas dataframe of SS_3000itt_n_nup2_df where the distance method is different.
-The y coordinate is multiplied by 3 as the pulse wave from out is not circular.
-
----Method needs to be considered more---

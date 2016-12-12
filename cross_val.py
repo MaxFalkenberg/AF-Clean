@@ -6,11 +6,11 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import cross_val_score
 from Functions import print_progress
-import os
 import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
-X = pd.read_hdf(os.path.join('Data', "%s.h5" % datafile))
+dataname = raw_input("Data savename: ")
+X = pd.read_hdf("%s.h5" % datafile)
 y = X.pop('Target')
 y = y.astype(int)
 
@@ -30,9 +30,5 @@ for i in n_tree_range:
 print mean_scores_l
 print errors
 data = zip(mean_scores_l, errors)
-dataname = raw_input("filename: ")
-MY_dIR = os.path.realpath(os.path.dirname(__file__))
-PICKLE_DIR = os.path.join(MY_dIR, 'ML_models')
-fname = os.path.join(PICKLE_DIR, '%s.p' % dataname)
-with open(fname, 'wb') as f:
+with open('%s.p' % dataname, 'wb') as f:
     cPickle.dump(data, f)

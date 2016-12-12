@@ -1,6 +1,0 @@
-Original Pandas dataframe created from simulated data by Max F.
-Noisy single source simulation
-Nu = 0.2
-Iterations: 2000
-Probes: 400
-Beat period: ?

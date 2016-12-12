@@ -4,16 +4,14 @@ Distance 0 --> Distance in this file.
 """
 
 import pandas as pd
-import os
-from Functions import feature_prune
 
 print "\n"
 datafile = raw_input("Pandas dataframe to open: ")
-dataframe = pd.read_hdf(os.path.join('Dataframes', "%s.h5" % datafile))
+dataframe = pd.read_hdf("%s.h5" % datafile)
 
 print "\n"
 print "Dataframe description:"
-with open(os.path.join('Data_desc', '%s.txt' % datafile)) as f:
+with open('%s.txt' % datafile) as f:
     print f.read()
 print "\n"
 
@@ -46,4 +44,4 @@ if observation_style == 'c':
 if observation_style == 'r':
     del dataframe['Target 0']
 
-dataframe.to_hdf(os.path.join('Dataframes', "%s.h5" % filename), 'w')
+dataframe.to_hdf("%s.h5" % filename, 'w')

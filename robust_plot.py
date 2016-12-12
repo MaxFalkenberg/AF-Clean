@@ -1,9 +1,12 @@
+"""
+Reads the feature robustness data and plots them.
+"""
+
 import cPickle
 import seaborn as sns
-import os
 
 filename = raw_input('Robust data to plot: ')
-with open(os.path.join('Data', '%s.p' % filename)) as f:
+with open('%s.p' % filename) as f:
     sorted_mean_importance, sorted_std_importance, feature_names_sorted = cPickle.load(f)
 
 fig = sns.plt.figure()

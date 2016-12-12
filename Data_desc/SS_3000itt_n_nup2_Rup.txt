@@ -1,3 +1,0 @@
-Regression tree for SS_3000itt_n_nup2_df.
-
---Needs work to remove nan values--

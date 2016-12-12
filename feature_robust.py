@@ -11,7 +11,7 @@ from Functions import print_progress
 import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
-X = pd.read_hdf(os.path.join('Dataframes', "%s.h5" % datafile))
+X = pd.read_hdf("%s.h5" % datafile)
 y = X.pop('Target')
 y = y.astype(int)
 
@@ -35,8 +35,5 @@ sorted_std_importance = np.sort(np.std(robustness_datagrid, axis=0, ddof=1))
 indicies = np.argsort(mean_importance)[::1]
 feature_names_sorted = [X.columns[ind] for ind in indicies]
 
-MY_dIR = os.path.realpath(os.path.dirname(__file__))
-PICKLE_DIR = os.path.join(MY_dIR, 'Data')
-fname = os.path.join(PICKLE_DIR, '%s_robust.p' % datafile)
-with open(fname, 'wb') as f:
+with open('%s_robust.p' % datafile, 'wb') as f:
     cPickle.dump((sorted_mean_importance, sorted_std_importance, feature_names_sorted), f)
