@@ -87,14 +87,14 @@ if choice == 'Delta':
     Plot for number of excited cells in each time step. If you want to plot these, need to change parameters in
     af_line_plot so that it uses the desired delta, nu, iteration. scanned finds where AF occurs.
     """
-    plt.figure(1)
-    af_line_plot(raw_data=raw_data, para=para, delta_=0.001, nu_=0.08, iteration=1, normalised=True)
-    af_line_plot(0.001, 0.08, 1, normalised=False, scanned=True)
-    plt.hlines((200 * 1.1)/float(
-                max(raw_data[u'delta: %s' % 0.001][u'Nu: %s' % 0.08][1])), 0, sim_size, 'r', label='Threshold')
-    plt.legend()
-    plt.ylabel("Normalised number of excited cells")
-    plt.xlabel("Time Step")
+    # plt.figure(1)
+    # af_line_plot(raw_data=raw_data, para=para, delta_=0.1, nu_=0.08, iteration=1, normalised=True)
+    # af_line_plot(0.1, 0.12, 1, normalised=False, scanned=True)
+    # plt.hlines((200 * 1.1)/float(
+    #             max(raw_data[u'delta: %s' % 0.1][u'Nu: %s' % 0.08][1])), 0, sim_size, 'r', label='Threshold')
+    # plt.legend()
+    # plt.ylabel("Normalised number of excited cells")
+    # plt.xlabel("Time Step")
 
     """
     Plot showing the risk curve for different delta values. Kishans data is also plotted as reference.
