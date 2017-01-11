@@ -2,6 +2,10 @@
 First created - 5th Dec 2016
 File which alters the radius at which the cp is defined from the electrode probe posistion. It then works out the recall
 for both groups and records them (this metric can be changed).
+
+range of circular aperture radius's are used (thresholds)
+
+input = pandas dataframe
 """
 
 import pandas as pd
