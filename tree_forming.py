@@ -18,7 +18,7 @@ dtree = None
 
 if model_choice == 'r':
     from sklearn.ensemble import RandomForestRegressor
-    y = X.pop('Distance')
+    y = X.pop('Distance 0')
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
     dtree = RandomForestRegressor(n_estimators=15)
     dtree.fit(X_train, y_train)
@@ -27,7 +27,7 @@ if model_choice == 'r':
 
 if model_choice == 'c':
     from sklearn.ensemble import RandomForestClassifier
-    y = X.pop('Target')
+    y = X.pop('Target 0')
     y = y.astype(int)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
     dtree = RandomForestClassifier(n_estimators=15)
