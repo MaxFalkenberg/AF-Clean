@@ -2,6 +2,7 @@
 File to create the Random Forest models.
 """
 import pandas as pd
+import numpy as np
 from sklearn.cross_validation import train_test_split
 import sklearn.metrics as metrics
 import cPickle
@@ -32,6 +33,8 @@ if model_choice == 'c':
     dtree = RandomForestClassifier(n_estimators=15)
     dtree.fit(X_train, y_train)
     y_pred = dtree.predict(X_test)
+    final_frame = pd.DataFrame({'Test': y_test, 'Prediction': y_pred})
+    print final_frame
     print(metrics.classification_report(y_test, y_pred))
     print(metrics.confusion_matrix(y_test, y_pred))
 
