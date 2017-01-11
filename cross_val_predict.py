@@ -12,7 +12,7 @@ import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
 X = pd.read_hdf("%s.h5" % datafile)
-y = X.pop('Target')
+y = X.pop('Target 0')
 y = y.astype(int)
 
 progress = 0
