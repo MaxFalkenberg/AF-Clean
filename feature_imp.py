@@ -15,7 +15,7 @@ datafile = raw_input("Pandas dataframe to open: ")
 
 # Feature pruning and popping for the train test split
 X = pd.read_hdf("%s.h5" % datafile)
-y = X.pop('Target')
+y = X.pop('Target 0')
 y = y.astype(int)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
