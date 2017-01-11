@@ -11,7 +11,7 @@ import cPickle
 datafile = raw_input("Pandas dataframe to open: ")
 dataname = raw_input("Data savename: ")
 X = pd.read_hdf("%s.h5" % datafile)
-y = X.pop('Target')
+y = X.pop('Target 0')
 y = y.astype(int)
 
 mean_scores_l = list()
