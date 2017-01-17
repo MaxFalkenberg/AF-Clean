@@ -10,6 +10,7 @@ from numpy.fft import irfft
 from sklearn.tree import export_graphviz
 import subprocess
 import sys
+import scipy.signal as ss
 
 
 ##############################################################################################################
@@ -200,30 +201,43 @@ def feature_extract(number, ecg_vals, cp, probes):
     :return:
     """
     ecg = ecg_vals[number]
-    crit_point = cp #Index of critical point
+    crit_point = cp.tolist() #Index of critical point
     probe_point = np.ravel_multi_index(probes.astype('int')[number], (200, 200))
     y,x = np.unravel_index(cp,(200,200))
     # dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
 
-    def cp_vector(y_probe,x_probe):
-        x_vector = int(x_probe) - x
-        y_vector = int(y_probe) - y
-        if y_vector > 100:
-            y_vector -= 200
-        elif y_vector <= -100:
-            y_vector += 200
+    dist = []
+    unit_vector_x = []
+    unit_vector_y = []
+    theta = []
+    target = []
+    cp = np.atleast_1d(cp)
+    x = np.atleast_1d(x)
+    y = np.atleast_1d(y)
+    for i in range(len(cp)):
+        def cp_vector(y_probe,x_probe):
+            x_vector = int(x_probe) - x[i]
+            y_vector = int(y_probe) - y[i]
+            if y_vector > 100:
+                y_vector -= 200
+            elif y_vector <= -100:
+                y_vector += 200
 
-        r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
-        c = (x_vector + (1j * y_vector)) /r
-        theta = np.angle(c)
-        return r,float(x_vector)/r,float(y_vector)/r,theta
-
-    dist, unit_vector_x,unit_vector_y, theta = cp_vector(probes[number][0],probes[number][1])
-
-    if dist <= np.sqrt(200):
-        target = 1
-    else:
-        target = 0
+            r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+            c = (x_vector + (1j * y_vector)) /r
+            theta = np.angle(c)
+            return r,float(x_vector)/r,float(y_vector)/r,theta
+        a,b,c,d = cp_vector(probes[number][0],probes[number][1])
+        if a <= np.sqrt(200):
+            t = 1
+        else:
+            t = 0
+        dist.append(a)
+        unit_vector_x.append(b)
+        unit_vector_y.append(c)
+        theta.append(d)
+        target.append(t)
+    nearest = [np.argmin(dist)]
 
     ft = rfft(ecg)  # Real valued FT of original ECG
     ft_abs = np.absolute(ft)  # Takes absolute value of FT
@@ -236,14 +250,15 @@ def feature_extract(number, ecg_vals, cp, probes):
     ft2 = np.copy(ft)
     ft2[ft_max + 1:] = 0
     ift = irfft(ft2)
-    start = np.argmax(ift[:(2*period) - 1])
+    start = np.argmax(ift[:(2*period)])
+    #start = 0
     end = start + (2 * period)
     sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
 
     ft_samp = rfft(sample_)  # Real valued FT of sample ECG
     freq_samp = np.fft.rfftfreq(ft.size, d=1.)
-    ft_samp_abs = np.absolute(ft)  # Takes absolute value of FT
-    ft_samp_max10 = np.argsort(ft_abs)[-9:]  # Finds 9 largest frequency fundamentals
+    ft_samp_abs = np.absolute(ft_samp)  # Takes absolute value of FT
+    ft_samp_max10 = np.argsort(ft_samp_abs)[-9:]  # Finds 9 largest frequency fundamentals
 
     grad = np.gradient(sample_)
     stat_points = []
@@ -257,6 +272,8 @@ def feature_extract(number, ecg_vals, cp, probes):
     minmax_dif = max_value - min_value
     # FEATURE: Sample ECG intensity defined as sum of absolute voltages
     sample_int = np.sum(np.absolute(sample_))
+    sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    sample_int_neg = np.sum(sample_[sample_ < 0.])
     # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
     sample_len = len(sample_)
     # FEATURE: Sum of all positive voltages
@@ -299,6 +316,7 @@ def feature_extract(number, ecg_vals, cp, probes):
 
 
     # FEATURE: Largest 9 frequencies in sample ECG. Largest first.
+
     largest_ft_freq = freq_samp[ft_samp_max10[::-1]].tolist()
     # FEATURE: Absolute values of largest 9 freqs
     largest_ft_mag = ft_samp_abs[ft_samp_max10[::-1]].tolist()
@@ -310,8 +328,176 @@ def feature_extract(number, ecg_vals, cp, probes):
     features = np.array([max_value, min_value, minmax_dif, sample_int, sample_len, grad_max, grad_min, grad_diff,
                          grad_argmax, grad_argmin, grad_argdiff, n_stat_point, arg_firststat]
                         + largest_ft_freq + largest_ft_mag + largest_ft_rel_mag +
-                        [largest_sum, crit_point, probe_point, dist, unit_vector_x, unit_vector_y, theta, target])
+                        [largest_sum] + cp.tolist() + [probe_point] + dist + unit_vector_x + unit_vector_y + theta + target + nearest + [start] + [end])
+    return features
 
+
+def feature_extract2(number, ecg_vals, cp, probes):
+    """
+    Extracts features for the current itteration's ECG at the probe position
+    corresponding to probes[number]. Not currently written to return values in a
+    particular format.
+    :param number: Index in data.
+    :param ecg_vals: The ecg voltages.
+    :param cp: The position of the critical point.
+    :param probes: The probe position.
+    :return:
+    """
+    ecg = ecg_vals[number]
+    crit_point = cp.tolist() #Index of critical point
+    probe_point = np.ravel_multi_index(probes.astype('int')[number], (200, 200))
+    y,x = np.unravel_index(cp,(200,200))
+    # dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+
+    dist = []
+    unit_vector_x = []
+    unit_vector_y = []
+    theta = []
+    target = []
+    cp = np.atleast_1d(cp)
+    x = np.atleast_1d(x)
+    y = np.atleast_1d(y)
+    for i in range(len(cp)):
+        def cp_vector(y_probe,x_probe):
+            x_vector = int(x_probe) - x[i]
+            y_vector = int(y_probe) - y[i]
+            if y_vector > 100:
+                y_vector -= 200
+            elif y_vector <= -100:
+                y_vector += 200
+
+            r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+            c = (x_vector + (1j * y_vector)) /r
+            theta = np.angle(c)
+            return r,float(x_vector)/r,float(y_vector)/r,theta
+        a,b,c,d = cp_vector(probes[number][0],probes[number][1])
+        if a <= np.sqrt(200):
+            t = 1
+        else:
+            t = 0
+        dist.append(a)
+        unit_vector_x.append(b)
+        unit_vector_y.append(c)
+        theta.append(d)
+        target.append(t)
+    nearest = [np.argmin(dist)]
+
+    ft = rfft(ecg)  # Real valued FT of original ECG
+    ft_abs = np.absolute(ft)  # Takes absolute value of FT
+    ft_max10 = np.argsort(ft_abs)[-4:]  # Finds 9 largest frequency fundamentals
+    ft_max = np.min(ft_max10)
+    freq = np.fft.rfftfreq(ecg.size, d=1.)
+    freq_main = np.fft.rfftfreq(ecg.size, d=1.)[ft_max]
+    # FEATURE (Should be the same for all ECGs if correctly sampled.)
+    period = int(1. / freq_main)
+    ft[ft_max + 1:] = 0
+    ft[:ft_max] = 0
+    ift = irfft(ft)
+    start = np.argmax(ift[:period])
+    #start = 0
+    end = start + period
+    sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
+
+    ft_samp = rfft(sample_)  # Real valued FT of sample ECG
+    freq_samp = np.fft.rfftfreq(sample_.size, d=1.)
+    ft_samp_abs = np.absolute(ft_samp)  # Takes absolute value of FT
+    ft_samp_abs_rel1 = ft_samp_abs / ft_samp_abs[1]
+    ft_samp_abs_rel2 = ft_samp_abs / ft_samp_abs[2]
+    ft_samp_abs_rel3 = ft_samp_abs / ft_samp_abs[3]
+    # ft_samp_max10 = np.argsort(ft_samp_abs)[-9:]  # Finds 9 largest frequency fundamentals
+
+    grad = np.gradient(sample_)
+    stat_points = []
+    stat_diffs = []
+
+    # FEATURE: Maximum value of sample ECG
+    max_value = np.max(sample_)
+    max_arg = np.argmax(sample_)
+    # FEATURE: Minimum value of sample ECG
+    min_value = np.min(sample_)
+    min_arg = np.argmin(sample_)
+    # FEATURE: Difference of the above
+    minmax_dif = max_value - min_value
+    minmax_half = (max_value + min_value)/2
+    try:
+        arghalf = np.argwhere(sample_[max_arg:min_arg] < minmax_half)[0]
+    except:
+        arghalf = np.array([0])
+    half_ratio = float(arghalf - max_arg) / float(min_arg - max_arg)
+    std_full = np.std(sample_)
+    std_premax = np.std(sample_[:max_arg])
+    try:
+        std_minmax = np.std(sample_[max_arg:min_arg])
+    except:
+        std_minmax = 0
+    std_postmin = np.std(sample_[min_arg:])
+    n_extrema_max = len(ss.argrelextrema(sample_,np.greater))
+    n_extrema_min = len(ss.argrelextrema(sample_,np.less))
+    # FEATURE: Sample ECG intensity defined as sum of absolute voltages
+    sample_int = np.sum(np.absolute(sample_))
+    sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    sample_int_neg = np.sum(sample_[sample_ < 0.])
+    sample_int_ratio = float(sample_int_pos) / float(sample_int_neg)
+    # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
+    sample_len = len(sample_)
+    # FEATURE: Sum of all positive voltages
+    sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # Feature: Sum of all negative voltages
+    sample_int_neg = np.sum(sample_[sample_ < 0.])
+
+    # FEATURE: Maximum of first order gradient of ECG
+    grad_max = np.max(grad)
+    # FEATURE: Minimum of first order gradient of ECG
+    grad_min = np.min(grad)
+    # FEATURE: Difference of the above
+    grad_diff = grad_max - grad_min
+    # FEATURE: Argument at gradient Minimum
+    grad_argmin = np.argmin(grad)
+    # FEATURE: Argument at gradient Maximum
+    grad_argmax = np.argmax(grad)
+    # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
+    grad_argdiff = grad_argmax - grad_argmin
+    grad_minmax_mean = np.mean(grad[max_arg:min_arg + 1])
+
+    for i in range(len(grad) - 1):
+        if grad[i] * grad[i + 1] < 0:
+            stat_points.append(i)
+    # FEATURE: The number of stationary points
+    n_stat_point = len(stat_points)
+    # FEATURE: The position of the first stationary point
+    arg_firststat = stat_points[0]
+
+    """
+    Think about a way to deal with nans in RFC (might not matter)
+    """
+    # for i in range(len(stat_points) - 1):
+    #     try:
+    #         stat_diffs.append(stat_points[i + 1] - stat_points[i])
+    #         if len(stat_diffs) < 6:
+    #             np.pad(stat_diffs, (0, 6 - len(stat_diffs)), 'constant')
+    #     except:
+    #         break
+
+
+
+    # FEATURE: Largest 9 frequencies in sample ECG. Largest first.
+
+    # largest_ft_freq = freq_samp[ft_samp_max10[::-1]].tolist()
+    # FEATURE: Absolute values of largest 9 freqs
+    # largest_ft_mag = ft_samp_abs[ft_samp_max10[::-1]].tolist()
+    # FEATURE: Sum of absolute values
+    # largest_sum = np.sum(ft_samp_abs[ft_samp_max10[::-1]])
+    # FEATURE: Absolute values normalised by sum.
+    # largest_ft_rel_mag = [mag/largest_sum for mag in largest_ft_mag]
+    # if len(freq_samp) != 31 or len(ft_samp_abs) != 31 or len(ft_samp_abs_rel) != 31:
+    #     print(len(freq_samp),len(ft_samp_abs),len(ft_samp_abs_rel))
+    features = np.array([max_value, min_value, minmax_dif, max_arg,min_arg,minmax_half,arghalf[0],half_ratio,
+                        std_full,std_premax,std_minmax,std_postmin,n_extrema_max,n_extrema_min,sample_int_pos,
+                        sample_int_neg,sample_int_ratio,grad_minmax_mean,
+                        sample_int, sample_len, grad_max, grad_min, grad_diff,
+                         grad_argmax, grad_argmin, grad_argdiff, n_stat_point, arg_firststat]
+                        + freq_samp.tolist() + ft_samp_abs.tolist() + ft_samp_abs_rel1.tolist() + ft_samp_abs_rel2.tolist() + ft_samp_abs_rel3.tolist()
+                        + cp.tolist() + [probe_point] + dist + unit_vector_x + unit_vector_y + theta + target + nearest + [start] + [end])
     return features
 
 
@@ -362,12 +548,12 @@ def polar_feature(X, feature, title, rmax=None, clim=None, condition=None):
     plt.figure(figsize=(8.5, 8.5))
     if condition == None:
         r = np.array(X[feature])
-        d = np.array(X['Distance'])
-        theta = np.array(X['Theta'])
+        d = np.array(X['Distance 0'])
+        theta = np.array(X['Theta 0'])
     else:
         r = np.array(X[feature])[condition]
-        d = np.array(X['Distance'])[condition]
-        theta = np.array(X['Theta'])[condition]
+        d = np.array(X['Distance 0'])[condition]
+        theta = np.array(X['Theta 0'])[condition]
     if np.max(r) < 0:
         r = np.absolute(r)
 
@@ -389,6 +575,123 @@ def polar_feature(X, feature, title, rmax=None, clim=None, condition=None):
     ax.grid(True)
     ax.set_title(title, va='bottom', fontsize = 20)
     plt.show()
+
+def fcplot(X, feature, clim = None, condition = None):
+    plt.figure(figsize =(8.5,8.5))
+    if condition == None:
+        rad = np.array(X['Distance 0'])
+        theta = np.array(X['Theta 0'])
+        fea = np.array(X[feature])
+    else:
+        rad = np.array(X['Distance 0'])[condition]
+        theta = np.array(X['Theta 0'])[condition]
+        fea = np.array(X[feature])[condition]
+
+    rad = rad[np.logical_not(np.isnan(theta))]
+    fea = fea[np.logical_not(np.isnan(theta))]
+    theta = theta[np.logical_not(np.isnan(theta))]
+
+    x = rad * np.cos(theta)
+    y = rad * np.sin(theta)
+
+    cm = plt.cm.get_cmap('coolwarm')
+    ax = plt.subplot()
+    PCM = ax.scatter(x, y, c=fea,  marker = '.', s = 10.,edgecolors = 'none', alpha = 0.98, cmap = cm)
+    if clim != None:
+        PCM.set_clim(vmin = clim[0],vmax = clim[1])
+    cbar = plt.colorbar(PCM, ax = ax, shrink=0.4, pad = 0.07)
+    plt.xlim([-200,200])
+    plt.ylim([-100,100])
+    plt.axes().set_aspect('equal')
+
+    ax.grid(True)
+    ax.set_title(str(feature), va='bottom', fontsize = 20)
+    plt.show()
+    return x,y,fea
+
+def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save  = False, ret = False):
+
+    try:
+        d = X['Distance 0']
+        t = X['Theta 0']
+    except:
+        d = X['Distance']
+        t = X['Theta']
+    if condition == None:
+        rad = np.array(d)
+        theta = np.array(t)
+        f = np.array(X[feature])
+
+        p = np.array(X['Probe Position'])
+        if split == 'mid':
+            p = (p%200 > 30) * (p%200 < 170)
+        else:
+            p = (p%200 < 30) + (p%200 > 170)
+
+    else:
+        rad = np.array(d)[condition]
+        theta = np.array(t)[condition]
+        f = np.array(X[feature])[condition]
+
+        p = np.array(X['Probe Position'])[condition]
+        if split == 'mid':
+            p = (p%200 > 30) * (p%200 < 170)
+        else:
+            p = (p%200 < 30) + (p%200 > 170)
+
+    if split == 'mid' or split == 'out':
+        rad =  rad[p]
+        theta = theta[p]
+        f = f[p]
+
+    rad = rad[np.logical_not(np.isnan(theta))]
+    f = f[np.logical_not(np.isnan(theta))]
+    theta = theta[np.logical_not(np.isnan(theta))]
+
+
+    x = rad * np.cos(theta)
+    y = rad * np.sin(theta)
+
+    x = x.astype('int')
+    y = y.astype('int')
+    x /= binsize
+    y /= binsize
+    x += np.absolute(np.min(x))
+    y += np.absolute(np.min(y))
+    z = np.zeros((np.max(y) + 1, np.max(x) + 1), dtype = 'float')
+    count = np.copy(z)
+
+    for i in range(len(x)):
+        z[y[i]][x[i]] += float(f[i])
+        count[y[i]][x[i]] += 1.
+    z /= count
+
+
+    # y_grad, x_grad = np.gradient(z)
+    cm = plt.cm.get_cmap('coolwarm')
+    # plt.figure()
+    # plt.imshow(x_grad, interpolation="nearest", origin="lower", cmap = cm)
+    # plt.colorbar(shrink=0.4, pad = 0.07)
+    # plt.figure()
+    # plt.imshow(y_grad, interpolation="nearest", origin="lower", cmap = cm)
+    # plt.colorbar(shrink=0.4, pad = 0.07)
+
+    if clim == None:
+        clim = [np.nanmin(z),np.nanmax(z)]
+        print(clim)
+    plt.figure(figsize =(10.,10.))
+    plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
+    plt.colorbar(shrink=0.4, pad = 0.07)
+    plt.xlabel('x', fontsize = 18)
+    plt.ylabel('y', fontsize = 18)
+    plt.title(feature, fontsize = 18)
+    if save:
+        plt.savefig(feature + '.png')
+    print(np.shape(z))
+    plt.show()
+
+    if ret:
+        return z
 
 
 def feature_prune(dataframe, delete_list):

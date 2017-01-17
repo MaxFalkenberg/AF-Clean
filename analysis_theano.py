@@ -7,6 +7,8 @@ from theano import function
 from theano.tensor.signal.conv import conv2d
 from itertools import product
 
+THEANO_FLAGS= 'floatX = float32, config.profile_memory = True'
+
 
 def af_starts(start, end):
     nu = []
@@ -195,20 +197,6 @@ class ECG:
         Xgrad = roll_compiledx(roll_y, Xgrad_base)
         Ygrad = roll_compiledy(roll_y, inp)
 
-        dif = T.fmatrix('dif')
-        den = T.fmatrix('den')
-        grad = T.ftensor3('grad')
-        subtot = (dif * grad) / den
-        F_subtot = function([grad,dif,den],subtot)
-
-        x_subtot = T.ftensor3('x_subtot')
-        y_subtot = T.ftensor3('y_subtot')
-        tot = T.sum(x_subtot, axis = [1,2]) + T.sum(y_subtot, axis = [1,2])
-        F_tot = function([x_subtot,y_subtot],tot)
-        ECG_values = []
-        # theano.printing.pydotprint(F_tot, outfile = 'theano.png')
-
-
         ecg_out = T.fvector('ecg_output')
         probe_var = T.imatrix('probe_ind')
         xg_var = T.ftensor4('xg_var')
@@ -246,8 +234,8 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
     # exc = f(exc) * (cg_factor ** 2)
 
     if probe_pos != None:
-        #If y coordinate of probe is not in tissue centre,
-        #this will roll matrix rows until probe y coordinate is in central row
+        # If y coordinate of probe is not in tissue centre,
+        # this will roll matrix rows until probe y coordinate is in central row
         exc = np.roll(exc,(shape[1]/2) - probe_pos[0],axis = 1)
 
     x_dif = np.gradient(exc,axis = 2)
