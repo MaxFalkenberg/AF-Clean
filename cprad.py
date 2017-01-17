@@ -18,7 +18,7 @@ from Functions import print_progress
 datafile = raw_input("Pandas dataframe to open: ")
 savefile = raw_input("Save name: ")
 X = pd.read_hdf("%s.h5" % datafile)
-cross_ref = X.pop('Distance')
+cross_ref = X.pop('Distance 0')
 
 recalls = list()
 thresholds = range(5, 25, 1)
