@@ -594,7 +594,7 @@ def fcplot(X, feature, clim = None, condition = None):
     x = rad * np.cos(theta)
     y = rad * np.sin(theta)
 
-    cm = plt.cm.get_cmap('coolwarm')
+    cm = plt.cm.get_cmap('gist_ncar')
     ax = plt.subplot()
     PCM = ax.scatter(x, y, c=fea,  marker = '.', s = 10.,edgecolors = 'none', alpha = 0.98, cmap = cm)
     if clim != None:
@@ -668,7 +668,7 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
 
 
     # y_grad, x_grad = np.gradient(z)
-    cm = plt.cm.get_cmap('coolwarm')
+    cm = plt.cm.get_cmap('brg')
     # plt.figure()
     # plt.imshow(x_grad, interpolation="nearest", origin="lower", cmap = cm)
     # plt.colorbar(shrink=0.4, pad = 0.07)

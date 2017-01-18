@@ -4,10 +4,11 @@ Forms the FC plot for the confusion matrix. Feed in a Classifier dataframe and i
 
 import pandas as pd
 import numpy as np
-from Functions import binplot
+from Functions import fcplot
 from sklearn.cross_validation import train_test_split
 import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
+from Functions import binplot
 
 datafile = raw_input("Classifier Pandas dataframe to open: ")
 bin_datafile = raw_input("Original Pandas dataframe to open: ")
@@ -56,4 +57,4 @@ B['Confusion'] = pd.Series(np.array(confusion_series_values), index=y_test.index
 print B.columns
 print B.head(5)
 
-binplot(B, 'Confusion', condition=y_test.index.values)
+binplot(B, 'Confusion', condition= np.array(y_test.index.values)[np.array(B['Confusion'])[y_test.index.values] < 1.5 ])
