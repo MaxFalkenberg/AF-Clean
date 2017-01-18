@@ -1,11 +1,13 @@
 import numpy as np
 import propagate
-import cPickle
+#import cPickle
 import theano
 import theano.tensor as T
 from theano import function
 from theano.tensor.signal.conv import conv2d
 from itertools import product
+
+THEANO_FLAGS= 'floatX = float32, config.profile_memory = True'
 
 
 def af_starts(start, end):
@@ -16,7 +18,7 @@ def af_starts(start, end):
         temp1 = []
         temp2 = []
         nu.append(i)
-        print 'nu = ', i
+        print( 'nu = ', i)
         for j in range(1):
             a = propagate.Heart(nu=i, delta=0.05, eps=0.05, rp=50, count_excited='start', print_t=False)
             a.set_pulse(220)
@@ -30,7 +32,7 @@ def af_starts(start, end):
 
 def af_duration(nu_list):
     for i in nu_list:
-        print 'nu = ', i
+        print( 'nu = ', i)
         in_af_temp = []
         mean_time_temp = []
         exc_cell_temp = []
@@ -46,6 +48,7 @@ def af_duration(nu_list):
             save('af_duration_data_nu' + str(i)[2:], z)
         except:
             return z
+
 
 def course_grain(excitation_grid, cg_factor):
     """ excitation_grid should be list of 2d arrays in time order where each 2d array
@@ -90,19 +93,27 @@ class ECG:
         self.z = probe_height
         self.probe_position = None
 
-        mode = str(raw_input('Would you like a range (input = range) of electrodes or a single electrode (input = single)? '))
+        print( '[r,s,c (have to set in code)]')
+        mode = str(input('Ecg position mode: '))
 
-        if mode == 'range':
-            electrode_spacing = int(raw_input('Choose Electrode Spacing: '))
+        self.mode = mode
+
+        if mode == 'r':
+            electrode_spacing = int(input('Choose Electrode Spacing: '))
             self.electrode_spacing = electrode_spacing
             self.probe_y = np.arange(electrode_spacing - 1,self.shape[0],electrode_spacing, dtype = 'float32')
             self.probe_x = np.arange(electrode_spacing - 1,self.shape[1],electrode_spacing, dtype = 'float32') - (electrode_spacing/2)
+            self.probe_x[self.probe_x > 99] += 1
             self.probe_position = list(product(self.probe_y, self.probe_x))
-        if mode == 'single':
-            y = int(raw_input('Electrode y position:'))
-            x = int(raw_input('Electrode x position:'))
+        if mode == 's':
+            y = input('Electrode y position:')
+            x = input('Electrode x position:')
             self.probe_y = np.array([y],dtype = 'int32')
             self.probe_x = np.array([x],dtype = 'int32')
+            self.probe_position = list(product(self.probe_y, self.probe_x))
+        if mode == 'c':
+            self.probe_y = np.array([100], dtype='int32')
+            self.probe_x = np.linspace(80, 120, 5, dtype='int32')
             self.probe_position = list(product(self.probe_y, self.probe_x))
 
         self.base_y_x = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
@@ -186,20 +197,6 @@ class ECG:
         Xgrad = roll_compiledx(roll_y, Xgrad_base)
         Ygrad = roll_compiledy(roll_y, inp)
 
-        dif = T.fmatrix('dif')
-        den = T.fmatrix('den')
-        grad = T.ftensor3('grad')
-        subtot = (dif * grad) / den
-        F_subtot = function([grad,dif,den],subtot)
-
-        x_subtot = T.ftensor3('x_subtot')
-        y_subtot = T.ftensor3('y_subtot')
-        tot = T.sum(x_subtot, axis = [1,2]) + T.sum(y_subtot, axis = [1,2])
-        F_tot = function([x_subtot,y_subtot],tot)
-        ECG_values = []
-        # theano.printing.pydotprint(F_tot, outfile = 'theano.png')
-
-
         ecg_out = T.fvector('ecg_output')
         probe_var = T.imatrix('probe_ind')
         xg_var = T.ftensor4('xg_var')
@@ -214,6 +211,7 @@ class ECG:
         F_ECG = function(inputs = [probe_var,xg_var,yg_var,xden_var,yden_var,xdif_var,ydif_var], outputs = result)
 
         return F_ECG(probe_index, Xgrad, Ygrad, self.xgrad_den,self.ygrad_den,self.shifted_x_x,self.base_y_y)
+
 
 
 def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at (shape[0]/2,shape[1]/2)
@@ -236,8 +234,8 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
     # exc = f(exc) * (cg_factor ** 2)
 
     if probe_pos != None:
-        #If y coordinate of probe is not in tissue centre,
-        #this will roll matrix rows until probe y coordinate is in central row
+        # If y coordinate of probe is not in tissue centre,
+        # this will roll matrix rows until probe y coordinate is in central row
         exc = np.roll(exc,(shape[1]/2) - probe_pos[0],axis = 1)
 
     x_dif = np.gradient(exc,axis = 2)
@@ -268,6 +266,7 @@ def ecg_data(excitation_grid, cg_factor, probe_pos = None): #By default probe at
             pass
     return ecg_values
 
+
 class ECG_single:
 
     def __init__(self,shape, probe_height):
@@ -287,7 +286,7 @@ class ECG_single:
 
         self.ex = T.dmatrix('ex') #Theano variable definition
         self.z1 = 50 - self.ex #Converts excitation state to time state counter.
-        self.z2 = (((((50 - self.z1) ** 0.3) * T.exp(-(self.z1**4)/1500000) + T.exp(-self.z1)) / 4.2) * 110) - 20
+        self.z2 = self.ex #(((((50 - self.z1) ** 0.3) * T.exp(-(self.z1**4)/1500000) + T.exp(-self.z1)) / 4.2) * 110) - 20
         self.f = function([self.ex], self.z2)
 
         self.xd = T.dmatrix('xd')
