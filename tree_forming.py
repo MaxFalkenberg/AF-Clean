@@ -8,7 +8,6 @@ import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
 X = pd.read_hdf("%s.h5" % datafile)
-output_choice = raw_input("Predict or Probabilities (pre\pro")
 model_choice = raw_input("Regressor or Classifier (r\c): ")
 save_deci = raw_input("Save model (y/n): ")
 modelname = None
@@ -26,6 +25,7 @@ if model_choice == 'r':
     print(metrics.mean_absolute_error(y_test, y_pred))
 
 if model_choice == 'c':
+    output_choice = raw_input("Predict or Probabilities (pre\pro")
     from sklearn.ensemble import RandomForestClassifier
     y = X.pop('Target 0')
     y = y.astype(int)
