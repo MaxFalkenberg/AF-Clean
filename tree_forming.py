@@ -25,7 +25,7 @@ if model_choice == 'r':
     print(metrics.mean_absolute_error(y_test, y_pred))
 
 if model_choice == 'c':
-    output_choice = raw_input("Predict or Probabilities (pre\pro")
+    output_choice = raw_input("Predict or Probabilities (pre\pro): ")
     from sklearn.ensemble import RandomForestClassifier
     y = X.pop('Target 0')
     y = y.astype(int)
@@ -40,7 +40,9 @@ if model_choice == 'c':
         print(metrics.confusion_matrix(y_test, y_pred))
     if output_choice == 'pro':
         y_prob = dtree.predict_proba(X_test)
+        y_pred = dtree.predict(X_test)
         print y_prob
+        print y_pred
 
 print '\n'
 if save_deci == 'y':
