@@ -2,13 +2,13 @@
 File to create the Random Forest models.
 """
 import pandas as pd
-import numpy as np
 from sklearn.cross_validation import train_test_split
 import sklearn.metrics as metrics
 import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
 X = pd.read_hdf("%s.h5" % datafile)
+output_choice = raw_input("Predict or Probabilities (pre\pro")
 model_choice = raw_input("Regressor or Classifier (r\c): ")
 save_deci = raw_input("Save model (y/n): ")
 modelname = None
@@ -32,11 +32,15 @@ if model_choice == 'c':
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
     dtree = RandomForestClassifier(n_estimators=15)
     dtree.fit(X_train, y_train)
-    y_pred = dtree.predict(X_test)
-    final_frame = pd.DataFrame({'Test': y_test, 'Prediction': y_pred})
-    print final_frame
-    print(metrics.classification_report(y_test, y_pred))
-    print(metrics.confusion_matrix(y_test, y_pred))
+    if output_choice == 'pre':
+        y_pred = dtree.predict(X_test)
+        final_frame = pd.DataFrame({'Test': y_test, 'Prediction': y_pred})
+        print final_frame
+        print(metrics.classification_report(y_test, y_pred))
+        print(metrics.confusion_matrix(y_test, y_pred))
+    if output_choice == 'pro':
+        y_prob = dtree.predict_proba(X_test)
+        print y_prob
 
 print '\n'
 if save_deci == 'y':
