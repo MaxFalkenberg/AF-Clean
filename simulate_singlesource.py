@@ -34,11 +34,13 @@ def convert(data, output):
 e = at.ECG(shape=(200, 200), probe_height=3)  # Assuming shape/probe height doesn't change.
 file_name = input("Name of output file: ")
 print("Nu Value:")
-nu = float(input())
-print(nu)
+# nu = float(input())
+
+# print(nu)
 
 h5f = h5py.File('%s.h5' % file_name, 'w')
 for index in range(Iterations):
+    nu = (np.random.rand() / 5) + 0.1
     start_time1 = time.time()
     index_grp = h5f.create_group('Index: %s' % index)
 
@@ -46,14 +48,15 @@ for index in range(Iterations):
     crit_position = np.random.randint(40000)
     y_rand,x_rand = np.unravel_index(crit_position,(200,200))
     a.set_pulse(60,[[y_rand],[x_rand]])
-    raw_data = a.propagate(960)
+    raw_data = a.propagate(1260)
     converted_data = list()
     grid = np.zeros(a.shape)
     convert(raw_data, converted_data)
 
     # Saving the critical circuit position
     index_grp.create_dataset('Crit Position', data=crit_position)
-    ecg = e.solve(converted_data[480:])
+    index_grp.create_dataset('Nu', data=nu)
+    ecg = e.solve(converted_data[1021:])
 
 
     index_grp.create_dataset('ECG', data=ecg)

@@ -11,6 +11,8 @@ from sklearn.tree import export_graphviz
 import subprocess
 import sys
 import scipy.signal as ss
+import nolds
+import scipy.stats as stats
 
 
 ##############################################################################################################
@@ -498,6 +500,175 @@ def feature_extract2(number, ecg_vals, cp, probes):
                          grad_argmax, grad_argmin, grad_argdiff, n_stat_point, arg_firststat]
                         + freq_samp.tolist() + ft_samp_abs.tolist() + ft_samp_abs_rel1.tolist() + ft_samp_abs_rel2.tolist() + ft_samp_abs_rel3.tolist()
                         + cp.tolist() + [probe_point] + dist + unit_vector_x + unit_vector_y + theta + target + nearest + [start] + [end])
+    return features
+
+def feature_extract3(number, ecg_vals, cp, probes):
+    """
+    Extracts features for the current itteration's ECG at the probe position
+    corresponding to probes[number]. Not currently written to return values in a
+    particular format.
+    :param number: Index in data.
+    :param ecg_vals: The ecg voltages.
+    :param cp: The position of the critical point.
+    :param probes: The probe position.
+    :return:
+    """
+    ecg = ecg_vals[number]
+    crit_point = cp.tolist() #Index of critical point
+    probe_point = np.ravel_multi_index(probes.astype('int')[number], (200, 200))
+    y,x = np.unravel_index(cp,(200,200))
+    # dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+
+    dist = []
+    unit_vector_x = []
+    unit_vector_y = []
+    vec_x = []
+    vec_y = []
+    theta = []
+    target = []
+    cp = np.atleast_1d(cp)
+    x = np.atleast_1d(x)
+    y = np.atleast_1d(y)
+    for i in range(len(cp)):
+        def cp_vector(y_probe,x_probe):
+            x_vector = int(x_probe) - x[i]
+            y_vector = int(y_probe) - y[i]
+            if y_vector > 100:
+                y_vector -= 200
+            elif y_vector <= -100:
+                y_vector += 200
+
+            r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+            c = (x_vector + (1j * y_vector)) /r
+            theta = np.angle(c)
+            return r,float(x_vector)/r,float(y_vector)/r,theta,float(x_vector),float(y_vector)
+        a,b,c,d,e,f = cp_vector(probes[number][0],probes[number][1])
+        if a <= np.sqrt(200):
+            t = 1
+        else:
+            t = 0
+        dist.append(a)
+        unit_vector_x.append(b)
+        unit_vector_y.append(c)
+        theta.append(d)
+        target.append(t)
+        vec_x.append(e)
+        vec_y.append(f)
+    nearest = [np.argmin(dist)]
+
+    ft = rfft(ecg)  # Real valued FT of original ECG
+    ft_abs = np.absolute(ft)  # Takes absolute value of FT
+    ft_max10 = np.argsort(ft_abs)[-4:]  # Finds 9 largest frequency fundamentals
+    ft_max = np.min(ft_max10)
+    freq = np.fft.rfftfreq(ecg.size, d=1.)
+    freq_main = np.fft.rfftfreq(ecg.size, d=1.)[ft_max]
+    # FEATURE (Should be the same for all ECGs if correctly sampled.)
+    period = int(1. / freq_main)
+    ft[ft_max + 1:] = 0
+    ft[:ft_max] = 0
+    ift = irfft(ft)
+    start = np.argmax(ift[:period])
+    #start = 0
+    end = start + period
+    sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
+    sample_double =ecg[start:end + (2 * period)]
+    length,minmax,mean,var,skew,kurt = stats.describe(sample_)
+    min_value,max_value = minmax
+    #mean = np.mean(sample_)
+    ft_samp = rfft(sample_)[:4]  # Real valued FT of sample ECG
+    freq_samp = np.fft.rfftfreq(sample_.size, d=1.)[:4]
+    ft_samp_abs = np.absolute(ft_samp)  # Takes absolute value of FT
+    ft_samp_abs_rel1 = ft_samp_abs / ft_samp_abs[1]
+    ft_samp_abs_rel2 = ft_samp_abs / ft_samp_abs[2]
+    ft_samp_abs_rel3 = ft_samp_abs / ft_samp_abs[3]
+    # ft_samp_max10 = np.argsort(ft_samp_abs)[-9:]  # Finds 9 largest frequency fundamentals
+
+    grad = np.gradient(sample_)
+    stat_points = []
+    stat_diffs = []
+
+    #entropy = nolds.sampen(sample_double)
+    #hurst = nolds.hurst_rs(sample_double)
+    # dfa = nolds.dfa(sample_double)
+    #corr_dim = nolds.corr_dim(sample_double,1)
+
+    # FEATURE: Maximum value of sample ECG
+    #max_value = np.max(sample_)
+    max_arg = np.argmax(sample_)
+    # FEATURE: Minimum value of sample ECG
+    #min_value = np.min(sample_)
+    min_arg = np.argmin(sample_)
+    # FEATURE: Difference of the above
+    minmax_dif = max_value - min_value
+    minmax_half = (max_value + min_value)/2
+    try:
+        arghalf = np.argwhere(sample_[max_arg:min_arg] < minmax_half)[0]
+    except:
+        arghalf = np.array([0])
+    half_ratio = float(arghalf - max_arg) / float(min_arg - max_arg)
+    #std_full = np.std(sample_)
+
+    std_postmin = np.std(sample_[min_arg:])
+    # FEATURE: Sample ECG intensity defined as sum of absolute voltages
+    sample_int = np.sum(np.absolute(sample_))
+    sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    sample_int_neg = np.sum(sample_[sample_ < 0.])
+    # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
+    sample_len = len(sample_)
+    # FEATURE: Sum of all positive voltages
+    sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # Feature: Sum of all negative voltages
+    sample_int_neg = np.sum(sample_[sample_ < 0.])
+
+    # FEATURE: Maximum of first order gradient of ECG
+    grad_max = np.max(grad)
+    # FEATURE: Minimum of first order gradient of ECG
+    grad_min = np.min(grad)
+    # FEATURE: Difference of the above
+    grad_diff = grad_max - grad_min
+    # FEATURE: Argument at gradient Minimum
+    grad_argmin = np.argmin(grad)
+    # FEATURE: Argument at gradient Maximum
+    grad_argmax = np.argmax(grad)
+    # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
+    grad_argdiff = grad_argmax - grad_argmin
+
+
+    g_temp = grad[max_arg:min_arg + 1]
+    if len(g_temp) == 0:
+        g_temp = grad[min_arg:max_arg + 1]
+        grad_minmax_mean =  - np.mean(g_temp)
+    else:
+        grad_minmax_mean = np.mean(g_temp)
+
+    if len(sample_[:max_arg]) == 0:
+        std_premax = - np.std(sample_[max_arg:])
+    else:
+        std_premax = np.std(sample_[:max_arg])
+    if len(sample_[max_arg:min_arg]) == 0:
+        std_minmax =  - np.std(sample_[min_arg:max_arg])
+    else:
+        std_minmax = np.std(sample_[max_arg:min_arg])
+
+
+    covariance = np.cov(sample_)
+    for i in range(len(grad) - 1):
+        if grad[i] * grad[i + 1] < 0:
+            stat_points.append(i)
+    # FEATURE: The position of the first stationary point
+    arg_firststat = stat_points[0]
+
+    """
+    Think about a way to deal with nans in RFC (might not matter)
+    """
+    #entropy,hurst,corr_dim,dfa,
+    features = np.array([covariance,mean,skew,kurt,max_value, min_value, minmax_dif, max_arg,min_arg,minmax_half,arghalf[0],half_ratio,
+                        var,std_premax,std_minmax,std_postmin,sample_int_pos,
+                        sample_int_neg,grad_minmax_mean,
+                        sample_int, sample_len, grad_max, grad_min, grad_diff,
+                         grad_argmax, grad_argmin, grad_argdiff, arg_firststat]
+                        + freq_samp.tolist() + ft_samp_abs.tolist() + ft_samp_abs_rel1.tolist() + ft_samp_abs_rel2.tolist() + ft_samp_abs_rel3.tolist()
+                        + cp.tolist() + [probe_point] + dist + vec_x + vec_y + unit_vector_x + unit_vector_y + theta + target + nearest)
     return features
 
 

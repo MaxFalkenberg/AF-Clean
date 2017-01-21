@@ -15,7 +15,7 @@ X = pd.read_hdf("%s.h5" % datafile)
 y = X.pop('Target 0')
 y = y.astype(int)
 
-rows = 25
+rows = 15
 robustness_datagrid = np.zeros((rows, len(X.columns)))
 
 pp = 0
