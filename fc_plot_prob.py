@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.cross_validation import train_test_split
 import matplotlib.pyplot as plt
-from Functions import binplot, fcplot
+from Functions import binplot
 from sklearn.ensemble import RandomForestClassifier
 
 datafile = raw_input("Classifier Pandas dataframe to open: ")
