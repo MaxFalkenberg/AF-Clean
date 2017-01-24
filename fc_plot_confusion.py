@@ -54,7 +54,4 @@ def confusion_conditions():
 
 confusion_series_values = confusion_conditions()
 B['Confusion'] = pd.Series(np.array(confusion_series_values), index=y_test.index)
-print B.columns
-print B.head(5)
-
 binplot(B, 'Confusion', condition= np.array(y_test.index.values)[np.array(B['Confusion'])[y_test.index.values] < 1.5 ])
