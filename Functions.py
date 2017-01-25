@@ -680,16 +680,17 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
         clim = [np.nanmin(z),np.nanmax(z)]
         print(clim)
     if not ret:
-        plt.figure(figsize =(10.,10.))
-        plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
-        plt.colorbar(shrink=0.4, pad = 0.07)
-        plt.xlabel('x', fontsize = 18)
-        plt.ylabel('y', fontsize = 18)
-        plt.title(feature, fontsize = 18)
-        if save:
-            plt.savefig(feature + '.png')
-        print(np.shape(z))
-        plt.show()
+        return z, clim, feature
+        # plt.figure(figsize =(10.,10.))
+        # plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
+        # plt.colorbar(shrink=0.4, pad = 0.07)
+        # plt.xlabel('x', fontsize = 18)
+        # plt.ylabel('y', fontsize = 18)
+        # plt.title(feature, fontsize = 18)
+        # if save:
+        #     plt.savefig(feature + '.png')
+        # print(np.shape(z))
+        # plt.show()
     if ret:
         return np.array(z)
 
