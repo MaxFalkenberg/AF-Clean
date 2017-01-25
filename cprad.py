@@ -21,7 +21,7 @@ X = pd.read_hdf("%s.h5" % datafile)
 cross_ref = X.pop('Distance 0')
 
 recalls = list()
-thresholds = 5
+thresholds = range(5)
 for t in thresholds:
     print "\n"
     y = cross_ref.apply(lambda x: 1.0 if x <= 5 else 0.0)
