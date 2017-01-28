@@ -168,7 +168,7 @@ if output_figure == "hist":
     binned_grid = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=True)
     processed_grid = np.nan_to_num(binned_grid)
     flat_processed_list = [prob for prob_list in processed_grid for prob in prob_list]
-    plt.hist(flat_processed_list, bins=50)
+    plt.hist(flat_processed_list, bins=50, range=[0.2, 1])
     plt.title("Histogram of the probabilty map.")
     plt.ylabel("Count")
     plt.xlabel("Bins")
