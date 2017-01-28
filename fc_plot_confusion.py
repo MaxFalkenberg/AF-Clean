@@ -4,24 +4,12 @@ Forms the FC plot for the confusion matrix. Feed in a Classifier dataframe and i
 
 import pandas as pd
 import numpy as np
-from Functions import fcplot
 from sklearn.cross_validation import train_test_split
+from Functions import distance, binplot, print_progress
 import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
-from Functions import binplot
-
-datafile = raw_input("Classifier Pandas dataframe to open: ")
-bin_datafile = raw_input("Original Pandas dataframe to open: ")
-X = pd.read_hdf("%s.h5" % datafile)
-B = pd.read_hdf("%s.h5" % bin_datafile)
-y = X.pop('Target 0')
-y = y.astype(int)
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-
 from sklearn.ensemble import RandomForestClassifier
-dtree = RandomForestClassifier(n_estimators=15)
-dtree.fit(X_train, y_train)
-y_pred = dtree.predict(X_test)
+import pickle
 
 
 def confusion_conditions():
@@ -50,8 +38,85 @@ def confusion_conditions():
     confusion_series = pd.Series(np.array(values))
     print confusion_series.value_counts()
     print(metrics.confusion_matrix(y_test, y_pred))
+    print(metrics.classification_report(y_test, y_pred))
     return confusion_series.values
 
-confusion_series_values = confusion_conditions()
-B['Confusion'] = pd.Series(np.array(confusion_series_values), index=y_test.index)
-binplot(B, 'Confusion', condition= np.array(y_test.index.values)[np.array(B['Confusion'])[y_test.index.values] < 1.5 ])
+datafile = raw_input("Pandas dataframe to open: ")
+bin_datafile = raw_input("Original Pandas dataframe to open: ")
+
+while True:
+    threshold_type = raw_input("Threshold type (c,e,re): ")
+    if threshold_type in ['c', 'e', 're']:
+        break
+
+X = pd.read_hdf("%s.h5" % datafile)
+B = pd.read_hdf("%s.h5" % bin_datafile)
+
+if threshold_type == 'c':
+    y = X.pop('Target 0')
+    y = y.astype(int)
+
+if threshold_type == 'e':
+    # Removes the target column as not needed
+    remove_pop = X.pop('Target 0')
+    y_scale_input = float(raw_input("y scale: "))
+    x_scale_input = float(raw_input("x scale: "))
+    y = pd.Series(distance(B['Crit Position 0'], B['Probe Position'], y_scale=y_scale_input, x_scale=x_scale_input))
+    y = y.apply(lambda x: 1 if x <= np.sqrt(200) else 0)
+    y = y.astype(int)
+
+if threshold_type == 're':
+    # Need to add this in.
+    y_scale_range = np.arange(1.0, 4.5, 0.5)
+    x_scale_range = np.arange(0.5, 1.5, 0.5)
+    results_dict = {}
+    remove_pop = X.pop('Target 0')
+
+    pp = 0
+    print_progress(pp, len(y_scale_range), prefix='Progress:', suffix='Complete', bar_length=50)
+    for y_scale in y_scale_range:
+        for x_scale in x_scale_range:
+            y = pd.Series(
+                distance(B['Crit Position 0'], B['Probe Position'], y_scale=y_scale, x_scale=x_scale))
+            y = y.apply(lambda x: 1 if x <= np.sqrt(200) else 0)
+            y = y.astype(int)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+            dtree = RandomForestClassifier(n_estimators=15)
+            dtree.fit(X_train, y_train)
+            y_pred = dtree.predict(X_test)
+            confusion_mat = metrics.confusion_matrix(y_test, y_pred)
+            results_dict[(y_scale, x_scale)] = confusion_mat
+
+        pp += 1
+        print_progress(pp, len(y_scale_range), prefix='Progress:', suffix='Complete', bar_length=50)
+
+    with open('%s_confusion_series.p' % datafile, 'wb') as f:
+        pickle.dump(results_dict, f)
+
+if threshold_type != 're':
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+    dtree = RandomForestClassifier(n_estimators=15)
+    dtree.fit(X_train, y_train)
+    y_pred = dtree.predict(X_test)
+
+    confusion_series_values = confusion_conditions()
+    B['Confusion'] = pd.Series(np.array(confusion_series_values), index=y_test.index)
+    z, clim, feature = binplot(B, 'Confusion', condition= np.array(y_test.index.values))
+    # [np.array(B['Confusion'])[y_test.index.values] < 1.5 ])
+
+    # Need to alter still
+    # z_shape = z.shape
+    # z = [l[i] for i in range(z.shape[1]) for l in z]
+    # print z
+    # z = [x if x >= 2.5 else float('NaN') for x in z]
+    # z = np.array(z).reshape(z_shape)
+
+    cm = plt.cm.get_cmap('brg')
+    plt.figure(figsize =(10.,10.))
+    plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
+    plt.colorbar(shrink=0.4, pad = 0.07)
+    plt.xlabel('x', fontsize = 18)
+    plt.ylabel('y', fontsize = 18)
+    plt.title(feature, fontsize = 18)
+    print(np.shape(z))
+    plt.show()
