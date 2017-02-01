@@ -67,7 +67,7 @@ if threshold_type == 'e':
 
 if threshold_type == 're':
     # Need to add this in.
-    y_scale_range = np.arange(1.0, 4.5, 0.5)
+    y_scale_range = np.arange(1.0, 8.5, 0.5)
     x_scale_range = np.arange(0.5, 1.5, 0.5)
     results_dict = {}
     remove_pop = X.pop('Target 0')
@@ -90,7 +90,7 @@ if threshold_type == 're':
         pp += 1
         print_progress(pp, len(y_scale_range), prefix='Progress:', suffix='Complete', bar_length=50)
 
-    with open('%s_confusion_series.p' % datafile, 'wb') as f:
+    with open('%s_conf_s.p' % datafile, 'wb') as f:
         pickle.dump(results_dict, f)
 
 if threshold_type != 're':
