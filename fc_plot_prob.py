@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.cross_validation import train_test_split
 import matplotlib.pyplot as plt
+from Functions import distance
 from Functions import binplot
 from sklearn.ensemble import RandomForestClassifier
 
@@ -19,12 +20,28 @@ thresholds = [5, 10, 15, 20]
 # hist - probabilty histogram
 
 while True:
-    output_figure = raw_input("Output figure (probm, r_probm, probsl, r_probsl, hist): ")
-    if output_figure in ["probm", "r_probm", "probsl", "r_probsl", "hist"]:
+    output_figure = raw_input("Output figure (probm, e_probm, r_probm, probsl, e_probsl r_probsl, hist): ")
+    if output_figure in ["probm", "e_probm", "r_probm", "probsl", "e_probsl", "r_probsl", "hist"]:
         break
 
 X = pd.read_hdf("%s.h5" % datafile)
 B = pd.read_hdf("%s.h5" % bin_datafile)
+
+if output_figure in ["e_probm", "e_probsl"]:
+    # Removes the target column as not needed
+    remove_pop = X.pop('Target 0')
+    y_scale_input = float(raw_input("y scale: "))
+    x_scale_input = float(raw_input("x scale: "))
+    y = pd.Series(distance(B['Crit Position 0'], B['Probe Position'], y_scale=y_scale_input, x_scale=x_scale_input))
+    y = y.apply(lambda x: 1 if x <= np.sqrt(200) else 0)
+    y = y.astype(int)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+    dtree = RandomForestClassifier(n_estimators=15)
+    dtree.fit(X_train, y_train)
+    y_pred = dtree.predict(X_test)
+    y_prob = dtree.predict_proba(X_test)
+    on_cp_prob = [probs[1] for probs in y_prob]
+    B['Positive Crit Prob'] = pd.Series(np.array(on_cp_prob), index=y_test.index.values)
 
 if output_figure in ["probm", "probsl", "hist"]:
     y = X.pop('Target 0')
@@ -54,7 +71,7 @@ if output_figure in ["r_probm", "r_probsl"]:
         binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=False)
         binned_dict[t] = (binned_grid, clim, feature)
 
-if output_figure == "probm":
+if output_figure in ["probm", "e_probm"]:
     # ret = False for probabilty map.
     binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=False)
     plt.figure(figsize=(10., 10.))
@@ -77,7 +94,7 @@ if output_figure == 'r_probm':
     fig.colorbar(im, cax=cbar_ax)
     plt.show()
 
-if output_figure == "probsl":
+if output_figure in ["probsl", "e_probsl"]:
     binned_grid = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=True)
     processed_grid = np.nan_to_num(binned_grid)
     flat_processed_list = [prob for prob_list in processed_grid for prob in prob_list]
