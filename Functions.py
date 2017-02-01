@@ -509,11 +509,11 @@ def visualize_tree(tree, feature_names):
     tree -- scikit-learn DecsisionTree.
     feature_names -- list of feature names.
     """
-    with open("dt2.dot", 'w') as f:
+    with open("dt3.dot", 'w') as f:
         export_graphviz(tree, out_file=f,
                         feature_names=feature_names, filled=True, rounded=True)
 
-    command = ["dot", "-Tpdf", "dt2.dot", "-o", "dt2.pdf"]
+    command = ["dot", "-Tpdf", "dt3.dot", "-o", "dt3.pdf"]
     try:
         subprocess.check_call(command)
     except:
