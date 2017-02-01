@@ -8,7 +8,7 @@ import cPickle
 
 datafile = raw_input("Pandas dataframe to open: ")
 X = pd.read_hdf("%s.h5" % datafile)
-model_choice = raw_input("Regressor or Classifier (r\c): ")
+model_choice = raw_input("Regressor or Classifier (r/c): ")
 save_deci = raw_input("Save model (y/n): ")
 modelname = None
 if save_deci == 'y':
