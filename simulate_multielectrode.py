@@ -33,14 +33,14 @@ def convert(data, output):
 
 e = at.ECG(shape=(200, 200), probe_height=3)  # Assuming shape/probe height doesn't change.
 file_name = input("Name of output file: ")
-# print("Nu Value:")
-# nu = float(input())
+print("Nu Value:")
+nu = float(input())
 
 # print(nu)
 
 h5f = h5py.File('%s.h5' % file_name, 'w')
 for index in range(Iterations):
-    nu = (np.random.rand() / 5) + 0.1
+    #nu = (np.random.rand() / 5) + 0.1
     start_time1 = time.time()
     index_grp = h5f.create_group('Index: %s' % index)
 
@@ -61,6 +61,7 @@ for index in range(Iterations):
 
     index_grp.create_dataset('ECG', data=ecg)
     index_grp.create_dataset('Probe Positions', data=e.probe_position)
+    # index_grp.create_dataset('Probe Number', data=e.probe_number)
     print("--- Iteration %s: %s seconds ---" % (index, time.time() - start_time1))
 
 h5f.close()

@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from Functions import feature_extract3
+from Functions import feature_extract_nu
 import numpy as np
 import h5py
 from numpy.fft import rfft
@@ -31,10 +31,10 @@ theta = ['Theta %s' % x for x in range(cp_number)]
 targ = ['Target %s' % x for x in range(cp_number)]
 #'Entropy','Hurst Exponent','Correlation Dimension','Detrended Fluctuation Analysis',
 
-columns = ['Tissue Index','Probe Number','Covariance','Mean','Skewness','Kurtosis','Max Value', 'Min Value', 'Minmax Diff', 'Max Arg', 'Min Arg','Minmax Half','Arg Half','Half Ratio','STD Full','STD Premax','STD Minmax','STD Postmin', 'Positive Sample Intensity','Negative Sample Intensity','Grad Minmax Mean', 'Sample Intensity', 'Sample Length', 'Grad Max','Grad Min',
+columns = ['Covariance','Mean','Skewness','Kurtosis','Max Value', 'Min Value', 'Minmax Diff', 'Max Arg', 'Min Arg','Minmax Half','Arg Half','Half Ratio','STD Full','STD Premax','STD Minmax','STD Postmin', 'Positive Sample Intensity','Negative Sample Intensity','Grad Minmax Mean', 'Sample Intensity', 'Sample Length', 'Grad Max','Grad Min',
            'Grad Diff', 'Grad Argmax', 'Grad Argmin', 'Grad Argdiff', 'First Station'] \
           + largest_ft_freq_columns + largest_ft_mag_columns + largest_ft_rel1_mag_columns + largest_ft_rel2_mag_columns + largest_ft_rel3_mag_columns +\
-           crit_pos + ['Probe Position'] + dist + vecx + vecy +uvecx + uvecy + theta + targ + ['Nearest Crit Position']
+           crit_pos + ['Probe Position'] + dist + vecx + vecy +uvecx + uvecy + theta + targ + ['Nearest Crit Position', 'Nu']
 
 memory_condition = False
 
@@ -62,13 +62,14 @@ for index in range(index_num):
     group = trainfile.get('Index: %s' % index)
     cp = np.array(group['Crit Position'])
     probes = np.array(group['Probe Positions']).astype(int)
+    nu = np.array(group['Nu'])
     ecg_vals = np.array(group['ECG'])
     ecg_0 = ecg_vals[0]
     fft_0 = rfft(ecg_0)
     i += 1
     print_progress(i, index_num, prefix='Progress:', suffix='Complete', bar_length=50)
     for number in range(probe_num):
-        feature_grid[count] = feature_extract3(index,number, ecg_vals=ecg_vals, cp=cp, probes=probes)
+        feature_grid[count] = feature_extract_nu(number, ecg_vals=ecg_vals, cp=cp, probes=probes, nu = nu)
         count += 1
 
 df_index = range(index_num * probe_num)

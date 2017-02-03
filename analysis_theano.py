@@ -93,7 +93,7 @@ class ECG:
         self.z = probe_height
         self.probe_position = None
 
-        print( '[r,s,c (have to set in code)]')
+        print( '[r,s,g,c (have to set in code)]')
         mode = str(input('Ecg position mode: '))
 
         self.mode = mode
@@ -114,6 +114,45 @@ class ECG:
         if mode == 'c':
             self.probe_y = np.array([100], dtype='int32')
             self.probe_x = np.linspace(80, 120, 5, dtype='int32')
+            self.probe_position = list(product(self.probe_y, self.probe_x))
+        if mode == 'g':
+            # x = np.random.randint(10,191)
+            # y = np.random.randint(200)
+            # probes = np.array([[y,x],[y + 4, x],[y - 4, x],[y,x + 3],[y, x - 3],[y-3,x-4],[y-3,x+4],[y+3,x-4],[y+3,x+4]])
+            # self.probe_x = probes[:,1]
+            # self.probe_y = probes[:,0]
+            # probes[:,0] %= 200
+            # self.probe_position = probes.tolist()
+            def pr(a,b):
+                return list(product(a, b))
+            pa = np.array([20,23,26])
+            pb = np.array([40,43,46])
+            pc = np.array([60,63,66])
+            pd = np.array([80,83,86])
+            pe = np.array([113,116,119])
+            pf = np.array([133,136,139])
+            pg = np.array([153,156,159])
+            ph = np.array([173,176,179])
+            p_all = [pa,pb,pc,pd,pe,pf,pg,ph]
+            self.probe_x = np.concatenate(p_all)
+            self.probe_y = np.copy(self.probe_x)
+            self.probe_position = []
+            self.probe_number = []
+            k = 0
+            for i in range(len(p_all)):
+                for j in range(len(p_all)):
+                    prod = pr(p_all[i],p_all[j])
+                    self.probe_position += prod
+                    for l in range(len(prod)):
+                        self.probe_number.append(k)
+                    k+= 1
+
+        if mode == 'g_rand':
+            x = np.random.randint(10,191)
+            y = np.random.randint(200)
+            self.probe_x = np.array([x-3,x,x+3])
+            self.probe_y = np.array([y-3,y,y+3])
+            self.probe_y %= 200
             self.probe_position = list(product(self.probe_y, self.probe_x))
 
         self.base_y_x = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
