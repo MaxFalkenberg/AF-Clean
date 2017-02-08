@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from Functions import distance
 from Functions import binplot
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
 
 datafile = raw_input("Classifier Pandas dataframe to open: ")
 bin_datafile = raw_input("Original Pandas dataframe to open: ")
@@ -18,6 +20,21 @@ thresholds = [5, 10, 15, 20]
 # r_probm - probabilty map with diffrent thresholds
 # probsl - probabilty slices
 # hist - probabilty histogram
+
+while True:
+    model = raw_input("ML model (RF, GNB, LR): ")
+    if model in ['RF', 'GNB', 'LR']:
+        break
+
+if model == 'RF':
+    ML = RandomForestClassifier(n_estimators=15)
+
+if model == 'GNB':
+    ML = GaussianNB()
+
+if model == 'LR':
+    ML = LogisticRegression()
+
 
 while True:
     output_figure = raw_input("Output figure (probm, e_probm, r_probm, probsl, e_probsl r_probsl, hist): ")
@@ -35,22 +52,20 @@ if output_figure in ["e_probm", "e_probsl"]:
     y = pd.Series(distance(B['Crit Position 0'], B['Probe Position'], y_scale=y_scale_input, x_scale=x_scale_input))
     y = y.apply(lambda x: 1 if x <= np.sqrt(200) else 0)
     y = y.astype(int)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    dtree = RandomForestClassifier(n_estimators=15)
-    dtree.fit(X_train, y_train)
-    y_pred = dtree.predict(X_test)
-    y_prob = dtree.predict_proba(X_test)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    ML.fit(X_train, y_train)
+    y_pred = ML.predict(X_test)
+    y_prob = ML.predict_proba(X_test)
     on_cp_prob = [probs[1] for probs in y_prob]
     B['Positive Crit Prob'] = pd.Series(np.array(on_cp_prob), index=y_test.index.values)
 
 if output_figure in ["probm", "probsl", "hist"]:
     y = X.pop('Target 0')
     y = y.astype(int)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    dtree = RandomForestClassifier(n_estimators=15)
-    dtree.fit(X_train, y_train)
-    y_pred = dtree.predict(X_test)
-    y_prob = dtree.predict_proba(X_test)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    ML.fit(X_train, y_train)
+    y_pred = ML.predict(X_test)
+    y_prob = ML.predict_proba(X_test)
     on_cp_prob = [probs[1] for probs in y_prob]
     B['Positive Crit Prob'] = pd.Series(np.array(on_cp_prob), index=y_test.index.values)
 
@@ -61,11 +76,11 @@ if output_figure in ["r_probm", "r_probsl"]:
     for t in thresholds:
         y = cross_ref.apply(lambda x: 1.0 if x <= t else 0.0)
         y = y.astype(int)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1, test_size=0.25)
-        dtree = RandomForestClassifier(n_estimators=15)
-        dtree.fit(X_train, y_train)
-        y_pred = dtree.predict(X_test)
-        y_prob = dtree.predict_proba(X_test)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+        ML_ = ML
+        ML_.fit(X_train, y_train)
+        y_pred = ML_.predict(X_test)
+        y_prob = ML_.predict_proba(X_test)
         on_cp_prob = [probs[1] for probs in y_prob]
         B['Positive Crit Prob'] = pd.Series(np.array(on_cp_prob), index=y_test.index.values)
         binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=False)
@@ -122,14 +137,14 @@ if output_figure in ["probsl", "e_probsl"]:
 
     plt.figure(1)
     plt.plot(range(len(x_slice)), x_slice)
-    plt.title("Probabilty Slice through centre (constant x) [SS_2000itt_n_nup2_Cup.h5]")
+    plt.title("Probabilty Slice through centre (constant x)")
     plt.xlabel("y")
-    plt.ylabel("Probabilty for positive output (RandomForest)")
+    plt.ylabel("Probabilty for positive output (%s)" % model)
     plt.figure(2)
     plt.plot(range(len(y_slice)), y_slice)
-    plt.title("Probabilty Slice through centre (constant y) [SS_2000itt_n_nup2_Cup.h5]")
+    plt.title("Probabilty Slice through centre (constant y)")
     plt.xlabel("x")
-    plt.ylabel("Probabilty for positive output (RandomForest)")
+    plt.ylabel("Probabilty for positive output (%s)" % model)
     plt.show()
 
 if output_figure == "r_probsl":
@@ -171,11 +186,11 @@ if output_figure == "r_probsl":
         ax1.plot(range(len(x_slice)), x_slice, label='Threshold: ' + str(t))
         ax1.set_title("Constant x")
         ax1.set_xlabel("y")
-        ax1.set_ylabel("Probabilty for positive output (RandomForest)")
+        ax1.set_ylabel("Probabilty for positive output (%s)" % model)
         ax2.plot(range(len(y_slice)), y_slice, label='Threshold: ' + str(t))
         ax2.set_title("Constant y")
         ax2.set_xlabel("x")
-        ax2.set_ylabel("Probabilty for positive output (RandomForest)")
+        ax2.set_ylabel("Probabilty for positive output (%s)" % model)
 
     plt.legend(loc='upper right')
     plt.show()

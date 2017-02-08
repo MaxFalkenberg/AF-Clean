@@ -1,5 +1,6 @@
 """
 Forms the FC plot for the confusion matrix. Feed in a Classifier dataframe and it's original dataframe.
+Also can save a range of scaling targets.
 """
 
 import pandas as pd
@@ -9,6 +10,8 @@ from Functions import distance, binplot, print_progress
 import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
 import pickle
 
 
@@ -45,6 +48,20 @@ datafile = raw_input("Pandas dataframe to open: ")
 bin_datafile = raw_input("Original Pandas dataframe to open: ")
 
 while True:
+    model = raw_input("ML model (RF, GNB, LR): ")
+    if model in ['RF', 'GNB', 'LR']:
+        break
+
+if model == 'RF':
+    ML = RandomForestClassifier(n_estimators=15)
+
+if model == 'GNB':
+    ML = GaussianNB()
+
+if model == 'LR':
+    ML = LogisticRegression()
+
+while True:
     threshold_type = raw_input("Threshold type (c,e,re): ")
     if threshold_type in ['c', 'e', 're']:
         break
@@ -68,7 +85,7 @@ if threshold_type == 'e':
 if threshold_type == 're':
     # Need to add this in.
     y_scale_range = np.arange(1.0, 8.5, 0.5)
-    x_scale_range = np.arange(0.5, 1.5, 0.5)
+    x_scale_range = np.arange(0.5, 2.0, 0.5)
     results_dict = {}
     remove_pop = X.pop('Target 0')
 
@@ -80,10 +97,10 @@ if threshold_type == 're':
                 distance(B['Crit Position 0'], B['Probe Position'], y_scale=y_scale, x_scale=x_scale))
             y = y.apply(lambda x: 1 if x <= np.sqrt(200) else 0)
             y = y.astype(int)
-            X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-            dtree = RandomForestClassifier(n_estimators=15)
-            dtree.fit(X_train, y_train)
-            y_pred = dtree.predict(X_test)
+            X_train, X_test, y_train, y_test = train_test_split(X, y)
+            ML_ = ML
+            ML_.fit(X_train, y_train)
+            y_pred = ML_.predict(X_test)
             confusion_mat = metrics.confusion_matrix(y_test, y_pred)
             results_dict[(y_scale, x_scale)] = confusion_mat
 
@@ -94,10 +111,9 @@ if threshold_type == 're':
         pickle.dump(results_dict, f)
 
 if threshold_type != 're':
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    dtree = RandomForestClassifier(n_estimators=15)
-    dtree.fit(X_train, y_train)
-    y_pred = dtree.predict(X_test)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    ML.fit(X_train, y_train)
+    y_pred = ML.predict(X_test)
 
     confusion_series_values = confusion_conditions()
     B['Confusion'] = pd.Series(np.array(confusion_series_values), index=y_test.index)
