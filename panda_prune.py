@@ -27,8 +27,8 @@ filename = raw_input("Saved file name: ")
 # Need to Alter this to be consistent with double (or more) sources.
 probe_features = ['Crit Position', 'Crit Position 0', 'Crit Position 1', 'Probe Position',
                   'Unit Vector X', 'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y', 'Unit Vector Y 0',
-                  'Unit Vector Y 1', 'Theta', 'Theta 0', 'Theta 1',
-                  'Nearest Crit Position','Vector X 0','Vector Y 0']
+                  'Unit Vector Y 1', 'Theta', 'Theta 0', 'Theta 1', 'Probe Number',
+                  'Nearest Crit Position','Vector X 0','Vector Y 0','Sample Length','Nu']
 
 # Deletes features from the dataframe that are in probe_features
 all_features = list(dataframe.columns)

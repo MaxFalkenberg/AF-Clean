@@ -19,7 +19,12 @@ dtree = None
 
 if model_choice == 'r':
     from sklearn.ensemble import RandomForestRegressor
-    y = X.pop('Distance 0')
+    y = X.pop('Mod Vector Y 0')
+    try:
+        feature_prune(X, ['Multi Target 0', 'Target 0', 'Vector Y 0', 'Vector X 0', 'Distance 0', 'Nu', 'Unit Vector X 0', 'Unit Vector Y 0', 'Theta 0'])
+    except:
+        print 'prune failed'
+        pass
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
     dtree = RandomForestRegressor(n_estimators=15)
     dtree.fit(X_train, y_train)
@@ -44,9 +49,19 @@ label = ['Target 0']
 Z = X.copy()
 for i in label:
     X = Z.copy()
+    probe_features = ['Crit Position', 'Crit Position 0', 'Crit Position 1', 'Probe Position',
+                      'Unit Vector X', 'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y', 'Unit Vector Y 0',
+                      'Unit Vector Y 1', 'Theta', 'Theta 0', 'Theta 1', 'Probe Number', 'Multi Target 0',
+                      'Nearest Crit Position','Vector X 0','Vector Y 0','Sample Length','Nu', 'Distance 0']
+
+    # Deletes features from the dataframe that are in probe_features
     if model_choice == 'c':
         from sklearn.ensemble import RandomForestClassifier
         y = X.pop(i)
+        all_features = list(X.columns)
+        for feature in probe_features:
+            if feature in all_features:
+                del X['%s' % feature]
         y = y.astype(int)
         temp = label[:]
         temp.remove(i)

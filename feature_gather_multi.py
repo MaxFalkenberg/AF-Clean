@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from Functions import feature_extract_multi
+from Functions import feature_extract_multi_test
 import numpy as np
 import h5py
 from numpy.fft import rfft
@@ -16,11 +16,11 @@ feature_grid = None  # Numpy Zero array
 index_num = None  # Integer
 probe_num = trainfile['Index: 0']['Probe Positions'].shape[0]
 
-largest_ft_freq_columns = ['FT Freq %s' % x for x in range(0, 4)]
-largest_ft_mag_columns = ['FT Mag %s' % x for x in range(0, 4)]
-largest_ft_rel1_mag_columns = ['FT Rel 1 Mag %s' % x for x in range(0, 4)]
-largest_ft_rel2_mag_columns = ['FT Rel 2 Mag %s' % x for x in range(0, 4)]
-largest_ft_rel3_mag_columns = ['FT Rel 3 Mag %s' % x for x in range(0, 4)]
+largest_ft_freq_columns = ['FT Freq %s' % x for x in range(0, 3)]
+largest_ft_mag_columns = ['FT Mag %s' % x for x in range(0, 3)]
+largest_ft_rel1_mag_columns = ['FT Rel 1 Mag %s' % x for x in range(0, 3)]
+largest_ft_rel2_mag_columns = ['FT Rel 2 Mag %s' % x for x in range(0, 3)]
+largest_ft_rel3_mag_columns = ['FT Rel 3 Mag %s' % x for x in range(0, 3)]
 crit_pos = ['Crit Position %s' % x for x in range(cp_number)]
 dist = ['Distance %s' % x for x in range(cp_number)]
 vecx = ['Vector X %s' % x for x in range(cp_number)]
@@ -29,12 +29,13 @@ uvecx = ['Unit Vector X %s' % x for x in range(cp_number)]
 uvecy = ['Unit Vector Y %s' % x for x in range(cp_number)]
 theta = ['Theta %s' % x for x in range(cp_number)]
 targ = ['Target %s' % x for x in range(cp_number)]
+multi_targ = ['Multi Target %s' % x for x in range(cp_number)]
 #'Entropy','Hurst Exponent','Correlation Dimension','Detrended Fluctuation Analysis',
 
-columns = ['Start','Covariance','Mean','Skewness','Kurtosis','Max Value', 'Min Value', 'Minmax Diff', 'Max Arg', 'Min Arg','Minmax Half','Arg Half','Half Ratio','STD Full','STD Premax','STD Minmax','STD Postmin', 'Positive Sample Intensity','Negative Sample Intensity','Grad Minmax Mean', 'Sample Intensity', 'Sample Length', 'Grad Max','Grad Min',
-           'Grad Diff', 'Grad Argmax', 'Grad Argmin', 'Grad Argdiff', 'First Station'] \
-          + largest_ft_freq_columns + largest_ft_mag_columns + largest_ft_rel1_mag_columns + largest_ft_rel2_mag_columns + largest_ft_rel3_mag_columns +\
-           crit_pos + ['Probe Position'] + dist + vecx + vecy +uvecx + uvecy + theta + targ + ['Nearest Crit Position', 'Nu', 'Probe Number']
+columns = ['Start','Mean','Skewness','Kurtosis','Max Value', 'Min Value', 'Minmax Diff', 'Max Arg', 'Min Arg','Minmax Half','Arg Half','STD Postmin', 'Sample Length', 'Grad Max',
+            'First Station'] \
+           + largest_ft_mag_columns + largest_ft_rel2_mag_columns +\
+           crit_pos + ['Probe Position'] + dist + vecx + vecy +uvecx + uvecy + theta + targ + multi_targ + ['Nearest Crit Position', 'Nu', 'Probe Number']
 
 memory_condition = False
 
@@ -70,8 +71,9 @@ for index in range(index_num):
     i += 1
     print_progress(i, index_num, prefix='Progress:', suffix='Complete', bar_length=50)
     for number in range(probe_num):
-        feature_grid[count] = feature_extract_multi(number, ecg_vals=ecg_vals, cp=cp, probes=probes, nu = nu)
+        feature_grid[count] = feature_extract_multi_test(number, ecg_vals=ecg_vals, cp=cp, probes=probes, nu = nu)
         count += 1
+        
 
 df_index = range(index_num * probe_num)
 df = pd.DataFrame(data=feature_grid, index=df_index, columns=columns)

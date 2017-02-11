@@ -234,4 +234,4 @@ def feature_extract(number):
     print largest_ft_rel_mag
     print dist
 
-feature_extract(6)
+#feature_extract(6)

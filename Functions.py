@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import theano.tensor as T
 from theano import function
 from theano.tensor.signal.conv import conv2d
+from astropy.stats import LombScargle
 from itertools import product
 from numpy.fft import rfft
 from numpy.fft import irfft
@@ -13,6 +14,7 @@ import sys
 import scipy.signal as ss
 import nolds
 import scipy.stats as stats
+import pandas as pd
 
 
 ##############################################################################################################
@@ -662,7 +664,7 @@ def feature_extract3(index, number, ecg_vals, cp, probes):
     Think about a way to deal with nans in RFC (might not matter)
     """
     #entropy,hurst,corr_dim,dfa,
-    features = np.array([index,number,covariance,mean,skew,kurt,max_value, min_value, minmax_dif, max_arg,min_arg,minmax_half,arghalf[0],half_ratio,
+    features = np.array([start,index,number,covariance,mean,skew,kurt,max_value, min_value, minmax_dif, max_arg,min_arg,minmax_half,arghalf[0],half_ratio,
                         var,std_premax,std_minmax,std_postmin,sample_int_pos,
                         sample_int_neg,grad_minmax_mean,
                         sample_int, sample_len, grad_max, grad_min, grad_diff,
@@ -853,6 +855,9 @@ def feature_extract_multi(number, ecg_vals, cp, probes, nu):
     :return:
     """
     ecg = ecg_vals[number]
+    index = np.arange(1,len(ecg) + 1)
+    f,p = LombScargle(index,ecg).autopower()
+    per = int(np.round(1./f[np.argmax(p[(1./f) > 5.])]))
     crit_point = cp.tolist() #Index of critical point
     nu = nu.tolist()
     # probe_number = probe_number.tolist()
@@ -867,6 +872,7 @@ def feature_extract_multi(number, ecg_vals, cp, probes, nu):
     vec_y = []
     theta = []
     target = []
+    multi_target = []
     cp = np.atleast_1d(cp)
     x = np.atleast_1d(x)
     y = np.atleast_1d(y)
@@ -888,6 +894,10 @@ def feature_extract_multi(number, ecg_vals, cp, probes, nu):
             t = 1
         else:
             t = 0
+        if np.absolute(e) < 4 and np.absolute(f) < 4:
+            m = True
+        else:
+            m = False
         dist.append(a)
         unit_vector_x.append(b)
         unit_vector_y.append(c)
@@ -895,11 +905,12 @@ def feature_extract_multi(number, ecg_vals, cp, probes, nu):
         target.append(t)
         vec_x.append(e)
         vec_y.append(f)
+        multi_target.append(m)
     nearest = [np.argmin(dist)]
 
-    ft = rfft(ecg)  # Real valued FT of original ECG
+    ft = rfft(ecg[:2*per])  # Real valued FT of original ECG
     ft_abs = np.absolute(ft)  # Takes absolute value of FT
-    ft_max10 = np.argsort(ft_abs)[-4:]  # Finds 9 largest frequency fundamentals
+    ft_max10 = np.argsort(ft_abs)[-3:]  # Finds 9 largest frequency fundamentals
     ft_max = np.min(ft_max10)
     freq = np.fft.rfftfreq(ecg.size, d=1.)
     freq_main = np.fft.rfftfreq(ecg.size, d=1.)[ft_max]
@@ -908,25 +919,24 @@ def feature_extract_multi(number, ecg_vals, cp, probes, nu):
     ft[ft_max + 1:] = 0
     ft[:ft_max] = 0
     ift = irfft(ft)
-    start = np.argmax(ift[:period])
+    start = np.argmax(ift[:per])
     #start = 0
     end = start + period
     sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
-    sample_double =ecg[start:end + (2 * period)]
+    # sample_double =ecg[start:end + (2 * period)]
     length,minmax,mean,var,skew,kurt = stats.describe(sample_)
     min_value,max_value = minmax
     #mean = np.mean(sample_)
-    ft_samp = rfft(sample_)[:4]  # Real valued FT of sample ECG
-    freq_samp = np.fft.rfftfreq(sample_.size, d=1.)[:4]
+    ft_samp = rfft(sample_)[:3]  # Real valued FT of sample ECG
+    freq_samp = np.fft.rfftfreq(sample_.size, d=1.)[:9]
     ft_samp_abs = np.absolute(ft_samp)  # Takes absolute value of FT
-    ft_samp_abs_rel1 = ft_samp_abs / ft_samp_abs[1]
+    # print freq_samp, end - start
     ft_samp_abs_rel2 = ft_samp_abs / ft_samp_abs[2]
-    ft_samp_abs_rel3 = ft_samp_abs / ft_samp_abs[3]
     # ft_samp_max10 = np.argsort(ft_samp_abs)[-9:]  # Finds 9 largest frequency fundamentals
 
     grad = np.gradient(sample_)
     stat_points = []
-    stat_diffs = []
+    # stat_diffs = []
 
     #entropy = nolds.sampen(sample_double)
     #hurst = nolds.hurst_rs(sample_double)
@@ -946,53 +956,53 @@ def feature_extract_multi(number, ecg_vals, cp, probes, nu):
         arghalf = np.argwhere(sample_[max_arg:min_arg] < minmax_half)[0]
     except:
         arghalf = np.array([0])
-    half_ratio = float(arghalf - max_arg) / float(min_arg - max_arg)
+    #half_ratio = float(arghalf - max_arg) / float(min_arg - max_arg)
     #std_full = np.std(sample_)
 
     std_postmin = np.std(sample_[min_arg:])
     # FEATURE: Sample ECG intensity defined as sum of absolute voltages
-    sample_int = np.sum(np.absolute(sample_))
-    sample_int_pos = np.sum(sample_[sample_ >= 0.])
-    sample_int_neg = np.sum(sample_[sample_ < 0.])
+    # sample_int = np.sum(np.absolute(sample_))
+    # sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # sample_int_neg = np.sum(sample_[sample_ < 0.])
     # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
     sample_len = len(sample_)
     # FEATURE: Sum of all positive voltages
-    sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # sample_int_pos = np.sum(sample_[sample_ >= 0.])
     # Feature: Sum of all negative voltages
-    sample_int_neg = np.sum(sample_[sample_ < 0.])
+    # sample_int_neg = np.sum(sample_[sample_ < 0.])
 
     # FEATURE: Maximum of first order gradient of ECG
     grad_max = np.max(grad)
     # FEATURE: Minimum of first order gradient of ECG
-    grad_min = np.min(grad)
+    # grad_min = np.min(grad)
     # FEATURE: Difference of the above
-    grad_diff = grad_max - grad_min
+    # grad_diff = grad_max - grad_min
     # FEATURE: Argument at gradient Minimum
-    grad_argmin = np.argmin(grad)
+    # grad_argmin = np.argmin(grad)
     # FEATURE: Argument at gradient Maximum
-    grad_argmax = np.argmax(grad)
+    # grad_argmax = np.argmax(grad)
     # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
-    grad_argdiff = grad_argmax - grad_argmin
+    # grad_argdiff = grad_argmax - grad_argmin
 
 
-    g_temp = grad[max_arg:min_arg + 1]
-    if len(g_temp) == 0:
-        g_temp = grad[min_arg:max_arg + 1]
-        grad_minmax_mean =  - np.mean(g_temp)
-    else:
-        grad_minmax_mean = np.mean(g_temp)
+    # g_temp = grad[max_arg:min_arg + 1]
+    # if len(g_temp) == 0:
+    #     g_temp = grad[min_arg:max_arg + 1]
+    #     grad_minmax_mean =  - np.mean(g_temp)
+    # else:
+    #     grad_minmax_mean = np.mean(g_temp)
+    #
+    # if len(sample_[:max_arg]) == 0:
+    #     std_premax = - np.std(sample_[max_arg:])
+    # else:
+    #     std_premax = np.std(sample_[:max_arg])
+    # if len(sample_[max_arg:min_arg]) == 0:
+    #     std_minmax =  - np.std(sample_[min_arg:max_arg])
+    # else:
+    #     std_minmax = np.std(sample_[max_arg:min_arg])
 
-    if len(sample_[:max_arg]) == 0:
-        std_premax = - np.std(sample_[max_arg:])
-    else:
-        std_premax = np.std(sample_[:max_arg])
-    if len(sample_[max_arg:min_arg]) == 0:
-        std_minmax =  - np.std(sample_[min_arg:max_arg])
-    else:
-        std_minmax = np.std(sample_[max_arg:min_arg])
 
-
-    covariance = np.cov(sample_)
+    # covariance = np.cov(sample_)
     for i in range(len(grad) - 1):
         if grad[i] * grad[i + 1] < 0:
             stat_points.append(i)
@@ -1003,51 +1013,292 @@ def feature_extract_multi(number, ecg_vals, cp, probes, nu):
     Think about a way to deal with nans in RFC (might not matter)
     """
     #entropy,hurst,corr_dim,dfa,
-    features = np.array([start, covariance,mean,skew,kurt,max_value, min_value, minmax_dif, max_arg,min_arg,minmax_half,arghalf[0],half_ratio,
-                        var,std_premax,std_minmax,std_postmin,sample_int_pos,
-                        sample_int_neg,grad_minmax_mean,
-                        sample_int, sample_len, grad_max, grad_min, grad_diff,
-                         grad_argmax, grad_argmin, grad_argdiff, arg_firststat]
-                        + freq_samp.tolist() + ft_samp_abs.tolist() + ft_samp_abs_rel1.tolist() + ft_samp_abs_rel2.tolist() + ft_samp_abs_rel3.tolist()
-                        + cp.tolist() + [probe_point] + dist + vec_x + vec_y + unit_vector_x + unit_vector_y + theta + target + nearest + [nu]+ [int(number)/9])
+    features = np.array([start, mean,skew,kurt,max_value, min_value, minmax_dif, max_arg,min_arg,minmax_half,arghalf[0],
+                        std_postmin,
+                        sample_len, grad_max,
+                         arg_firststat]
+                        + ft_samp_abs.tolist() +  ft_samp_abs_rel2.tolist()
+                        + cp.tolist() + [probe_point] + dist + vec_x + vec_y + unit_vector_x + unit_vector_y + theta + target + multi_target + nearest + [nu]+ [int(number)/9])
+    return features
+
+
+def feature_extract_multi_test(number, ecg_vals, cp, probes, nu):
+    """
+    Extracts features for the current itteration's ECG at the probe position
+    corresponding to probes[number]. Not currently written to return values in a
+    particular format.
+    :param number: Index in data.
+    :param ecg_vals: The ecg voltages.
+    :param cp: The position of the critical point.
+    :param probes: The probe position.
+    :return:
+    """
+    ecg = ecg_vals[number]
+    index = np.arange(1,len(ecg) + 1)
+    # f,p = LombScargle(index,ecg).autopower()
+    # per = int(np.round(1./f[np.argmax(p[(1./f) > 5.])]))
+    crit_point = cp.tolist() #Index of critical point
+    nu = nu.tolist()
+    # probe_number = probe_number.tolist()
+    probe_point = np.ravel_multi_index(probes.astype('int')[number], (200, 200))
+    y,x = np.unravel_index(cp,(200,200))
+    # dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+
+    dist = []
+    unit_vector_x = []
+    unit_vector_y = []
+    vec_x = []
+    vec_y = []
+    theta = []
+    target = []
+    multi_target = []
+    cp = np.atleast_1d(cp)
+    x = np.atleast_1d(x)
+    y = np.atleast_1d(y)
+    for i in range(len(cp)):
+        def cp_vector(y_probe,x_probe):
+            x_vector = int(x_probe) - x[i]
+            y_vector = int(y_probe) - y[i]
+            if y_vector > 100:
+                y_vector -= 200
+            elif y_vector <= -100:
+                y_vector += 200
+
+            r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+            c = (x_vector + (1j * y_vector)) /r
+            theta = np.angle(c)
+            return r,float(x_vector)/r,float(y_vector)/r,theta,float(x_vector),float(y_vector)
+        a,b,c,d,e,f = cp_vector(probes[number][0],probes[number][1])
+        if a <= np.sqrt(200):
+            t = 1
+        else:
+            t = 0
+        if np.absolute(e) < 4 and np.absolute(f) < 4:
+            m = True
+        else:
+            m = False
+        dist.append(a)
+        unit_vector_x.append(b)
+        unit_vector_y.append(c)
+        theta.append(d)
+        target.append(t)
+        vec_x.append(e)
+        vec_y.append(f)
+        multi_target.append(m)
+    nearest = [np.argmin(dist)]
+
+    signs = np.sign(np.diff(np.sign(ecg)))
+    crossovers = np.argwhere(signs == -1).flatten()
+    # print crossovers
+    start = crossovers[0]
+    noise = []
+    for i in range(1,len(crossovers)):
+        per = crossovers[i] - start
+        if per >= 50:
+            end = crossovers[i]
+            break
+        else:
+            noise.append(crossovers[i])
+    ecg = ecg[:2*per]
+    # print start, end
+    ft = rfft(ecg)  # Real valued FT of original ECG
+    ft_abs = np.absolute(ft)  # Takes absolute value of FT
+    ft_max10 = np.argsort(ft_abs)[-3:]  # Finds 9 largest frequency fundamentals
+    ft_max = np.min(ft_max10)
+    freq = np.fft.rfftfreq(ecg.size, d=1.)
+    freq_main = np.fft.rfftfreq(ecg.size, d=1.)[ft_max]
+    # FEATURE (Should be the same for all ECGs if correctly sampled.)
+    period = int(1. / freq_main)
+    ft[ft_max + 1:] = 0
+    ft[:ft_max] = 0
+    ift = irfft(ft)
+    start = np.argmax(ift[:period])
+    #start = 0
+    end = start + period
+    sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
+    # sample_double =ecg[start:end + (2 * period)]
+    length,minmax,mean,var,skew,kurt = stats.describe(sample_)
+    min_value,max_value = minmax
+    #mean = np.mean(sample_)
+    ft_samp = rfft(sample_)[:3]  # Real valued FT of sample ECG
+    freq_samp = np.fft.rfftfreq(sample_.size, d=1.)[:9]
+    ft_samp_abs = np.absolute(ft_samp)  # Takes absolute value of FT
+    # print freq_samp, end - start
+    # print len(sample_),start,per, np.gradient(np.sign(ecg))
+    ft_samp_abs_rel2 = ft_samp_abs / ft_samp_abs[2]
+    # ft_samp_max10 = np.argsort(ft_samp_abs)[-9:]  # Finds 9 largest frequency fundamentals
+
+    grad = np.gradient(sample_)
+    stat_points = []
+    # stat_diffs = []
+
+    #entropy = nolds.sampen(sample_double)
+    #hurst = nolds.hurst_rs(sample_double)
+    # dfa = nolds.dfa(sample_double)
+    #corr_dim = nolds.corr_dim(sample_double,1)
+
+    # FEATURE: Maximum value of sample ECG
+    #max_value = np.max(sample_)
+    max_arg = np.argmax(sample_)
+    # FEATURE: Minimum value of sample ECG
+    #min_value = np.min(sample_)
+    min_arg = np.argmin(sample_)
+    # FEATURE: Difference of the above
+    minmax_dif = max_value - min_value
+    minmax_half = (max_value + min_value)/2
+    try:
+        arghalf = np.argwhere(sample_[max_arg:min_arg] < minmax_half)[0]
+    except:
+        arghalf = np.array([0])
+    #half_ratio = float(arghalf - max_arg) / float(min_arg - max_arg)
+    #std_full = np.std(sample_)
+
+    std_postmin = np.std(sample_[min_arg:])
+    # FEATURE: Sample ECG intensity defined as sum of absolute voltages
+    # sample_int = np.sum(np.absolute(sample_))
+    # sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # sample_int_neg = np.sum(sample_[sample_ < 0.])
+    # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
+    sample_len = len(sample_)
+    # FEATURE: Sum of all positive voltages
+    # sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # Feature: Sum of all negative voltages
+    # sample_int_neg = np.sum(sample_[sample_ < 0.])
+
+    # FEATURE: Maximum of first order gradient of ECG
+    grad_max = np.max(grad)
+    # FEATURE: Minimum of first order gradient of ECG
+    # grad_min = np.min(grad)
+    # FEATURE: Difference of the above
+    # grad_diff = grad_max - grad_min
+    # FEATURE: Argument at gradient Minimum
+    # grad_argmin = np.argmin(grad)
+    # FEATURE: Argument at gradient Maximum
+    # grad_argmax = np.argmax(grad)
+    # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
+    # grad_argdiff = grad_argmax - grad_argmin
+
+
+    # g_temp = grad[max_arg:min_arg + 1]
+    # if len(g_temp) == 0:
+    #     g_temp = grad[min_arg:max_arg + 1]
+    #     grad_minmax_mean =  - np.mean(g_temp)
+    # else:
+    #     grad_minmax_mean = np.mean(g_temp)
+    #
+    # if len(sample_[:max_arg]) == 0:
+    #     std_premax = - np.std(sample_[max_arg:])
+    # else:
+    #     std_premax = np.std(sample_[:max_arg])
+    # if len(sample_[max_arg:min_arg]) == 0:
+    #     std_minmax =  - np.std(sample_[min_arg:max_arg])
+    # else:
+    #     std_minmax = np.std(sample_[max_arg:min_arg])
+
+
+    # covariance = np.cov(sample_)
+    for i in range(len(grad) - 1):
+        if grad[i] * grad[i + 1] < 0:
+            stat_points.append(i)
+    # FEATURE: The position of the first stationary point
+    arg_firststat = stat_points[0]
+
+    """
+    Think about a way to deal with nans in RFC (might not matter)
+    """
+    #entropy,hurst,corr_dim,dfa,
+    features = np.array([start, mean,skew,kurt,max_value, min_value, minmax_dif, max_arg,min_arg,minmax_half,arghalf[0],
+                        std_postmin,
+                        sample_len, grad_max,
+                         arg_firststat]
+                        + ft_samp_abs.tolist() +  ft_samp_abs_rel2.tolist()
+                        + cp.tolist() + [probe_point] + dist + vec_x + vec_y + unit_vector_x + unit_vector_y + theta + target + multi_target + nearest + [nu]+ [int(number)/9])
     return features
 
 def process_multi_feature(T):
+    T = T.astype('float')
     centre = T[5]
     mean = np.mean(T,0)
     std = np.mean(T,0)
     kurtosis = stats.kurtosis(T,0)
-    skewness = stats.skewness(T,0)
+    skewness = stats.skew(T,0)
 
     #Vertical Singles
     v63,v74,v85,v30,v41,v52 = T[6]-T[3],T[7]-T[4],T[8]-T[5],T[3]-T[0],T[4]-T[1],T[5]-T[2]
+    vs_bar = ( v63 + v74 + v85 + v30 + v41 + v52 )/6
+    vs_centreratio = ( v63 + v74 + v85 ) -( v30 + v41 + v52 )
     #Vertical Fulls
     v60,v71,v82 = T[6]-T[0],T[7]-T[1],T[8]-T[2]
+    vf_bar = ( v60 + v71 + v82)/3
     #Hortizontal Singles
     h87,h76,h54,h43,h21,h10 = T[8]-T[7],T[7]-T[6],T[5]-T[4],T[4]-T[3],T[2]-T[1],T[1]-T[0]
+    hs_bar = ( h87 + h76 + h54 + h43 + h21 + h10 )/6
+    hs_centreratio = ( h87 + h76 + h54 ) -( h43 + h21 + h10 )
     #Horizontal Fulls
     h86,h53,h20 = T[8]-T[6],T[5]-T[3],T[2]-T[0]
+    hf_bar = ( h86 + h53 + h20 ) / 3
     #Diag11s
     d73,d84,d40,d51 = T[7]-T[3],T[8]-T[4],T[4]-T[0],T[5]-T[1]
+    d11_bar = ( d73 + d84 + d40 + d51 ) / 4
     #Diag12s
     d70,d81 = T[7]-T[0],T[8]-T[1]
+    d12_bar = ( d70 + d81 ) / 2
     #Diag21s
     d50,d83 = T[5]-T[0],T[8]-T[3]
+    d21_bar = ( d50 + d83 ) / 2
     #Diagneg11s
     d64,d42,d31,d75 = T[6]-T[4],T[4]-T[2],T[3]-T[1],T[7]-T[5]
+    dn11_bar = ( d64 + d42 + d31 + d75 ) / 4
     #Diagneg12s
     d72,d61 = T[7]-T[2],T[6]-T[1]
+    dn12_bar = ( d72 + d61 ) / 2
     #Diagneg21s
     d32,d65 = T[3]-T[2],T[6]-T[5]
+    dn21_bar = ( d32 + d65 ) / 2
+
+    axisfocus = (( h54 + v74 ) - ( h43 + v41 )) / 4
+    diagfocus = ((d84 + d64) - (d42 + d40)) / 4
+    focusratio = axisfocus - diagfocus
+    focus = ( axisfocus + diagfocus ) / 2
+    total = np.concatenate([centre,mean,std,kurtosis,skewness,vs_bar,vs_centreratio,vf_bar,hs_bar,hs_centreratio,hf_bar,d11_bar,d12_bar,d21_bar,dn11_bar,dn12_bar,dn21_bar,axisfocus,diagfocus,focusratio,focus])
+    return total
 
 
-
-def multi_feature_compile(dataframe):
+def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
+    dataframe = dataframe.copy()
     feature_list = []
-    index = np.arange(0,len(dataframe),9)
+    ran = len(dataframe)
+    index = np.arange(0,ran,9)
+
+    metadata = dataframe[['Target 0', 'Multi Target 0', 'Vector X 0', 'Vector Y 0','Theta 0', 'Distance 0', 'Nu']]
+    probe_features = ['Crit Position', 'Crit Position 0', 'Crit Position 1', 'Probe Position',
+                      'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y 0','Target 0', 'Multi Target 0',
+                      'Unit Vector Y 1', 'Theta',  'Theta 1', 'Probe Number',
+                      'Nearest Crit Position','Vector X 0', 'Vector Y 0', 'Distance 0', 'Nu']
+    all_features = list(dataframe.columns)
+    for feature in probe_features:
+        if feature in all_features:
+            del dataframe['%s' % feature]
+
     for i in index:
         T = dataframe.iloc[i:i+9].as_matrix()
+        X = process_multi_feature(T)
+        feature_list.append(X)
+    X = np.vstack(feature_list)
+    X[X == np.inf] = np.nan
+    prefixes = ['Probe Centre: ','Mean Probes: ' ,'Std Probes: ','Kurtosis Probes: ','Skewness Probes' ,'Vertical Singles Mean: ','Vertical Singles Centre Ratio: ','Vertical Full Mean: ','Horizontal Singles Mean: ','Horizontal Singles Centre Ratio: ','Horizontal Full Mean: ','Diagonal 11 Mean: ','Diagonal 12 Mean: ','Diagonal 21 Mean: ','Diagonal N11 Mean: ','Diagonal N12 Mean: ','Diagonal N21 Mean: ','Focus Axis Orientation: ','Focus Diag Orientation: ','Focus Ratio: ','Focus: ']
+    suffixes = dataframe.keys().tolist()
+    keys = []
+    for i in prefixes:
+        for j in suffixes:
+            temp = i + j
+            keys.append(temp)
+    df = pd.DataFrame(X,columns = keys)
+    df = df.join(metadata)
+    df.fillna(99999.)
 
+    name = raw_input("Save Filename: ")
+    df.to_hdf(name + '.h5','w')
 
 def visualize_tree(tree, feature_names):
     """Create tree png using graphviz.
@@ -1170,27 +1421,27 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
         theta = np.array(t)
         f = np.array(X[feature])
 
-        p = np.array(X['Probe Position'])
-        if split == 'mid':
-            p = (p%200 > 30) * (p%200 < 170)
-        else:
-            p = (p%200 < 30) + (p%200 > 170)
+        # p = np.array(X['Probe Position'])
+        # if split == 'mid':
+        #     p = (p%200 > 30) * (p%200 < 170)
+        # else:
+        #     p = (p%200 < 30) + (p%200 > 170)
 
     else:
         rad = np.array(d)[condition]
         theta = np.array(t)[condition]
         f = np.array(X[feature])[condition]
 
-        p = np.array(X['Probe Position'])[condition]
-        if split == 'mid':
-            p = (p%200 > 30) * (p%200 < 170)
-        else:
-            p = (p%200 < 30) + (p%200 > 170)
+        # p = np.array(X['Probe Position'])[condition]
+        # if split == 'mid':
+        #     p = (p%200 > 30) * (p%200 < 170)
+        # else:
+        #     p = (p%200 < 30) + (p%200 > 170)
 
-    if split == 'mid' or split == 'out':
-        rad =  rad[p]
-        theta = theta[p]
-        f = f[p]
+    # if split == 'mid' or split == 'out':
+    #     rad =  rad[p]
+    #     theta = theta[p]
+    #     f = f[p]
 
     rad = rad[np.logical_not(np.isnan(theta))]
     f = f[np.logical_not(np.isnan(theta))]
@@ -1216,7 +1467,7 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
 
 
     # y_grad, x_grad = np.gradient(z)
-    cm = plt.cm.get_cmap('brg')
+    cm = plt.cm.get_cmap('coolwarm')
     # plt.figure()
     # plt.imshow(x_grad, interpolation="nearest", origin="lower", cmap = cm)
     # plt.colorbar(shrink=0.4, pad = 0.07)
@@ -1234,9 +1485,15 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
     plt.ylabel('y', fontsize = 18)
     plt.title(feature, fontsize = 18)
     if save:
-        plt.savefig(feature + '.png')
-    print(np.shape(z))
-    plt.show()
+        words = [feature]
+        words = [w.replace(':', '_') for w in words]
+        words = [w.replace(' ', '_') for w in words]
+        print words
+        plt.savefig(words[0] + '.png')
+        plt.close()
+    else:
+        print(np.shape(z))
+        plt.show()
 
     if ret:
         return z
