@@ -83,7 +83,6 @@ if threshold_type == 'e':
     y = y.astype(int)
 
 if threshold_type == 're':
-    # Need to add this in.
     y_scale_range = np.arange(1.0, 8.5, 0.5)
     x_scale_range = np.arange(0.5, 2.0, 0.5)
     results_dict = {}
@@ -111,6 +110,9 @@ if threshold_type == 're':
         pickle.dump(results_dict, f)
 
 if threshold_type != 're':
+    """
+    Does the plotting if the threshold type is not a range.
+    """
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     ML.fit(X_train, y_train)
     y_pred = ML.predict(X_test)
@@ -134,5 +136,4 @@ if threshold_type != 're':
     plt.xlabel('x', fontsize = 18)
     plt.ylabel('y', fontsize = 18)
     plt.title(feature, fontsize = 18)
-    print(np.shape(z))
     plt.show()
