@@ -1,6 +1,5 @@
 """
 File to create k-means clustering for ECG data. Input a classification dataframe.
-Should input a regression database for FC plot.
 """
 
 import pandas as pd
