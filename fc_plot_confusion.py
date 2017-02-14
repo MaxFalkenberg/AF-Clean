@@ -78,7 +78,7 @@ if threshold_type == 'e':
     remove_pop = X.pop('Target 0')
     y_scale_input = float(raw_input("y scale: "))
     x_scale_input = float(raw_input("x scale: "))
-    y = pd.Series(distance(B['Crit Position 0'], B['Probe Position'], y_scale=y_scale_input, x_scale=x_scale_input))
+    y = pd.Series(distance(B['Vector X 0'], B['Vector Y 0'], y_scale=y_scale_input, x_scale=x_scale_input))
     y = y.apply(lambda x: 1 if x <= np.sqrt(200) else 0)
     y = y.astype(int)
 
@@ -94,7 +94,7 @@ if threshold_type == 're':
     for y_scale in y_scale_range:
         for x_scale in x_scale_range:
             y = pd.Series(
-                distance(B['Crit Position 0'], B['Probe Position'], y_scale=y_scale, x_scale=x_scale))
+                distance(B['Vector X 0'], B['Vector Y 0'], y_scale=y_scale, x_scale=x_scale))
             y = y.apply(lambda x: 1 if x <= np.sqrt(200) else 0)
             y = y.astype(int)
             X_train, X_test, y_train, y_test = train_test_split(X, y)
