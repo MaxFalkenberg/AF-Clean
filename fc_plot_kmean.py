@@ -28,7 +28,7 @@ k_model = KMeans(n_clusters=n_clusters, init='k-means++')
 cluster_labels = k_model.fit_predict(X)
 B['Cluster Label'] = pd.Series(cluster_labels)
 
-binned_grid, clim, feature = binplot(B, 'Cluster Label', ret=False)
+binned_grid, clim, feature = binplot(B, 'Cluster Label')
 plt.figure()
 cm = plt.cm.get_cmap('brg')
 plt.imshow(binned_grid, vmin=clim[0], vmax=clim[1], interpolation="nearest", origin="lower", cmap=cm)
