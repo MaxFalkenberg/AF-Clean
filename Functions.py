@@ -12,7 +12,7 @@ from sklearn.tree import export_graphviz
 import subprocess
 import sys
 import scipy.signal as ss
-import nolds
+# import nolds
 import scipy.stats as stats
 import pandas as pd
 
@@ -1533,7 +1533,8 @@ def target_creation(row):
         return 0
 
 
-def distance(col1, col2, y_scale=1, x_scale=1):
+def distance(x_vectors, y_vectors, y_scale=1, x_scale=1):
+    # Old method for re-scaling
     """
     Function used to rework out the distance in a pandas dataframe (use in ipython). Need to convert the columns into
     tuples via np.unravel_index.
@@ -1543,11 +1544,22 @@ def distance(col1, col2, y_scale=1, x_scale=1):
     :param x_scale: sacling for x
     :return: New distance
     """
-    col1_values = [int(x) for x in col1.values]
-    col2_values = [int(x) for x in col2.values]
-    col1_t = [np.unravel_index(index, dims=(200, 200)) for index in col1_values]
-    col2_t = [np.unravel_index(index, dims=(200, 200)) for index in col2_values]
-    x_vectors = [(value1[1]-value2[1]) for value1, value2 in zip(col1_t,col2_t)]
-    y_vectors = [(value1[0]-value2[0]) for value1, value2 in zip(col1_t,col2_t)]
-    y_vectors = [y-200 if y>100 else y+200 if y<=-100 else y for y in y_vectors]
-    return [np.sqrt((y_scale*y)**2 + (x_scale*x)**2) for y, x in zip(y_vectors,x_vectors)]
+
+    # col1_values = [int(x) for x in col1.values]
+    # col2_values = [int(x) for x in col2.values]
+    # col1_t = [np.unravel_index(index, dims=(200, 200)) for index in col1_values]
+    # col2_t = [np.unravel_index(index, dims=(200, 200)) for index in col2_values]
+    # x_vectors = [(value1[1]-value2[1]) for value1, value2 in zip(col1_t,col2_t)]
+    # y_vectors = [(value1[0]-value2[0]) for value1, value2 in zip(col1_t,col2_t)]
+    # y_vectors = [y-200 if y>100 else y+200 if y<=-100 else y for y in y_vectors]
+    # return [np.sqrt((y_scale*y)**2 + (x_scale*x)**2) for y, x in zip(y_vectors,x_vectors)]
+
+    """
+    :param x_vectors: df['Vector X 0']
+    :param y_vectors: df['Vector Y 0']
+    :param y_scale: scaling for y
+    :param x_scale: sacling for x
+    :return: New distance
+    """
+
+    return [np.sqrt((y_scale*y)**2 + (x_scale*x)**2) for y, x in zip(y_vectors.values,x_vectors.values)]
