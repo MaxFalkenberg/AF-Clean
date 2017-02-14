@@ -49,7 +49,7 @@ if output_figure in ["e_probm", "e_probsl"]:
     remove_pop = X.pop('Target 0')
     y_scale_input = float(raw_input("y scale: "))
     x_scale_input = float(raw_input("x scale: "))
-    y = pd.Series(distance(B['Crit Position 0'], B['Probe Position'], y_scale=y_scale_input, x_scale=x_scale_input))
+    y = pd.Series(distance(B['Vector X 0'], B['Vector Y 0'], y_scale=y_scale_input, x_scale=x_scale_input))
     y = y.apply(lambda x: 1 if x <= np.sqrt(200) else 0)
     y = y.astype(int)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
@@ -83,12 +83,12 @@ if output_figure in ["r_probm", "r_probsl"]:
         y_prob = ML_.predict_proba(X_test)
         on_cp_prob = [probs[1] for probs in y_prob]
         B['Positive Crit Prob'] = pd.Series(np.array(on_cp_prob), index=y_test.index.values)
-        binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=False)
+        binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values)
         binned_dict[t] = (binned_grid, clim, feature)
 
 if output_figure in ["probm", "e_probm"]:
     # ret = False for probabilty map.
-    binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=False)
+    binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values)
     plt.figure(figsize=(10., 10.))
     cm = plt.cm.get_cmap('brg')
     plt.imshow(binned_grid, vmin=clim[0], vmax=clim[1], interpolation="nearest", origin="lower", cmap=cm)
@@ -110,7 +110,7 @@ if output_figure == 'r_probm':
     plt.show()
 
 if output_figure in ["probsl", "e_probsl"]:
-    binned_grid = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=True)
+    binned_grid, _, _ = binplot(B, 'Positive Crit Prob', condition=y_test.index.values)
     processed_grid = np.nan_to_num(binned_grid)
     flat_processed_list = [prob for prob_list in processed_grid for prob in prob_list]
     # y_slice through grid (constant y)
@@ -197,7 +197,7 @@ if output_figure == "r_probsl":
     plt.close()
 
 if output_figure == "hist":
-    binned_grid = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, ret=True)
+    binned_grid = binplot(B, 'Positive Crit Prob', condition=y_test.index.values)
     processed_grid = np.nan_to_num(binned_grid)
     flat_processed_list = [prob for prob_list in processed_grid for prob in prob_list]
     plt.hist(flat_processed_list, bins=50, range=[0.2, 1])
