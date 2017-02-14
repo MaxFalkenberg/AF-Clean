@@ -1408,7 +1408,7 @@ def fcplot(X, feature, clim = None, condition = None):
     plt.show()
     # return x,y,fea
 
-def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save  = False, ret = False):
+def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save=False):
 
     try:
         d = X['Distance 0']
@@ -1467,7 +1467,7 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
 
 
     # y_grad, x_grad = np.gradient(z)
-    cm = plt.cm.get_cmap('coolwarm')
+    # cm = plt.cm.get_cmap('coolwarm')
     # plt.figure()
     # plt.imshow(x_grad, interpolation="nearest", origin="lower", cmap = cm)
     # plt.colorbar(shrink=0.4, pad = 0.07)
@@ -1477,26 +1477,25 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
 
     if clim == None:
         clim = [np.nanmin(z),np.nanmax(z)]
-        print(clim)
-    plt.figure(figsize =(10.,10.))
-    plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
-    plt.colorbar(shrink=0.4, pad = 0.07)
-    plt.xlabel('x', fontsize = 18)
-    plt.ylabel('y', fontsize = 18)
-    plt.title(feature, fontsize = 18)
-    if save:
-        words = [feature]
-        words = [w.replace(':', '_') for w in words]
-        words = [w.replace(' ', '_') for w in words]
-        print words
-        plt.savefig(words[0] + '.png')
-        plt.close()
-    else:
-        print(np.shape(z))
-        plt.show()
+        # print(clim)
+    # plt.figure(figsize =(10.,10.))
+    # plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
+    # plt.colorbar(shrink=0.4, pad = 0.07)
+    # plt.xlabel('x', fontsize = 18)
+    # plt.ylabel('y', fontsize = 18)
+    # plt.title(feature, fontsize = 18)
+    # if save:
+    #     words = [feature]
+    #     words = [w.replace(':', '_') for w in words]
+    #     words = [w.replace(' ', '_') for w in words]
+    #     print words
+    #     plt.savefig(words[0] + '.png')
+    #     plt.close()
+    # else:
+    #     print(np.shape(z))
+    #     plt.show()
 
-    if ret:
-        return z
+    return z, clim, feature
 
 
 def feature_prune(dataframe, delete_list):
