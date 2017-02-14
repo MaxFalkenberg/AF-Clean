@@ -17,7 +17,7 @@ with open('%s.txt' % datafile) as f:
 print "\n"
 
 # Depending on the RF type, removes one of the target observations.
-observation_style = raw_input("Classisfication/Regression (c/r): ")
+observation_style = raw_input("Classisfication/Regression/Multi-Classification (c/r/mc): ")
 prune = raw_input("Prune features? (y/n): ")
 
 # filename
@@ -43,8 +43,16 @@ if prune == 'y':
 
 if observation_style == 'c':
     del dataframe['Distance 0']
+    if 'Multi Target 0' in dataframe.columns:
+        del dataframe['Multi Target 0']
 
 if observation_style == 'r':
     del dataframe['Target 0']
+    if 'Multi Target 0' in dataframe.columns:
+        del dataframe['Multi Target 0']
+
+if observation_style == 'mc':
+    del dataframe['Target 0']
+    del dataframe['Distance 0']
 
 dataframe.to_hdf("%s.h5" % filename, 'w')
