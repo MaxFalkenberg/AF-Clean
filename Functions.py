@@ -1530,7 +1530,7 @@ def modeplot(X, feature, clim = None, condition = None, binsize = 1, split = 'no
     y /= binsize
     x += np.absolute(np.min(x))
     y += np.absolute(np.min(y))
-    z = [ [[0] for j in range(np.max(x)+1)] for i in range(np.max(y)+1)]
+    z = [ [[] for _ in range(np.max(x)+1)] for _ in range(np.max(y)+1)]
     count = np.zeros((np.max(y) + 1, np.max(x) + 1))
 
     for i in range(len(x)):
@@ -1539,7 +1539,10 @@ def modeplot(X, feature, clim = None, condition = None, binsize = 1, split = 'no
 
     for index_1, value_1 in enumerate(z):
         for index_2, value_2 in enumerate(value_1):
-            z[index_1][index_2] = mode(value_2)[0][0]
+            if value_2:
+                z[index_1][index_2] = mode(value_2)[0][0]
+            else:
+                z[index_1][index_2] = 0.0
 
     z /= count
 
