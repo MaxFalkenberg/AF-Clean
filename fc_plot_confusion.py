@@ -6,7 +6,7 @@ Also can save a range of scaling targets.
 import pandas as pd
 import numpy as np
 from sklearn.cross_validation import train_test_split
-from Functions import distance, binplot, print_progress
+from Functions import distance, modeplot, print_progress
 import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
 from sklearn.ensemble import RandomForestClassifier
@@ -119,7 +119,7 @@ if threshold_type != 're':
 
     confusion_series_values = confusion_conditions()
     B['Confusion'] = pd.Series(np.array(confusion_series_values), index=y_test.index)
-    z, clim, feature = binplot(B, 'Confusion', condition= np.array(y_test.index.values))
+    z, clim, feature = modeplot(B, 'Confusion', condition= np.array(y_test.index.values))
     # [np.array(B['Confusion'])[y_test.index.values] < 1.5 ])
 
     # Need to alter still
