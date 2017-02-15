@@ -137,3 +137,4 @@ if threshold_type != 're':
     plt.ylabel('y', fontsize = 18)
     plt.title(feature, fontsize = 18)
     plt.show()
+    plt.close()
