@@ -46,7 +46,10 @@ B = pd.read_hdf("%s.h5" % bin_datafile)
 
 if output_figure in ["e_probm", "e_probsl"]:
     # Removes the target column as not needed
-    remove_pop = X.pop('Target 0')
+    if 'Target 0' in X.columns:
+        del X['Target 0']
+    if 'Multi Target 0' in X.columns:
+        del X['Multi Target 0']
     y_scale_input = float(raw_input("y scale: "))
     x_scale_input = float(raw_input("x scale: "))
     y = pd.Series(distance(B['Vector X 0'], B['Vector Y 0'], y_scale=y_scale_input, x_scale=x_scale_input))
@@ -60,7 +63,10 @@ if output_figure in ["e_probm", "e_probsl"]:
     B['Positive Crit Prob'] = pd.Series(np.array(on_cp_prob), index=y_test.index.values)
 
 if output_figure in ["probm", "probsl", "hist"]:
-    y = X.pop('Target 0')
+    if 'Target 0' in X.columns:
+        y = X.pop('Target 0')
+    if 'Multi Target 0' in X.columns:
+        y = X.pop('Multi Target 0')
     y = y.astype(int)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     ML.fit(X_train, y_train)
@@ -97,6 +103,7 @@ if output_figure in ["probm", "e_probm"]:
     plt.ylabel('y', fontsize=18)
     plt.title(feature, fontsize=18)
     plt.show()
+    plt.close()
 
 if output_figure == 'r_probm':
     fig, axes = plt.subplots(nrows=2, ncols=2)
@@ -108,6 +115,7 @@ if output_figure == 'r_probm':
     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
     fig.colorbar(im, cax=cbar_ax)
     plt.show()
+    plt.close()
 
 if output_figure in ["probsl", "e_probsl"]:
     binned_grid, _, _ = binplot(B, 'Positive Crit Prob', condition=y_test.index.values)
@@ -146,6 +154,7 @@ if output_figure in ["probsl", "e_probsl"]:
     plt.xlabel("x")
     plt.ylabel("Probabilty for positive output (%s)" % model)
     plt.show()
+    plt.close()
 
 if output_figure == "r_probsl":
     print 'reached'
