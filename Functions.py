@@ -8,6 +8,7 @@ from astropy.stats import LombScargle
 from itertools import product
 from numpy.fft import rfft
 from numpy.fft import irfft
+from scipy.stats import mode
 from sklearn.tree import export_graphviz
 import subprocess
 import sys
@@ -1494,6 +1495,56 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
     # else:
     #     print(np.shape(z))
     #     plt.show()
+
+    return z, clim, feature
+
+
+def modeplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save=False):
+
+    try:
+        d = X['Distance 0']
+        t = X['Theta 0']
+    except:
+        d = X['Distance']
+        t = X['Theta']
+    if condition == None:
+        rad = np.array(d)
+        theta = np.array(t)
+        f = np.array(X[feature])
+
+    else:
+        rad = np.array(d)[condition]
+        theta = np.array(t)[condition]
+        f = np.array(X[feature])[condition]
+
+    rad = rad[np.logical_not(np.isnan(theta))]
+    f = f[np.logical_not(np.isnan(theta))]
+    theta = theta[np.logical_not(np.isnan(theta))]
+
+    x = rad * np.cos(theta)
+    y = rad * np.sin(theta)
+
+    x = x.astype('int')
+    y = y.astype('int')
+    x /= binsize
+    y /= binsize
+    x += np.absolute(np.min(x))
+    y += np.absolute(np.min(y))
+    z = [ [[0] for j in range(np.max(x)+1)] for i in range(np.max(y)+1)]
+    count = np.zeros((np.max(y) + 1, np.max(x) + 1))
+
+    for i in range(len(x)):
+        z[y[i]][x[i]] += [float(f[i])]
+        count[y[i]][x[i]] = 1.
+
+    for index_1, value_1 in enumerate(z):
+        for index_2, value_2 in enumerate(value_1):
+            z[index_1][index_2] = mode(value_2)[0][0]
+
+    z /= count
+
+    if clim == None:
+        clim = [np.nanmin(z),np.nanmax(z)]
 
     return z, clim, feature
 
