@@ -74,7 +74,7 @@ for index in range(Iterations):
     converted_data = list()
     grid = np.zeros(a.shape)
     convert(raw_data, converted_data)
-    np.save('raw_data.npy',np.array(converted_data))
+    # np.save('raw_data.npy',np.array(converted_data))
 
     # Saving the critical circuit position
     index_grp.create_dataset('Crit Position', data=crit_position)
