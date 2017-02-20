@@ -86,7 +86,7 @@ def ecg_fn(ind, Xg, Yg, Xg_den, Yg_den, Xdif, Ydif):
 
 class ECG:
 
-    def __init__(self, shape = (200,200), probe_height = 3, centre = None):
+    def __init__(self, shape = (200,200), probe_height = 3, m = None, centre = None):
         self.centre = centre
         self.shape = shape
         self.y_mid = self.shape[0]/2
@@ -94,8 +94,11 @@ class ECG:
         self.z = probe_height
         self.probe_position = None
 
-        print( '[r,s,g,g_rand,g_single,c (have to set in code)]')
-        mode = str(input('Ecg position mode: '))
+        if m == None:
+            print( '[r,s,g,g_rand,g_single,c (have to set in code)]')
+            mode = str(input('Ecg position mode: '))
+        else:
+            mode = m
 
         self.mode = mode
 
@@ -132,8 +135,8 @@ class ECG:
             for i in range(64):
                 s.append([])
             for i in range(576):
-                row = i/72
-                column = ((i-(72 * row))%24)/3
+                row = i // 72
+                column =  ((i-(72 * row))%24) // 3
                 index = (8* row) + column
                 s[index].append(i)
             self.reordered_index = np.concatenate(s)
