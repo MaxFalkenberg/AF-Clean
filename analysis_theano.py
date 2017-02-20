@@ -86,14 +86,15 @@ def ecg_fn(ind, Xg, Yg, Xg_den, Yg_den, Xdif, Ydif):
 
 class ECG:
 
-    def __init__(self, shape = (200,200), probe_height = 3):
+    def __init__(self, shape = (200,200), probe_height = 3, centre = None):
+        self.centre = centre
         self.shape = shape
         self.y_mid = self.shape[0]/2
         self.y_mid = np.array(self.y_mid, dtype = 'int32')
         self.z = probe_height
         self.probe_position = None
 
-        print( '[r,s,g,c (have to set in code)]')
+        print( '[r,s,g,g_rand,g_single,c (have to set in code)]')
         mode = str(input('Ecg position mode: '))
 
         self.mode = mode
@@ -159,6 +160,13 @@ class ECG:
             #             self.probe_number.append(k)
             #         k+= 1
 
+        if mode == 'g_single':
+            y,x = self.centre
+            self.probe_x = np.array([x-3,x,x+3])
+            self.probe_y = np.array([y-3,y,y+3])
+            self.probe_y %= 200
+            self.probe_position = list(product(self.probe_y, self.probe_x))
+
         if mode == 'g_rand':
             x = np.random.randint(10,191)
             y = np.random.randint(200)
@@ -166,6 +174,58 @@ class ECG:
             self.probe_y = np.array([y-3,y,y+3])
             self.probe_y %= 200
             self.probe_position = list(product(self.probe_y, self.probe_x))
+
+        self.base_y_x = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
+        self.base_y_y = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
+        self.base_x_y = np.zeros((self.shape[0],self.shape[1] - 1), dtype = 'float32')
+        self.base_x_x = np.zeros((self.shape[0],self.shape[1] - 1), dtype = 'float32')
+
+        for i in range(len(self.base_x_y)):
+            self.base_x_y[i] = i
+            self.base_y_x[:,i] = i
+
+        for i in range(len(self.base_y_y)):
+            self.base_y_y[i] = i
+            self.base_x_x[:,i] = i
+
+        self.base_x_y -= self.y_mid
+        self.base_y_y[:self.y_mid] -= self.y_mid
+        self.base_y_y[self.y_mid:] -= self.y_mid - 1.
+
+        self.shifted_x_x = []
+        self.shifted_y_x = []
+
+        for i in self.probe_x:
+            self.shifted_y_x.append(self.base_y_x - i)
+            temp = np.copy(self.base_x_x)
+            temp[:,:int(i)] -= i
+            temp[:,int(i):] -= i - 1.
+            self.shifted_x_x.append(temp)
+
+        self.shifted_x_x = np.array(self.shifted_x_x)
+        self.shifted_y_x = np.array(self.shifted_y_x)
+
+        self.ygrad_den = []
+        self.xgrad_den = []
+
+        for i in range(len(self.shifted_x_x)):
+            self.ygrad_den.append(((self.shifted_y_x[i] ** 2) + (self.base_y_y ** 2) + (self.z ** 2)) ** 1.5)
+            self.xgrad_den.append(((self.shifted_x_x[i] ** 2) + (self.base_x_y ** 2) + (self.z ** 2)) ** 1.5)
+
+        self.ygrad_den = np.array(self.ygrad_den)
+        self.xgrad_den = np.array(self.xgrad_den)
+
+    def reset_singlegrid(self,new_centre):
+        self.y_mid = self.shape[0]/2
+        self.y_mid = np.array(self.y_mid, dtype = 'int32')
+        self.probe_position = None
+
+        self.centre = new_centre
+        y,x = new_centre
+        self.probe_x = np.array([x-3,x,x+3])
+        self.probe_y = np.array([y-3,y,y+3])
+        self.probe_y %= 200
+        self.probe_position = list(product(self.probe_y, self.probe_x))
 
         self.base_y_x = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
         self.base_y_y = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')

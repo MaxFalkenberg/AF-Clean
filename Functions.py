@@ -1215,6 +1215,89 @@ def feature_extract_multi_test(number, ecg_vals, cp, probes, nu):
                         + cp.tolist() + [probe_point] + dist + vec_x + vec_y + unit_vector_x + unit_vector_y + theta + target + multi_target + nearest + [nu]+ [int(number)/9])
     return features
 
+
+def feature_extract_keras(number, ecg_vals, cp, probes, nu, min = None):
+    """
+    Extracts features for the current itteration's ECG at the probe position
+    corresponding to probes[number]. Not currently written to return values in a
+    particular format.
+    :param number: Index in data.
+    :param ecg_vals: The ecg voltages.
+    :param cp: The position of the critical point.
+    :param probes: The probe position.
+    :return:
+    """
+    ecg = ecg_vals[number]
+    index = np.arange(1,len(ecg) + 1)
+    crit_point = cp.tolist() #Index of critical point
+    nu = nu.tolist()
+    probe_point = np.ravel_multi_index(probes.astype('int')[number], (200, 200))
+    y,x = np.unravel_index(cp,(200,200))
+    vec_x = []
+    vec_y = []
+
+
+    def cp_vector(y_probe,x_probe):
+        x_vector = int(x_probe) - x
+        y_vector = int(y_probe) - y
+        if y_vector > 100:
+            y_vector -= 200
+        elif y_vector <= -100:
+            y_vector += 200
+
+        return float(x_vector),float(y_vector)
+    x,y = cp_vector(probes[number][0],probes[number][1])
+    x += 200.
+    y += 200.
+    x /= 400.
+    y /= 400.
+
+    vec_x.append(x)
+    vec_y.append(y)
+
+    signs = np.sign(np.diff(np.sign(ecg)))
+    crossovers = np.argwhere(signs == -1).flatten()
+    # print crossovers
+    start = crossovers[0]
+    noise = []
+    for i in range(1,len(crossovers)):
+        per = crossovers[i] - start
+        if per >= 50:
+            end = crossovers[i]
+            break
+        else:
+            noise.append(crossovers[i])
+    ecg = ecg[:2*per]
+    # print start, end
+    ft = rfft(ecg)  # Real valued FT of original ECG
+    ft_abs = np.absolute(ft)  # Takes absolute value of FT
+    ft_max10 = np.argsort(ft_abs)[-3:]  # Finds 9 largest frequency fundamentals
+    ft_max = np.min(ft_max10)
+    freq = np.fft.rfftfreq(ecg.size, d=1.)
+    freq_main = np.fft.rfftfreq(ecg.size, d=1.)[ft_max]
+    # FEATURE (Should be the same for all ECGs if correctly sampled.)
+    period = int(1. / freq_main)
+    ft[ft_max + 1:] = 0
+    ft[:ft_max] = 0
+    ift = irfft(ft)
+    start = np.argmax(ift[:period])
+    #start = 0
+    end = start + period
+    sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency
+    sample_ += 27.
+    sample_ /= 51.
+    # sample_double =ecg[start:end + (2 * period)]
+    metadata_ = np.array([nu,x,y])
+    dump = np.concatenate([metadata_,sample_])
+    if min != None:
+        if len(dump) < min:
+            temp = np.zeros(min - int(len(dump)))
+            temp[:] = np.nan
+            dump = np.concatenate([dump,temp])
+
+    return dump
+
+
 def process_multi_feature(T):
     T = T.astype('float')
     centre = T[5]
@@ -1270,10 +1353,10 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
     ran = len(dataframe)
     index = np.arange(0,ran,9)
 
-    metadata = dataframe[['Target 0', 'Multi Target 0', 'Vector X 0', 'Vector Y 0','Theta 0', 'Distance 0', 'Nu']]
+    metadata = dataframe[['Target 0', 'Multi Target 0', 'Vector X 0', 'Vector Y 0','Theta 0', 'Distance 0', 'Nu']][4::9]
     probe_features = ['Crit Position', 'Crit Position 0', 'Crit Position 1', 'Probe Position',
                       'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y 0','Target 0', 'Multi Target 0',
-                      'Unit Vector Y 1', 'Theta',  'Theta 1', 'Probe Number',
+                      'Unit Vector Y 1', 'Theta',  'Theta 1', 'Probe Number','Theta 0',
                       'Nearest Crit Position','Vector X 0', 'Vector Y 0', 'Distance 0', 'Nu']
     all_features = list(dataframe.columns)
     for feature in probe_features:
@@ -1283,6 +1366,7 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
     for i in index:
         T = dataframe.iloc[i:i+9].as_matrix()
         X = process_multi_feature(T)
+        # print i, np.shape(T), np.shape(X)
         feature_list.append(X)
     X = np.vstack(feature_list)
     X[X == np.inf] = np.nan
@@ -1293,8 +1377,9 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
         for j in suffixes:
             temp = i + j
             keys.append(temp)
+    print np.shape(metadata)
     df = pd.DataFrame(X,columns = keys)
-    df = df.join(metadata)
+    df = df.join(metadata.reset_index())
     df.fillna(99999.)
 
     name = raw_input("Save Filename: ")
