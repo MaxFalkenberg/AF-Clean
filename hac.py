@@ -17,7 +17,7 @@ M = pd.read_hdf("%s.h5" % original_datafile)
 
 del X['Target 0']
 
-rows = random.sample(X.index, 20000)
+rows = random.sample(X.index, 25000)
 X = X.ix[rows]
 data = scale(X.as_matrix().astype(float))
 
