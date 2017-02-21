@@ -242,13 +242,13 @@ class Visual:
         c_map_custom.set_over('r')
         plt.imshow(self.animation_data[desired_frame], cmap=c_map_custom, interpolation='nearest', vmin=0, vmax=self.rp,
                    origin='lower')
-        plt.annotate("Time Step: %s" % desired_frame, xy=(1, 0), xycoords='axes fraction', fontsize=16,
+        plt.annotate("Time Step: %s" % desired_frame, xy=(1, 0), xycoords='axes fraction', fontsize=18,
                      xytext=(100, -20), textcoords='offset points', ha='right', va='top')
         c_bar = plt.colorbar()
         c_bar.ax.tick_params(labelsize=14)
-        c_bar.set_label(r'$S(I,J)$', fontsize=16, rotation=0, labelpad=25)
-        plt.xlabel(r'$J$', fontsize=16, labelpad=12)
-        plt.ylabel(r'$I$', fontsize=16, rotation=0, labelpad=15)
-        plt.xticks(fontsize=14)
-        plt.yticks(fontsize=14)
+        c_bar.set_label(r'$S(I,J)$', fontsize=18, rotation=0, labelpad=25)
+        plt.xlabel(r'$J$', fontsize=18, labelpad=12)
+        plt.ylabel(r'$I$', fontsize=18, rotation=0, labelpad=15)
+        plt.xticks(fontsize=18)
+        plt.yticks(fontsize=18)
         plt.show()
