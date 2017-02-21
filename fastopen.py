@@ -159,7 +159,7 @@ def feature_extract(number):
     particular format."""
     ecg = ecg_vals[number]
     crit_point = cp #Index of critical point
-    dist = dist_grid[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+    dist, vector, theta = cp_vector(int(probes[number][0]),int(probes[number][1]))
 
     ft = rfft(ecg)  # Real valued FT of original ECG
     ft_abs = np.absolute(ft)  # Takes absolute value of FT
@@ -174,6 +174,7 @@ def feature_extract(number):
     ift = irfft(ft2)
     start = np.argmax(ift[:(2*period) - 1])
     end = start + (2 * period)
+
     sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
 
     ft_samp = rfft(sample_)  # Real valued FT of sample ECG
@@ -233,4 +234,4 @@ def feature_extract(number):
     print largest_ft_rel_mag
     print dist
 
-feature_extract(6)
+#feature_extract(6)

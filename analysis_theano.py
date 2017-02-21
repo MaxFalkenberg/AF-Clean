@@ -86,15 +86,18 @@ def ecg_fn(ind, Xg, Yg, Xg_den, Yg_den, Xdif, Ydif):
 
 class ECG:
 
-    def __init__(self, shape = (200,200), probe_height = 3):
+    def __init__(self, shape = (200,200), probe_height = 3, m=None):
         self.shape = shape
         self.y_mid = self.shape[0]/2
         self.y_mid = np.array(self.y_mid, dtype = 'int32')
         self.z = probe_height
         self.probe_position = None
 
-        print( '[r,s,c (have to set in code)]')
-        mode = str(input('Ecg position mode: '))
+        if m == None:
+            print( '[r,s,g,c (have to set in code)]')
+            mode = str(input('Ecg position mode: '))
+        else:
+            mode = m
 
         self.mode = mode
 
@@ -114,6 +117,57 @@ class ECG:
         if mode == 'c':
             self.probe_y = np.array([100], dtype='int32')
             self.probe_x = np.linspace(80, 120, 5, dtype='int32')
+            self.probe_position = list(product(self.probe_y, self.probe_x))
+        if mode == 'g':
+            # x = np.random.randint(10,191)
+            # y = np.random.randint(200)
+            # probes = np.array([[y,x],[y + 4, x],[y - 4, x],[y,x + 3],[y, x - 3],[y-3,x-4],[y-3,x+4],[y+3,x-4],[y+3,x+4]])
+            # self.probe_x = probes[:,1]
+            # self.probe_y = probes[:,0]
+            # probes[:,0] %= 200
+            # self.probe_position = probes.tolist()
+            # def pr(a,b):
+            #     return list(product(a, b))
+            self.probe_x = np.array([20,23,26,40,43,46,60,63,66,80,83,86,113,116,119,133,136,139,153,156,159,173,176,179],dtype = 'int32')
+            self.probe_y = np.copy(self.probe_x)
+            s = []
+            for i in range(64):
+                s.append([])
+            for i in range(576):
+                row = i // 72
+                column =  ((i-(72 * row))%24) // 3
+                index = (8* row) + column
+                s[index].append(i)
+            self.reordered_index = np.concatenate(s)
+            self.probe_position = np.array(list(product(self.probe_y, self.probe_x)))[self.reordered_index]
+            # pa = np.array([20.,23.,26.])
+            # pb = np.array([40.,43.,46.])
+            # pc = np.array([60.,63.,66.])
+            # pd = np.array([80.,83.,86.])
+            # pe = np.array([113.,116.,119.])
+            # pf = np.array([133.,136.,139.])
+            # pg = np.array([153.,156.,159.])
+            # ph = np.array([173.,176.,179.])
+            # p_all = [pa,pb,pc,pd,pe,pf,pg,ph]
+            # self.probe_x = np.concatenate(p_all)
+            # self.probe_y = np.copy(self.probe_x)
+            # self.probe_position = []
+            # self.probe_number = []
+            # k = 0
+            # for i in range(len(p_all)):
+            #     for j in range(len(p_all)):
+            #         prod = pr(p_all[i],p_all[j])
+            #         self.probe_position += prod
+            #         for l in range(len(prod)):
+            #             self.probe_number.append(k)
+            #         k+= 1
+
+        if mode == 'g_rand':
+            x = np.random.randint(10,191)
+            y = np.random.randint(200)
+            self.probe_x = np.array([x-3,x,x+3])
+            self.probe_y = np.array([y-3,y,y+3])
+            self.probe_y %= 200
             self.probe_position = list(product(self.probe_y, self.probe_x))
 
         self.base_y_x = np.zeros((self.shape[0] - 1,self.shape[1]), dtype = 'float32')
@@ -210,7 +264,12 @@ class ECG:
             sequences = [probe_var], non_sequences = [xg_var,yg_var,xden_var,yden_var,xdif_var,ydif_var])
         F_ECG = function(inputs = [probe_var,xg_var,yg_var,xden_var,yden_var,xdif_var,ydif_var], outputs = result)
 
-        return F_ECG(probe_index, Xgrad, Ygrad, self.xgrad_den,self.ygrad_den,self.shifted_x_x,self.base_y_y)
+        temp = F_ECG(probe_index, Xgrad, Ygrad, self.xgrad_den,self.ygrad_den,self.shifted_x_x,self.base_y_y)
+
+        if self.mode == 'g':
+            return temp[self.reordered_index]
+        else:
+            return temp
 
 
 

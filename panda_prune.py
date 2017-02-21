@@ -15,7 +15,6 @@ print "Dataframe description:"
 with open('%s.txt' % datafile) as f:
     print f.read()
 print "\n"
-
 # Depending on the RF type, removes one of the target observations.
 observation_style = raw_input("Classisfication/Regression/Multi-electrode Classification (c/r/mc): ")
 prune = raw_input("Prune features? (y/n): ")

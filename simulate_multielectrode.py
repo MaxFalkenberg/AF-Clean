@@ -11,9 +11,24 @@ from itertools import product
 import numpy as np
 import h5py
 import time
+import argparse
+
+
+parser = argparse.ArgumentParser(description='max stuff')
+parser.add_argument('iterations', metavar='ITER', type=int,
+                    help='an integer for the accumulator')
+parser.add_argument('nu', metavar='NU', type=float,
+                                        help='an integer for the accumulator')
+parser.add_argument('output', metavar='OUTPUT',
+                    help ='an integer for the accumulator')
+parser.add_argument('mode', metavar='MODE',
+                                        help ='[r,s,g,c (have to set in code)]')
+
+args = parser.parse_args()
+print(args)
 # import matplotlib.pyplot as plt
 
-Iterations = int(input("Number of iterations: "))
+Iterations = args.iterations #int(input("Number of iterations: "))
 
 def convert(data, output):
 
@@ -31,16 +46,17 @@ def convert(data, output):
 
     return output
 
-e = at.ECG(shape=(200, 200), probe_height=3)  # Assuming shape/probe height doesn't change.
-file_name = input("Name of output file: ")
-# print("Nu Value:")
-# nu = float(input())
+e = at.ECG(shape=(200, 200), probe_height=3, m=args.mode)  # Assuming shape/probe height doesn't change.
+file_name = args.output #nput("Name of output file: ")
+#print("Nu Value:")
+nu = args.nu#float(input())
 
+print(file_name, nu, e.mode, Iterations)
 # print(nu)
 
 h5f = h5py.File('%s.h5' % file_name, 'w')
 for index in range(Iterations):
-    nu = (np.random.rand() / 5) + 0.1
+    #nu = (np.random.rand() / 5) + 0.1
     start_time1 = time.time()
     index_grp = h5f.create_group('Index: %s' % index)
 
@@ -56,11 +72,12 @@ for index in range(Iterations):
     # Saving the critical circuit position
     index_grp.create_dataset('Crit Position', data=crit_position)
     index_grp.create_dataset('Nu', data=nu)
-    ecg = e.solve(converted_data[1021:])
+    ecg = e.solve(converted_data[1111:])
 
 
     index_grp.create_dataset('ECG', data=ecg)
     index_grp.create_dataset('Probe Positions', data=e.probe_position)
+    # index_grp.create_dataset('Probe Number', data=e.probe_number)
     print("--- Iteration %s: %s seconds ---" % (index, time.time() - start_time1))
 
 h5f.close()

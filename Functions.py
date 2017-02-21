@@ -1608,6 +1608,7 @@ def distance(x_vectors, y_vectors, y_scale=1, x_scale=1):
     # return [np.sqrt((y_scale*y)**2 + (x_scale*x)**2) for y, x in zip(y_vectors,x_vectors)]
 
     """
+<<<<<<< HEAD
     :param x_vectors: df['Vector X 0']
     :param y_vectors: df['Vector Y 0']
     :param y_scale: scaling for y

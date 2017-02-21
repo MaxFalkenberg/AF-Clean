@@ -255,6 +255,6 @@ if choice == 'PD':
     import seaborn as sns
     import matplotlib.patches as mpatches
 
-    rawfile = raw_input("ML file to load: ")
+    rawfile = raw_input("ML file to load: ") + '.h5'
     # datafile = raw_input("Pandas dataframe to open: ")
     X = pd.read_hdf(rawfile)

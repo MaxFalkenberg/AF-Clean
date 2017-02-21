@@ -27,6 +27,11 @@ if RFtype == 'r':
     y = X.pop('Distance 0')
 
 rows = model_number
+# For finding feature robustness for multi-electrode
+# y = X.pop('Multi Target 0')
+# y = y.astype(int)
+#
+# rows = 15
 robustness_datagrid = np.zeros((rows, len(X.columns)))
 
 pp = 0
