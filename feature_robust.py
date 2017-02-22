@@ -9,6 +9,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from Functions import print_progress
 import cPickle
+from Functions import feature_prune
 
 while True:
     input_list = ['c', 'r']
@@ -20,6 +21,7 @@ model_number = int(raw_input("Number of models: "))
 
 datafile = raw_input("Pandas dataframe to open: ")
 X = pd.read_hdf("%s.h5" % datafile)
+
 if RFtype == 'c':
     y = X.pop('Target 0')
     y = y.astype(int)
@@ -32,6 +34,15 @@ rows = model_number
 # y = y.astype(int)
 #
 # rows = 15
+# y = X.pop('Multi Target 0')
+# y = y.astype(int)
+
+# For y-vector trees
+# y = X.pop('Vector Y 0')
+# feature_prune(X, [ 'Target 0', 'Vector X 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0'])
+#
+# rows = 5
+
 robustness_datagrid = np.zeros((rows, len(X.columns)))
 
 pp = 0

@@ -6,7 +6,7 @@ import time
 import analysis_theano as at
 from Functions import ani_convert
 
-print "Propagator types: [Normal, Single Crit]"
+print "Propagator types: [Normal, Single Crit, Double Point]"
 
 propagate_choice = raw_input("Propagate type: ")
 a = None
@@ -22,6 +22,14 @@ if propagate_choice == 'Single Crit':
     a = ps.Heart(nu=0.2, fakedata=True)
     x_pos = int(raw_input("Crit x position: "))
     y_pos = int(raw_input("Crit y position: "))
+    a.set_pulse(60, [[y_pos], [x_pos]])
+
+if propagate_choice == 'Double Point':
+    import propagate_singlesource as ps
+    nu_value = float(raw_input('Choose a Nu value: '))
+    a = ps.Heart(nu=nu_value, fakedata=True)
+    x_pos = input("Crit x position: ")
+    y_pos = input("Crit y position: ")
     a.set_pulse(60, [[y_pos], [x_pos]])
 
 e = at.ECG_single(a.shape, 3)
