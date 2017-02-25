@@ -1586,6 +1586,24 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
     name = raw_input("Save Filename: ")
     df.to_hdf(name + '.h5','w')
 
+
+def multi_feature_compile_rt(uncompiled):
+    """
+    Compiles all the ecg features into a single multi probe feature array. This is then fed into a RF model.
+    :param uncompiled:
+    :return:
+    """
+    # Compiles all the features
+    compiled = process_multi_feature(uncompiled)
+    # Cleans all inf values
+    compiled[compiled == np.inf] = 99999.
+    if np.isinf(compiled).any():
+        print "Infinity came through"
+    if np.isnan(compiled).any():
+        print "NAN can through"
+    return np.nan_to_num(compiled)
+
+
 def visualize_tree(tree, feature_names):
     """Create tree png using graphviz.
 
