@@ -94,9 +94,9 @@ if output_figure in ["r_probm", "r_probsl"]:
 
 if output_figure in ["probm", "e_probm"]:
     # ret = False for probabilty map.
-    binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values)
+    binned_grid, clim, feature = binplot(B, 'Positive Crit Prob', condition=y_test.index.values, binsize=2)
     plt.figure(figsize=(10., 10.))
-    cm = plt.cm.get_cmap('brg')
+    cm = plt.cm.get_cmap('coolwarm')
     plt.imshow(binned_grid, vmin=clim[0], vmax=clim[1], interpolation="nearest", origin="lower", cmap=cm)
     plt.colorbar(shrink=0.4, pad=0.07)
     plt.xlabel('x', fontsize=18)
