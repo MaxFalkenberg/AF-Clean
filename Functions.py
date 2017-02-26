@@ -1920,3 +1920,15 @@ def distance(x_vectors, y_vectors, y_scale=1, x_scale=1):
     """
 
     return [np.sqrt((y_scale*y)**2 + (x_scale*x)**2) for y, x in zip(y_vectors.values,x_vectors.values)]
+
+
+def y_vector_classifier(x):
+    """
+    :param x: pandas series
+    :param threshold:
+    :return: turns vector data into classifier information.
+    """
+    if np.abs(x) >= 3:
+        return 0
+    if np.abs(x) < 3:
+        return 1
