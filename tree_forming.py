@@ -19,10 +19,10 @@ dtree = None
 
 if model_choice == 'r':
     from sklearn.ensemble import RandomForestRegressor
-    X = X[np.absolute(np.array(X['Vector Y 0'])) < 3.]
-    y = X.pop('Vector X 0')
+    # X = X[np.absolute(np.array(X['Vector Y 0'])) < 3.]
+    y = X.pop('Vector Y 0')
     try:
-        feature_prune(X, [ 'Target 0', 'Vector Y 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0'])
+        feature_prune(X, [ 'Target 0', 'Vector X 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0'])
     except:
         print 'prune failed'
         pass

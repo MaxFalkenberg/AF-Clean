@@ -1576,13 +1576,30 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
         print words
         plt.savefig(words[0] + '.png')
         plt.close()
-    else:
-        print(np.shape(z))
-        plt.show()
+    # else:
+    #     print(np.shape(z))
+    #     plt.show()
 
     if ret:
         return z
 
+def diff_plot(array1,array2,title = 'Default',save = False):
+    plt.figure(figsize =(10.,10.))
+    cm = 'coolwarm'
+    plt.imshow((array2 - array1)/np.nanmax(np.absolute(array2 - array1)),vmin = -1.,vmax = 1., interpolation="nearest", origin="lower", cmap = cm)
+    plt.colorbar(shrink=0.4, pad = 0.07)
+    plt.xlabel('x', fontsize = 18)
+    plt.ylabel('y', fontsize = 18)
+    plt.title(title, fontsize = 18)
+    if save:
+        words = [title]
+        words = [w.replace(':', '_') for w in words]
+        words = [w.replace(' ', '_') for w in words]
+        print words
+        plt.savefig(words[0] + '.png')
+        plt.close()
+    # else:
+    #     plt.show()
 
 def feature_prune(dataframe, delete_list):
     """
