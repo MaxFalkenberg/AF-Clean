@@ -1,35 +1,36 @@
 import pyqtgraph as pg
 import pyqtgraph.ptime as ptime
 from pyqtgraph.Qt import QtCore, QtGui
-import pandas as pd
 import numpy as np
 import time
 import copy
+from sklearn.externals import joblib
 from random import randint
 import analysis_theano as at
-from Functions import ani_convert, feature_extract_multi_test_rt
+from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_compile_rt
 import propagate_singlesource as ps
 
 # Loading in Machine Learning models
 #####################################
-
+y_regress = joblib.load('y_regress_rt_4.pkl')
+y_estimator = joblib.load('y_class_rt_1.pkl')
 #####################################
 
 # Initialising the Heart structure
-a = ps.Heart(nu=0.2, delta=0.05, fakedata=True)
-# Randomises the x/y position
+a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
+# Randomises the rotor x,y position
 cp_x_pos = randint(0, 199)
 cp_y_pos = randint(0, 199)
 a.set_pulse(60, [[cp_y_pos], [cp_x_pos]])
 
 print "Ectopic Beat position: (%s, %s)" % (cp_x_pos, cp_y_pos)
 
-# Initialising ECG recording (randomises the x,y position)
-ecg_x_pos = randint(0, 199)
-ecg_y_pos = randint(0, 199)
-ecg_processing = at.ECG(centre=(ecg_y_pos, ecg_x_pos), m='g_single')
+# Initialising ECG recording (randomises the probe x,y position)
+current_ecg_x_pos = randint(0, 199)
+current_ecg_y_pos = randint(0, 199)
+ecg_processing = at.ECG(centre=(current_ecg_y_pos, current_ecg_x_pos), m='g_single')
 
-print "Initial ECG Probe position: (%s, %s)" % (ecg_x_pos, ecg_y_pos)
+print "Initial ECG Probe position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
 
 # Initialising the animation window
 app = QtGui.QApplication([])
@@ -38,7 +39,6 @@ win.show()
 win.setWindowTitle('animation')
 view = win.addPlot()
 img = pg.ImageItem(border='w')
-# img.setLookupTable(lut)
 img.setLevels([0, 50])
 label = pg.TextItem()
 view.addItem(label)
@@ -62,7 +62,7 @@ updateTime = ptime.time()
 fps = 0
 
 # length of time for recording -> process (should be set to cover at least two waveform periods)
-process_length = 480
+process_length = 360
 
 # Time before the ECG starts taking measurments (should it be just 400?)
 n = 1
@@ -71,18 +71,53 @@ stability_time = n * process_length
 # process list
 process_list = []
 
+# Setting measurment flag to False (ecg measurments start when flag is triggered).
 ECG_start_flag = False
 
+# Sate for pipe work.
+state = 0
 
+"""
+State 0 - always measure and process ECG
+        - test y regression
+        - if np.abs(y vector) < 3:
+            keep features for further processing.
+            state = 1
+          if np.abs(y vector) >= 3:
+            move probe by y vector
+            state = 0
+"""
+
+y_regress_treshold = 3
+
+def rt_ecg_gathering(process_list):
+    """
+    Records the ECGS, Gathers the features and compiles them.
+    :param process_list: Raw data from animation_grid (t, (x,y))
+    :return: (441,) array of feature data.
+    """
+    voltages = ecg_processing.solve(np.array(process_list).astype('float32'))
+
+    # Putting all 9 ecg features into (9,21) array
+    uncompiled_features = []
+    for i in range(9):
+        uncompiled_features.append(feature_extract_multi_test_rt(i, voltages))
+    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features))
+    return compiled_features
+
+
+# Updates the frames and goes through pipework for ECG processing and machine learning processes.
 def update_data():
-    global updateTime, fps, ptr1, process_list, ECG_start_flag
+    global updateTime, fps, ptr1, process_list, ECG_start_flag, state, y_regress_treshold
+    global current_ecg_y_pos, current_ecg_x_pos
+
     data = a.propagate(ecg=True)
     data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
 
     # Initial Crosshair drawing
     if ptr1 == 0:
-        vLine.setPos(ecg_x_pos + 0.5)
-        hLine.setPos(ecg_y_pos + 0.5)
+        vLine.setPos(current_ecg_x_pos + 0.5)
+        hLine.setPos(current_ecg_y_pos + 0.5)
 
     # If flag triggered, then start taking measurments.
     if ECG_start_flag:
@@ -95,29 +130,41 @@ def update_data():
             print "Starting Measurment Process"
             ECG_start_flag = True
         if ptr1 % process_length == 0 and ptr1 != stability_time:
-            # needs a state variable to decide what to do
-            print 'ECG OUTPUT'
-            print ptr1
-            voltages = ecg_processing.solve(np.array(process_list).astype('float32'))
-            print voltages.shape
 
-            uncompiled_features = []
-            for i in range(9):
-                uncompiled_features.append(feature_extract_multi_test_rt(i, voltages))
-            print np.array(uncompiled_features).shape
+            if state == 0:
+                # ECG Recording and feature gathering
+                sample = rt_ecg_gathering(process_list)
+                # Get deprication warning if this is not done.
+                sample = sample.reshape(1,-1)
+                y_prob = y_estimator.predict(sample)[0]
+                print y_prob
+                y_vector = int(y_regress.predict(sample)[0])
+                print y_vector
 
-            cuurent_ecg_x_pos = randint(0, 199)
-            current_ecg_y_pos = randint(0, 199)
-            ecg_processing.reset_singlegrid((current_ecg_y_pos, cuurent_ecg_x_pos))
-            vLine.setPos(cuurent_ecg_x_pos + 0.5)
+                if y_prob == 1:
+                    print "Now test with estimator"
+                    # Temporary
+                    current_ecg_y_pos = randint(0, 199)
+                    current_ecg_x_pos = randint(0, 199)
+
+                if y_prob == 0:
+                    current_ecg_y_pos -= y_vector
+                    if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
+                        current_ecg_y_pos %= 200
+                    print current_ecg_y_pos
+
+            print "Current ECG Probe position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
+            ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
+            vLine.setPos(current_ecg_x_pos + 0.5)
             hLine.setPos(current_ecg_y_pos + 0.5)
             del process_list
             process_list = []
 
-    # gives larger more stable fps.
+    # gives more stable fps.
     time.sleep(1/120.)
     img.setImage(data.T)
 
+    # Stuff to do with time and fps.
     QtCore.QTimer.singleShot(1, update_data)
     now = ptime.time()
     fps2 = 1.0 / (now - updateTime)
