@@ -14,6 +14,8 @@ import propagate_singlesource as ps
 #####################################
 y_regress = joblib.load('y_regress_rt_4.pkl')
 y_estimator = joblib.load('y_class_rt_1.pkl')
+x_regress = joblib.load('x_regress_rt_2.pkl')
+x_class = joblib.load('x_classifier_rt_1.pkl')
 #####################################
 
 # Initialising the Heart structure
@@ -37,19 +39,23 @@ app = QtGui.QApplication([])
 win = pg.GraphicsWindow()
 win.show()
 win.setWindowTitle('animation')
-view = win.addPlot()
+w1 = win.addLayout()
+view = w1.addViewBox()
 img = pg.ImageItem(border='w')
 img.setLevels([0, 50])
-label = pg.TextItem()
-view.addItem(label)
-view.hideAxis('left')
-view.hideAxis('bottom')
+label = pg.LabelItem(justify='right', border=True)
+win.addItem(label)
+# label = pg.TextItem()
+# view.hideAxis('left')
+# view.hideAxis('bottom')
 view.addItem(img)
-view.setRange(QtCore.QRectF(0, -20, 200, 220))
+view.setRange(QtCore.QRectF(0, 0, 200, 200))
 
 # Initial probe and rotor position label.
-label.setText("ECG Position: (%s, %s), Rotor Position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos,
-                                                                    cp_x_pos, cp_y_pos))
+Text = """ECG Position: (%s, %s)<br>\n
+          Rotor Position: (%s, %s)""" % (current_ecg_x_pos, current_ecg_y_pos,
+                                         cp_x_pos, cp_y_pos)
+label.setText(Text)
 
 # Animation grids
 animation_grid = np.zeros(a.shape)
@@ -59,8 +65,6 @@ vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('r', width=2))
 hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('r', width=2))
 view.addItem(vLine, ignoreBounds=True)
 view.addItem(hLine, ignoreBounds=True)
-
-vb = view.vb
 
 # time step
 ptr1 = 0
@@ -79,6 +83,7 @@ process_list = []
 
 # Loop checking
 y_short_memory = []
+x_short_memory = []
 
 # Setting measurment flag to False (ecg measurments start when flag is triggered).
 ECG_start_flag = False
@@ -120,7 +125,7 @@ def rt_ecg_gathering(process_list):
 # Updates the frames and goes through pipework for ECG processing and machine learning processes.
 def update_data():
     global updateTime, fps, ptr1, process_list, ECG_start_flag, state, y_regress_treshold
-    global current_ecg_y_pos, current_ecg_x_pos, y_short_memory
+    global current_ecg_y_pos, current_ecg_x_pos, y_short_memory, x_short_memory
 
     data = a.propagate(ecg=True)
     data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
@@ -148,20 +153,29 @@ def update_data():
                 # Get deprication warning if this is not done.
                 sample = sample.reshape(1,-1)
 
-                y_class = y_estimator.predict(sample)[0]
-                print "Y classification: %s" % y_class
+                y_class_value = y_estimator.predict(sample)[0]
+                print "Y classification: %s" % y_class_value
                 y_vector = int(y_regress.predict(sample)[0])
                 print "Y Vector prediction: %s" % y_vector
 
-                if y_class == 1:
+                if y_class_value == 1:
+                    # Change to state 1 for y axis regression/classification.
+                    state = 1
                     print "Found X-Axis"
                     # Temporary
                     del y_short_memory
                     y_short_memory = []
-                    current_ecg_y_pos = randint(3, 196)
-                    current_ecg_x_pos = randint(3, 196)
+                    x_class_value = x_class.predict(sample)[0]
+                    print "X classification: %s" % x_class_value
+                    if x_class_value == 1:
+                        print "Found the rotor!"
+                        print "Predicted Rotor position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
+                        #reseting the process.
+                        current_ecg_y_pos = randint(3, 196)
+                        current_ecg_x_pos = randint(3, 196)
+                        state = 0
 
-                if y_class == 0:
+                if y_class_value == 0:
                     y_short_memory.append(current_ecg_y_pos)
                     current_ecg_y_pos -= y_vector
                     if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
@@ -176,6 +190,41 @@ def update_data():
                         current_ecg_y_pos = loop_average
                         # current_ecg_x_pos =
 
+            if state == 1:
+                # ECG Recording and feature gathering
+                sample = rt_ecg_gathering(process_list)
+                # Get deprication warning if this is not done.
+                sample = sample.reshape(1, -1)
+
+                x_class_value = x_class.predict(sample)[0]
+                print "X classification: %s" % x_class_value
+                x_vector = int(x_regress.predict(sample)[0])
+                print "X Vector prediction: %s" % x_vector
+
+                if x_class_value == 1:
+                    print "Found the rotor!"
+                    print "Predicted Rotor position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
+                    # Temporary
+                    del x_short_memory
+                    x_short_memory = []
+                    # reseting the process.
+                    current_ecg_y_pos = randint(3, 196)
+                    current_ecg_x_pos = randint(3, 196)
+                    state = 0
+
+                if x_class_value == 0:
+                    x_short_memory.append(current_ecg_x_pos)
+                    current_ecg_x_pos -= x_vector
+                    if current_ecg_x_pos in x_short_memory:
+                        print "Entered Loop"
+                        print "Loop: %s" % x_short_memory
+                        loop_average = int((float(sum(x_short_memory))/len(x_short_memory)))
+                        print "Loop Average: %s" % loop_average
+                        del x_short_memory
+                        x_short_memory = []
+                        current_ecg_x_pos = loop_average
+                        # current_ecg_x_pos =
+
             print "New ECG Probe position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
             print '\n'
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
@@ -183,11 +232,13 @@ def update_data():
             hLine.setPos(current_ecg_y_pos + 0.5)
             del process_list
             process_list = []
-            label.setText("ECG Position: (%s, %s), Rotor Position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos,
-                                                                                cp_x_pos, cp_y_pos))
+            updating_text = """ECG Position: (%s, %s)<br>\n
+                               Rotor Position: (%s, %s)""" % (current_ecg_x_pos, current_ecg_y_pos,
+                                                              cp_x_pos, cp_y_pos)
+            label.setText(updating_text)
 
     # gives more stable fps.
-    # time.sleep(1/120.)
+    time.sleep(1/120.)
     # puts animation grid on image.
     img.setImage(data.T)
 
