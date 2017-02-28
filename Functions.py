@@ -1233,8 +1233,8 @@ def feature_extract_multi_test_rt(number, ecg_vals):
     """
     ecg = ecg_vals[number]
     index = np.arange(1,len(ecg) + 1)
-    f,p = LombScargle(index,ecg).autopower()
-    per = int(np.round(1./f[np.argmax(p[(1./f) > 5.])]))
+    # f,p = LombScargle(index,ecg).autopower()
+    # per = int(np.round(1./f[np.argmax(p[(1./f) > 5.])]))
 
     # DONT THINK I NEED ANY OF THIS (JUST POSITION INFO)
 
@@ -1547,6 +1547,66 @@ def process_multi_feature(T):
     total = np.concatenate([centre,mean,std,kurtosis,skewness,vs_bar,vs_centreratio,vf_bar,hs_bar,hs_centreratio,hf_bar,d11_bar,d12_bar,d21_bar,dn11_bar,dn12_bar,dn21_bar,axisfocus,diagfocus,focusratio,focus])
     return total
 
+def sign_solver(Start, half_period = 30.):
+    T = Start.astype('float')
+    v63,v74,v85,v30,v41,v52 = T[6]-T[3],T[7]-T[4],T[8]-T[5],T[3]-T[0],T[4]-T[1],T[5]-T[2]
+    h87,h76,h54,h43,h21,h10 = T[8]-T[7],T[7]-T[6],T[5]-T[4],T[4]-T[3],T[2]-T[1],T[1]-T[0]
+
+    v63_copy1,v74_copy1,v85_copy1,v30_copy1,v41_copy1,v52_copy1 = np.copy(v63),np.copy(v74),np.copy(v85),np.copy(v30),np.copy(v41),np.copy(v52)
+    v63_copy2,v74_copy2,v85_copy2,v30_copy2,v41_copy2,v52_copy2 = np.copy(v63),np.copy(v74),np.copy(v85),np.copy(v30),np.copy(v41),np.copy(v52)
+
+    v63_copy1[v63_copy1 > half_period] -= (2*half_period)
+    v74_copy1[v74_copy1 > half_period] -= (2*half_period)
+    v85_copy1[v85_copy1 > half_period] -= (2*half_period)
+    v30_copy1[v30_copy1 > half_period] -= (2*half_period)
+    v41_copy1[v41_copy1 > half_period] -= (2*half_period)
+    v52_copy1[v52_copy1 > half_period] -= (2*half_period)
+
+    v63_copy2[v63_copy2 < -half_period] %= (2*half_period)
+    v74_copy2[v74_copy2 < -half_period] %= (2*half_period)
+    v85_copy2[v85_copy2 < -half_period] %= (2*half_period)
+    v30_copy2[v30_copy2 < -half_period] %= (2*half_period)
+    v41_copy2[v41_copy2 < -half_period] %= (2*half_period)
+    v52_copy2[v52_copy2 < -half_period] %= (2*half_period)
+
+    v63_sign = np.sign(v63 * np.sign(v63_copy1) * np.sign(v63_copy2))
+    v74_sign = np.sign(v74 * np.sign(v74_copy1) * np.sign(v74_copy2))
+    v85_sign = np.sign(v85 * np.sign(v85_copy1) * np.sign(v85_copy2))
+    v30_sign = np.sign(v30 * np.sign(v30_copy1) * np.sign(v30_copy2))
+    v41_sign = np.sign(v41 * np.sign(v41_copy1) * np.sign(v41_copy2))
+    v52_sign = np.sign(v52 * np.sign(v52_copy1) * np.sign(v52_copy2))
+
+    v_sign = (v63_sign +v74_sign +v85_sign +v30_sign +v41_sign +v52_sign )/6
+
+
+    h87_copy1,h76_copy1,h54_copy1,h43_copy1,h21_copy1,h10_copy1 = np.copy(h87),np.copy(h76),np.copy(h54),np.copy(h43),np.copy(h21),np.copy(h10)
+    h87_copy2,h76_copy2,h54_copy2,h43_copy2,h21_copy2,h10_copy2 = np.copy(h87),np.copy(h76),np.copy(h54),np.copy(h43),np.copy(h21),np.copy(h10)
+
+    h87_copy1[h87_copy1 > half_period] -= (2*half_period)
+    h76_copy1[h76_copy1 > half_period] -= (2*half_period)
+    h54_copy1[h54_copy1 > half_period] -= (2*half_period)
+    h43_copy1[h43_copy1 > half_period] -= (2*half_period)
+    h21_copy1[h21_copy1 > half_period] -= (2*half_period)
+    h10_copy1[h10_copy1 > half_period] -= (2*half_period)
+
+    h87_copy2[h87_copy2 < -half_period] %= (2*half_period)
+    h76_copy2[h76_copy2 < -half_period] %= (2*half_period)
+    h54_copy2[h54_copy2 < -half_period] %= (2*half_period)
+    h43_copy2[h43_copy2 < -half_period] %= (2*half_period)
+    h21_copy2[h21_copy2 < -half_period] %= (2*half_period)
+    h10_copy2[h10_copy2 < -half_period] %= (2*half_period)
+
+    h87_sign = np.sign(h87 * np.sign(h87_copy1) * np.sign(h87_copy2))
+    h76_sign = np.sign(h76 * np.sign(h76_copy1) * np.sign(h76_copy2))
+    h54_sign = np.sign(h54 * np.sign(h54_copy1) * np.sign(h54_copy2))
+    h43_sign = np.sign(h43 * np.sign(h43_copy1) * np.sign(h43_copy2))
+    h21_sign = np.sign(h21 * np.sign(h21_copy1) * np.sign(h21_copy2))
+    h10_sign = np.sign(h10 * np.sign(h10_copy1) * np.sign(h10_copy2))
+
+    h_sign = (h87_sign +h76_sign +h54_sign +h43_sign +h21_sign +h10_sign )/6
+    axes_sign = np.absolute(v_sign) + np.absolute(h_sign)
+    return np.array([v_sign, h_sign, axes_sign])
+
 
 def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
     dataframe = dataframe.copy()
@@ -1566,18 +1626,23 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
 
     for i in index:
         T = dataframe.iloc[i:i+9].as_matrix()
+        S =  dataframe.iloc[i:i+9]['Start'].as_matrix()
         X = process_multi_feature(T)
+        Y = sign_solver(S)
         # print i, np.shape(T), np.shape(X)
-        feature_list.append(X)
+        feature_list.append(np.concatenate([X,Y]))
     X = np.vstack(feature_list)
     X[X == np.inf] = np.nan
-    prefixes = ['Probe Centre: ','Mean Probes: ' ,'Std Probes: ','Kurtosis Probes: ','Skewness Probes' ,'Vertical Singles Mean: ','Vertical Singles Centre Ratio: ','Vertical Full Mean: ','Horizontal Singles Mean: ','Horizontal Singles Centre Ratio: ','Horizontal Full Mean: ','Diagonal 11 Mean: ','Diagonal 12 Mean: ','Diagonal 21 Mean: ','Diagonal N11 Mean: ','Diagonal N12 Mean: ','Diagonal N21 Mean: ','Focus Axis Orientation: ','Focus Diag Orientation: ','Focus Ratio: ','Focus: ']
+    prefixes = ['Probe Centre: ','Mean Probes: ' ,'Std Probes: ','Kurtosis Probes: ','Skewness Probes' ,'Vertical Singles Mean: ','Vertical Singles Centre Ratio: ','Vertical Full Mean: ','Horizontal Singles Mean: ',
+    'Horizontal Singles Centre Ratio: ','Horizontal Full Mean: ','Diagonal 11 Mean: ','Diagonal 12 Mean: ','Diagonal 21 Mean: ','Diagonal N11 Mean: ','Diagonal N12 Mean: ','Diagonal N21 Mean: ','Focus Axis Orientation: ',
+    'Focus Diag Orientation: ','Focus Ratio: ','Focus: ']#,'V63: ','V74: ','V85: ','V30: ','V41: ','V52: ','H87: ','H76: ','H54: ','H43: ', 'H21: ','H10: ']
     suffixes = dataframe.keys().tolist()
     keys = []
     for i in prefixes:
         for j in suffixes:
             temp = i + j
             keys.append(temp)
+    keys = keys + ['V Sign', 'H Sign', 'Axes Sign']
     print np.shape(metadata)
     df = pd.DataFrame(X,columns = keys)
     df = df.join(metadata.reset_index())
@@ -1595,6 +1660,8 @@ def multi_feature_compile_rt(uncompiled):
     """
     # Compiles all the features
     compiled = process_multi_feature(uncompiled)
+    signs = sign_solver(uncompiled[:,0])
+    compiled = np.concatenate([compiled,signs])
     # Cleans all inf values
     compiled[compiled == np.inf] = 99999.
     if np.isinf(compiled).any():
@@ -1771,7 +1838,7 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
 
 
     # y_grad, x_grad = np.gradient(z)
-    # cm = plt.cm.get_cmap('coolwarm')
+    cm = plt.cm.get_cmap('coolwarm')
     # plt.figure()
     # plt.imshow(x_grad, interpolation="nearest", origin="lower", cmap = cm)
     # plt.colorbar(shrink=0.4, pad = 0.07)
@@ -1782,24 +1849,24 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
     if clim == None:
         clim = [np.nanmin(z),np.nanmax(z)]
         # print(clim)
-    # plt.figure(figsize =(10.,10.))
-    # plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
-    # plt.colorbar(shrink=0.4, pad = 0.07)
-    # plt.xlabel('x', fontsize = 18)
-    # plt.ylabel('y', fontsize = 18)
+    plt.figure(figsize =(10.,10.))
+    plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
+    plt.colorbar(shrink=0.4, pad = 0.07)
+    plt.xlabel('x', fontsize = 18)
+    plt.ylabel('y', fontsize = 18)
     # plt.title(feature, fontsize = 18)
-    # if save:
-    #     words = [feature]
-    #     words = [w.replace(':', '_') for w in words]
-    #     words = [w.replace(' ', '_') for w in words]
-    #     print words
-    #     plt.savefig(words[0] + '.png')
-    #     plt.close()
-    # else:
-    #     print(np.shape(z))
-    #     plt.show()
+    if save:
+        words = [feature]
+        words = [w.replace(':', '_') for w in words]
+        words = [w.replace(' ', '_') for w in words]
+        print words
+        plt.savefig(words[0] + '.png')
+        plt.close()
+    else:
+        print(np.shape(z))
+        plt.show()
 
-    return z, clim, feature
+    return z#, clim, feature
 
 
 def modeplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save=False):
