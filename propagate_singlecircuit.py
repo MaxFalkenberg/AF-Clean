@@ -14,6 +14,7 @@ class Heart:
         self.pulse_index = None
         self.pulse_rate = 220
         self.pulse_norm = None
+        self.circuit_set = False
         self.t = 0
         self.__n = nu  # Private vertical fractions variable
         self.__d = delta  # Private cell dysfunction variable
@@ -57,6 +58,8 @@ class Heart:
 
     def set_circuit(self,centre):
         index = centre
+        self.circuit_index = centre
+        self.circuit_set = True
         self.cell_vert[index:index + 27] = False
         self.cell_vert[index - 200: index - 200 + 27] = False
         self.cell_vert[index - 1] = True
@@ -178,6 +181,8 @@ class Heart:
                 exc = np.array([], dtype='uint32')
 
             self.t += 1
+            if self.t == 1 and self.circuit_set == True:
+                self.cell_grid[self.circuit_index - 1] = True
             try:
                 if self.pulse_norm:
                     if self.t % self.pulse_rate == 0:
