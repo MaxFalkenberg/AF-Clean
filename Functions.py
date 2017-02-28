@@ -1652,16 +1652,18 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
     df.to_hdf(name + '.h5','w')
 
 
-def multi_feature_compile_rt(uncompiled):
+def multi_feature_compile_rt(uncompiled, sign=False):
     """
     Compiles all the ecg features into a single multi probe feature array. This is then fed into a RF model.
-    :param uncompiled:
+    :param uncompiled: Uncompiled ecg features.
+    :param sign: Flag to work out the sign features.
     :return:
     """
     # Compiles all the features
     compiled = process_multi_feature(uncompiled)
-    signs = sign_solver(uncompiled[:,0])
-    compiled = np.concatenate([compiled,signs])
+    if sign:
+        signs = sign_solver(uncompiled[:, 0])
+        compiled = np.concatenate([compiled,signs])
     # Cleans all inf values
     compiled[compiled == np.inf] = 99999.
     if np.isinf(compiled).any():
@@ -2006,7 +2008,7 @@ def x_vector_classifier(x):
     :param threshold:
     :return: turns vector data into classifier information.
     """
-    if np.abs(x) >= 8:
+    if np.abs(x) >= 10:
         return 0
-    if np.abs(x) < 8:
+    if np.abs(x) < 10:
         return 1
