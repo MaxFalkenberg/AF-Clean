@@ -1667,7 +1667,7 @@ def multi_feature_compile_rt(uncompiled):
     if np.isinf(compiled).any():
         print "Infinity came through"
     if np.isnan(compiled).any():
-        print "NAN can through"
+        print "NAN came through"
     return np.nan_to_num(compiled)
 
 
@@ -1998,4 +1998,15 @@ def y_vector_classifier(x):
     if np.abs(x) >= 3:
         return 0
     if np.abs(x) < 3:
+        return 1
+
+def x_vector_classifier(x):
+    """
+    :param x: pandas series
+    :param threshold:
+    :return: turns vector data into classifier information.
+    """
+    if np.abs(x) >= 8:
+        return 0
+    if np.abs(x) < 8:
         return 1
