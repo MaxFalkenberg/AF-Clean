@@ -15,7 +15,7 @@ import propagate_singlesource as ps
 y_regress = joblib.load('y_regress_rt_4.pkl')
 y_estimator = joblib.load('y_class_rt_1.pkl')
 x_regress = joblib.load('x_regress_rt_2.pkl')
-x_class = joblib.load('x_class_rt_1.pkl')
+x_class = joblib.load('x_classifier_rt_1.pkl')
 #####################################
 
 # Initialising the Heart structure
@@ -182,13 +182,15 @@ def update_data():
                     if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
                         current_ecg_y_pos %= 200
                     if current_ecg_y_pos in y_short_memory:
-                        print "Entered Loop"
-                        print "Loop: %s" % y_short_memory
-                        loop_average = int((float(sum(y_short_memory))/len(y_short_memory)))
-                        print "Loop Average: %s" % loop_average
-                        del y_short_memory
-                        y_short_memory = []
-                        current_ecg_y_pos = loop_average
+                        print "Entered Y Loop"
+                        # print "Loop: %s" % y_short_memory
+                        # loop_average = int((float(sum(y_short_memory))/len(y_short_memory)))
+                        # print "Loop Average: %s" % loop_average
+                        # del y_short_memory
+                        # y_short_memory = []
+                        # current_ecg_y_pos = loop_average
+                        current_ecg_x_pos = randint(3, 196)
+                        current_ecg_y_pos = randint(3, 196)
 
             if state == 1:
                 # ECG Recording and feature gathering
@@ -215,14 +217,18 @@ def update_data():
                 if x_class_value == 0:
                     x_short_memory.append(current_ecg_x_pos)
                     current_ecg_x_pos -= x_vector
+                    if current_ecg_x_pos > 200 or current_ecg_x_pos < 0:
+                        current_ecg_x_pos %= 200
                     if current_ecg_x_pos in x_short_memory:
-                        print "Entered Loop"
-                        print "Loop: %s" % x_short_memory
-                        loop_average = int((float(sum(x_short_memory))/len(x_short_memory)))
-                        print "Loop Average: %s" % loop_average
-                        del x_short_memory
-                        x_short_memory = []
-                        current_ecg_x_pos = loop_average
+                        print "Entered X Loop"
+                        # print "Loop: %s" % x_short_memory
+                        # loop_average = int((float(sum(x_short_memory))/len(x_short_memory)))
+                        # print "Loop Average: %s" % loop_average
+                        # del x_short_memory
+                        # x_short_memory = []
+                        # current_ecg_x_pos = loop_average
+                        current_ecg_x_pos = randint(3, 196)
+                        current_ecg_y_pos = randint(3, 196)
 
             print "New ECG Probe position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
             print '\n'
