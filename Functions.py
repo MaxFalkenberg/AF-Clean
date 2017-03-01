@@ -1715,6 +1715,21 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
     sys.stdout.flush()
 
 
+def print_counter(iteration, total, prefix='Counter', suffix='Rotors complete'):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+    """
+    sys.stdout.write('\r%s: %s/%s %s' % (prefix, iteration, total, suffix)),
+    if iteration == total:
+        sys.stdout.write('\n')
+    sys.stdout.flush()
+
+
 def polar_feature(X, feature, title, rmax=None, clim=None, condition=None):
 
     plt.figure(figsize=(8.5, 8.5))
