@@ -22,7 +22,7 @@ if model_choice == 'r':
     # X = X[np.absolute(np.array(X['Vector Y 0'])) < 3.]
     y = X.pop('Vector Y 0')
     try:
-        feature_prune(X, [ 'Target 0', 'Vector X 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0'])
+        feature_prune(X, [ 'Target 0', 'Vector X 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0', 'index'])
     except:
         print 'prune failed'
         pass
@@ -62,7 +62,6 @@ for i in label:
 
     # Deletes features from the dataframe that are in probe_features
     if model_choice == 'c':
-        X = X[np.absolute(np.array(X['Vector Y 0'])) < 40]
         from sklearn.ensemble import RandomForestClassifier
         y = X.pop(i)
         y = y.astype(int)
@@ -73,7 +72,7 @@ for i in label:
         # feature_prune(X, ['Distance 0'])
         #print X.keys()
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-        X_test_meta = X_test[['Target 0', 'Vector X 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0']]
+        X_test_meta = X_test[['Target 0', 'Vector X 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0', 'index']]
 
         all_features = list(X_train.columns)
         for feature in probe_features:
