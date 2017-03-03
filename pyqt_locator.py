@@ -36,14 +36,14 @@ print "Initial ECG Probe position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y
 
 # Initialising the animation window
 app = QtGui.QApplication([])
-win = pg.GraphicsWindow()
+win = pg.GraphicsWindow(border=True)
 win.show()
 win.setWindowTitle('animation')
 w1 = win.addLayout()
 view = w1.addViewBox()
-img = pg.ImageItem(border='w')
+img = pg.ImageItem()
 img.setLevels([0, 50])
-label = pg.LabelItem(justify='right', border=True)
+label = pg.LabelItem(justify='right', border='w')
 win.addItem(label)
 # label = pg.TextItem()
 # view.hideAxis('left')
@@ -106,19 +106,20 @@ State 0 - always measure and process ECG
 y_regress_treshold = 3
 
 
-def rt_ecg_gathering(process_list):
+def rt_ecg_gathering(ecg_list, sign_feature=False):
     """
     Records the ECGS, Gathers the features and compiles them.
-    :param process_list: Raw data from animation_grid (t, (x,y))
+    :param ecg_list: Raw data from animation_grid (t, (x,y))
+    :param sign_feature: Flag to find sign features.
     :return: (441,) array of feature data.
     """
-    voltages = ecg_processing.solve(np.array(process_list).astype('float32'))
+    voltages = ecg_processing.solve(np.array(ecg_list).astype('float32'))
 
     # Putting all 9 ecg features into (9,21) array
     uncompiled_features = []
     for i in range(9):
         uncompiled_features.append(feature_extract_multi_test_rt(i, voltages))
-    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features))
+    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign=sign_feature)
     return compiled_features
 
 
@@ -151,7 +152,7 @@ def update_data():
                 # ECG Recording and feature gathering
                 sample = rt_ecg_gathering(process_list)
                 # Get deprication warning if this is not done.
-                sample = sample.reshape(1,-1)
+                sample = sample.reshape(1, -1)
 
                 y_class_value = y_estimator.predict(sample)[0]
                 print "Y classification: %s" % y_class_value
@@ -170,7 +171,7 @@ def update_data():
                     if x_class_value == 1:
                         print "Found the rotor!"
                         print "Predicted Rotor position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
-                        #reseting the process.
+                        # reseting the process.
                         current_ecg_y_pos = randint(3, 196)
                         current_ecg_x_pos = randint(3, 196)
                         state = 0
@@ -181,14 +182,15 @@ def update_data():
                     if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
                         current_ecg_y_pos %= 200
                     if current_ecg_y_pos in y_short_memory:
-                        print "Entered Loop"
-                        print "Loop: %s" % y_short_memory
-                        loop_average = int((float(sum(y_short_memory))/len(y_short_memory)))
-                        print "Loop Average: %s" % loop_average
-                        del y_short_memory
-                        y_short_memory = []
-                        current_ecg_y_pos = loop_average
-                        # current_ecg_x_pos =
+                        print "Entered Y Loop"
+                        # print "Loop: %s" % y_short_memory
+                        # loop_average = int((float(sum(y_short_memory))/len(y_short_memory)))
+                        # print "Loop Average: %s" % loop_average
+                        # del y_short_memory
+                        # y_short_memory = []
+                        # current_ecg_y_pos = loop_average
+                        current_ecg_x_pos = randint(3, 196)
+                        current_ecg_y_pos = randint(3, 196)
 
             if state == 1:
                 # ECG Recording and feature gathering
@@ -215,15 +217,18 @@ def update_data():
                 if x_class_value == 0:
                     x_short_memory.append(current_ecg_x_pos)
                     current_ecg_x_pos -= x_vector
+                    if current_ecg_x_pos > 200 or current_ecg_x_pos < 0:
+                        current_ecg_x_pos %= 200
                     if current_ecg_x_pos in x_short_memory:
-                        print "Entered Loop"
-                        print "Loop: %s" % x_short_memory
-                        loop_average = int((float(sum(x_short_memory))/len(x_short_memory)))
-                        print "Loop Average: %s" % loop_average
-                        del x_short_memory
-                        x_short_memory = []
-                        current_ecg_x_pos = loop_average
-                        # current_ecg_x_pos =
+                        print "Entered X Loop"
+                        # print "Loop: %s" % x_short_memory
+                        # loop_average = int((float(sum(x_short_memory))/len(x_short_memory)))
+                        # print "Loop Average: %s" % loop_average
+                        # del x_short_memory
+                        # x_short_memory = []
+                        # current_ecg_x_pos = loop_average
+                        current_ecg_x_pos = randint(3, 196)
+                        current_ecg_y_pos = randint(3, 196)
 
             print "New ECG Probe position: (%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
             print '\n'

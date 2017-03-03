@@ -1,78 +1,204 @@
 """
-Script which demonstrates the locating of re-entrant circuits using random forest decision trees.
-Should produce an animation for Moviepy (hopefully).
+Runs the locator algorithm but without the animation (animation in pyqt_locator.py)
 """
 
-import analysis_theano as at
-import time
-from PIL import Image
 import numpy as np
-from Functions import ani_convert
-import propagate_singlesource as ps
-import moviepy.editor as mpy
 import copy
+from sklearn.externals import joblib
+from random import randint
+import analysis_theano as at
+from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_compile_rt, print_counter
+import propagate_singlesource as ps
+import cPickle
 
+# Loading in Machine Learning models
+#####################################
+y_regress_name = 'y_regress_rt_4'
+y_class_name = 'y_class_rt_1'
+x_regress_name = 'x_regress_rt_2'
+x_class_name = 'x_classifier_rt_1'
 
-# Parameter dictionary.
-# t: time counter
-# 'process_list': temporary list of ECG's (gets reset when feature extraction is done.)
-grid = {'t':0, 'current_frame':None ,'process_list':[]}
+y_regress = joblib.load('%s.pkl' % y_regress_name)
+y_estimator = joblib.load('%s.pkl' % y_class_name)
+x_regress = joblib.load('%s.pkl' % x_regress_name)
+x_class = joblib.load('%s.pkl' % x_class_name)
+#####################################
+
 # length of time for recording -> process (should be set to cover at least two waveform periods)
-process_length = 5
+process_length = 360
 
-# Initialising the heart tissue (initially pick where the ecptopic beat is.)
-a = ps.Heart(nu=0.2, fakedata=True)
-x_pos = int(raw_input("Crit x position: "))
-y_pos = int(raw_input("Crit y position: "))
-a.set_pulse(60, [[y_pos], [x_pos]])
-# Initial grid for the animation.
-animation_grid = np.zeros((200,200,3), dtype=np.uint8)
-background = mpy.ImageClip(Image.fromarray(animation_grid, 'RGB'))
-print background
-grid['current_frame'] = background.get_frame(0)
-
-# MODEL AND MACHINE LEARNING PROCESSES.
-
-# def ecg_processor
+# Time before the ECG starts taking measurments (should it be just 400?)
+n = 1
+stability_time = n * process_length
 
 
-# Update which updates the grid and performs ecg measure and feature gathering if certain conditions are met.
-def update(grid):
-    data = a.propagate(ecg=True)
-    data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
-    # saves current frame to dictionary.
-    grid['current_frame'] = data
-    # Adding data into the process list (needs to be a deep copy due to reference issues.)
-    grid['process_list'].append(copy.deepcopy(data))
-    # gives points where the ECG is processed.
-    grid['t'] += 1
-    if grid['t'] % process_length == 0 and grid['t'] != 0:
-        print grid['t']
-        print np.array(grid['process_list'])
-        # ecg_processor.
-        del grid['process_list']
-        grid['process_list'] = []
+# Number of rotors to find
+number_of_rotors = int(raw_input('Number of rotors to find: '))
+
+while True:
+    save_data = raw_input("Save rotor location data (y/n): ")
+    if save_data in ['y', 'n']:
+        break
+
+save_data_name = None
+if save_data == 'y':
+    save_data_name = raw_input("Saved datafile name: ")
 
 
-# ANIMATION FUNCTIONS.
+def rt_ecg_gathering(ecg_list):
+    """
+    Records the ECGS, Gathers the features and compiles them.
+    :param ecg_list: Raw data from animation_grid (t, (x,y))
+    :return: (441,) array of feature data.
+    """
+    voltages = ecg_processing.solve(np.array(ecg_list).astype('float32'))
 
+    # Putting all 9 ecg features into (9,21) array
+    uncompiled_features = []
+    for index in range(9):
+        uncompiled_features.append(feature_extract_multi_test_rt(index, voltages))
+    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features))
+    return compiled_features
 
-def grid_to_npimage(grid):
-    image = Image.fromarray(grid['current_frame'], 'RBG')
-    print image
+# Lists for recording data produced by algorithm
+ecg_counter = [0]*number_of_rotors
+ecg_start = [0]*number_of_rotors
+ecg_end = [0]*number_of_rotors
+rotor = [0]*number_of_rotors
 
+pp = 0
+print_counter(pp, number_of_rotors)
+for i in range(number_of_rotors):
 
-# in this case t is the movies duration.
-def make_frame(t):
-    while grid['t'] < t * process_length:
-        update(grid)
-    grid_to_npimage(grid)
+    # Initialising the Heart structure
+    a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
+    # Randomises the rotor x,y position
+    cp_x_pos = randint(0, 199)
+    cp_y_pos = randint(0, 199)
+    a.set_pulse(60, [[cp_y_pos], [cp_x_pos]])
+    rotor[i] = (cp_x_pos, cp_y_pos)
 
-# animation function placeholder (loops over to simulate saving frames. Each frame moves ECG to new point on grid.)
-def animation_ph(duration):
-    make_frame(duration)
+    # Initialising ECG recording (randomises the probe x,y position)
+    current_ecg_x_pos = randint(3, 196)
+    current_ecg_y_pos = randint(3, 196)
+    ecg_processing = at.ECG(centre=(current_ecg_y_pos, current_ecg_x_pos), m='g_single')
+    ecg_start[i] = (current_ecg_x_pos, current_ecg_y_pos)
 
-animation_ph(duration=100)
-#
-# animation = mpy.VideoClip(make_frame, duration=100)
-# animation.write_videofile('mov_test.mp4', fps=20)
+    # Animation grids
+    animation_grid = np.zeros(a.shape)
+
+    # reset time step counter
+    ptr1 = 0
+
+    # Loop checking
+    y_short_memory = []
+    x_short_memory = []
+
+    y_ecg_num = 0  # Number of y ecgs
+    x_ecg_num = 0  # Number of x ecgs
+    process_list = []  # process list
+    final_rotor_position = None  # Final rotor position tuple
+    ECG_start_flag = False  # Setting measurment flag to False (ecg measurments start when flag is triggered).
+    ECG_located_flag = False  # To keep the system propogating until the rotor is found or limit is reached.
+
+    state = 0  # State for pipe work.
+
+    while not ECG_located_flag:
+
+        # Propogates model and converts into ani_data (used in ecg data processing)
+        data = a.propagate(ecg=True)
+        data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
+
+        # If flag triggered, then start taking measurments.
+        if ECG_start_flag:
+            process_list.append(copy.deepcopy(data))
+
+        ptr1 += 1
+
+        if ptr1 >= stability_time:
+            if not ECG_start_flag:
+                ECG_start_flag = True
+
+            if ptr1 % process_length == 0 and ptr1 != stability_time:
+
+                if state == 0:
+                    sample = rt_ecg_gathering(process_list)  # ECG Recording and feature gathering
+                    y_ecg_num += 1
+                    sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
+                    y_class_value = y_estimator.predict(sample)[0]
+                    y_vector = int(y_regress.predict(sample)[0])
+
+                    if y_class_value == 1:
+                        state = 1  # Change to state 1 for y axis regression/classification.
+                        del y_short_memory  # Checks for loops
+                        y_short_memory = []
+                        x_class_value = x_class.predict(sample)[0]
+
+                        if x_class_value == 1:
+                            final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
+                            ecg_end[i] = final_rotor_position
+                            ecg_counter[i] = (y_ecg_num, 0)
+                            ECG_located_flag = True
+
+                    if y_class_value == 0:
+                        y_short_memory.append(current_ecg_y_pos)
+                        current_ecg_y_pos -= y_vector
+                        if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
+                            current_ecg_y_pos %= 200
+
+                        # Loop Check
+                        if current_ecg_y_pos in y_short_memory:
+                            final_rotor_position = "Y LOOP"
+                            ecg_end[i] = final_rotor_position
+                            ecg_counter[i] = (y_ecg_num, 0)
+                            ECG_located_flag = True
+
+                if state == 1:
+                    sample = rt_ecg_gathering(process_list)  # ECG Recording and feature gathering
+                    x_ecg_num += 1
+                    sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
+
+                    x_class_value = x_class.predict(sample)[0]
+                    x_vector = int(x_regress.predict(sample)[0])
+
+                    if x_class_value == 1:
+                        final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
+                        ecg_end[i] = final_rotor_position
+                        ecg_counter[i] = (y_ecg_num, x_ecg_num)
+                        ECG_located_flag = True
+                        del x_short_memory  # Checks for loops
+                        x_short_memory = []
+
+                    if x_class_value == 0:
+                        x_short_memory.append(current_ecg_x_pos)
+                        current_ecg_x_pos -= x_vector
+                        if current_ecg_x_pos > 200 or current_ecg_x_pos < 0:
+                            current_ecg_x_pos %= 200
+
+                        # Loop Check
+                        if current_ecg_x_pos in x_short_memory:
+                            final_rotor_position = "X LOOP"
+                            ecg_end[i] = final_rotor_position
+                            ecg_counter[i] = (y_ecg_num, x_ecg_num)
+                            ECG_located_flag = True
+
+                del process_list
+                process_list = []
+                ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
+
+    pp += 1
+    print_counter(pp, number_of_rotors)
+
+print '\n'
+if save_data == 'n':
+    print "ecg counter: %s" % ecg_counter
+    print "rotor position: %s" % rotor
+    print "ecg start: %s" % ecg_start
+    print "ecg end: %s" % ecg_end
+
+data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
+        "Machine Learning Models": [y_regress_name, y_class_name, x_regress_name, x_class_name]}
+
+if save_data == 'y':
+    with open('%s.p' % save_data_name, 'wb') as f:
+        cPickle.dump(data, f)
