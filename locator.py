@@ -13,10 +13,10 @@ import cPickle
 
 # Loading in Machine Learning models
 #####################################
-y_regress_name = 'y_regress_rt_4'
-y_class_name = 'y_class_rt_1'
-x_regress_name = 'x_regress_rt_2'
-x_class_name = 'x_classifier_rt_1'
+y_regress_name = 'y_regress_rt_5'
+y_class_name = 'y_class_rt_2'
+x_regress_name = 'x_regress_rt_3'
+x_class_name = 'x_class_rt_4'  # "classifier" without sign information
 
 y_regress = joblib.load('%s.pkl' % y_regress_name)
 y_estimator = joblib.load('%s.pkl' % y_class_name)
@@ -45,10 +45,11 @@ if save_data == 'y':
     save_data_name = raw_input("Saved datafile name: ")
 
 
-def rt_ecg_gathering(ecg_list):
+def rt_ecg_gathering(ecg_list, sign_feature=True):
     """
     Records the ECGS, Gathers the features and compiles them.
     :param ecg_list: Raw data from animation_grid (t, (x,y))
+    :param sign_feature: Determines if sign data is used as well
     :return: (441,) array of feature data.
     """
     voltages = ecg_processing.solve(np.array(ecg_list).astype('float32'))
@@ -57,7 +58,7 @@ def rt_ecg_gathering(ecg_list):
     uncompiled_features = []
     for index in range(9):
         uncompiled_features.append(feature_extract_multi_test_rt(index, voltages))
-    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features))
+    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign=sign_feature)
     return compiled_features
 
 # Lists for recording data produced by algorithm
@@ -73,7 +74,7 @@ for i in range(number_of_rotors):
     # Initialising the Heart structure
     a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
     # Randomises the rotor x,y position
-    cp_x_pos = randint(0, 199)
+    cp_x_pos = randint(20, 180)
     cp_y_pos = randint(0, 199)
     a.set_pulse(60, [[cp_y_pos], [cp_x_pos]])
     rotor[i] = (cp_x_pos, cp_y_pos)
