@@ -2023,7 +2023,7 @@ def x_vector_classifier(x):
     :param threshold:
     :return: turns vector data into classifier information.
     """
-    if np.abs(x) >= 10:
+    if np.abs(x) >= 8:
         return 0
-    if np.abs(x) < 10:
+    if np.abs(x) < 8:
         return 1
