@@ -1495,46 +1495,49 @@ def fcplot(X, feature, clim = None, condition = None):
 
 def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save  = False, ret = False):
 
-    try:
-        d = X['Distance 0']
-        t = X['Theta 0']
-    except:
-        d = X['Distance']
-        t = X['Theta']
-    if condition == None:
-        rad = np.array(d)
-        theta = np.array(t)
-        f = np.array(X[feature])
+    # try:
+    #     d = X['Distance 0']
+    #     t = X['Theta 0']
+    # except:
+    #     d = X['Distance']
+    #     t = X['Theta']
+    # if condition == None:
+    #     rad = np.array(d)
+    #     theta = np.array(t)
+    #     f = np.array(X[feature])
+    #
+    #     # p = np.array(X['Probe Position'])
+    #     # if split == 'mid':
+    #     #     p = (p%200 > 30) * (p%200 < 170)
+    #     # else:
+    #     #     p = (p%200 < 30) + (p%200 > 170)
+    #
+    # else:
+    #     rad = np.array(d)[condition]
+    #     theta = np.array(t)[condition]
+    #     f = np.array(X[feature])[condition]
+    #
+    #     # p = np.array(X['Probe Position'])[condition]
+    #     # if split == 'mid':
+    #     #     p = (p%200 > 30) * (p%200 < 170)
+    #     # else:
+    #     #     p = (p%200 < 30) + (p%200 > 170)
+    #
+    # # if split == 'mid' or split == 'out':
+    # #     rad =  rad[p]
+    # #     theta = theta[p]
+    # #     f = f[p]
 
-        # p = np.array(X['Probe Position'])
-        # if split == 'mid':
-        #     p = (p%200 > 30) * (p%200 < 170)
-        # else:
-        #     p = (p%200 < 30) + (p%200 > 170)
-
-    else:
-        rad = np.array(d)[condition]
-        theta = np.array(t)[condition]
-        f = np.array(X[feature])[condition]
-
-        # p = np.array(X['Probe Position'])[condition]
-        # if split == 'mid':
-        #     p = (p%200 > 30) * (p%200 < 170)
-        # else:
-        #     p = (p%200 < 30) + (p%200 > 170)
-
-    # if split == 'mid' or split == 'out':
-    #     rad =  rad[p]
-    #     theta = theta[p]
-    #     f = f[p]
-
-    rad = rad[np.logical_not(np.isnan(theta))]
-    f = f[np.logical_not(np.isnan(theta))]
-    theta = theta[np.logical_not(np.isnan(theta))]
+    # rad = rad[np.logical_not(np.isnan(theta))]
+    # f = f[np.logical_not(np.isnan(theta))]
+    # theta = theta[np.logical_not(np.isnan(theta))]
 
 
-    x = rad * np.cos(theta)
-    y = rad * np.sin(theta)
+    # x = rad * np.cos(theta)
+    # y = rad * np.sin(theta)
+    f = np.array(X[feature])
+    x = np.array(X['Vector X 0'])
+    y = np.array(X['Vector Y 0'])
 
     x = x.astype('int')
     y = y.astype('int')
