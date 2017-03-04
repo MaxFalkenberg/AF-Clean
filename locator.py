@@ -4,6 +4,7 @@ Runs the locator algorithm but without the animation (animation in pyqt_locator.
 
 import numpy as np
 import copy
+import sys
 from sklearn.externals import joblib
 from random import randint
 import analysis_theano as at
@@ -11,17 +12,18 @@ from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_
 import propagate_singlesource as ps
 import cPickle
 
+args = sys.argv
 # Loading in Machine Learning models
 #####################################
-y_regress_name = 'y_regress_rt_5'
-y_class_name = 'y_class_rt_2'
-x_regress_name = 'x_regress_rt_3'
-x_class_name = 'x_class_rt_4'  # "classifier" without sign information
+# y_regress_name = 'y_regress_rt_5'
+# y_class_name = 'y_class_rt_2'
+# x_regress_name = 'x_regress_rt_3'
+# x_class_name = 'x_class_rt_4'  # "classifier" without sign information
 
-y_regress = joblib.load('%s.pkl' % y_regress_name)
-y_estimator = joblib.load('%s.pkl' % y_class_name)
-x_regress = joblib.load('%s.pkl' % x_regress_name)
-x_class = joblib.load('%s.pkl' % x_class_name)
+y_regress = joblib.load(args[1])
+y_estimator = joblib.load(args[2])
+x_regress = joblib.load(args[3])
+x_class = joblib.load(args[4])
 #####################################
 
 # length of time for recording -> process (should be set to cover at least two waveform periods)
@@ -45,11 +47,10 @@ if save_data == 'y':
     save_data_name = raw_input("Saved datafile name: ")
 
 
-def rt_ecg_gathering(ecg_list, sign_feature=True):
+def rt_ecg_gathering(ecg_list):
     """
     Records the ECGS, Gathers the features and compiles them.
     :param ecg_list: Raw data from animation_grid (t, (x,y))
-    :param sign_feature: Determines if sign data is used as well
     :return: (441,) array of feature data.
     """
     voltages = ecg_processing.solve(np.array(ecg_list).astype('float32'))
@@ -58,7 +59,7 @@ def rt_ecg_gathering(ecg_list, sign_feature=True):
     uncompiled_features = []
     for index in range(9):
         uncompiled_features.append(feature_extract_multi_test_rt(index, voltages))
-    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign=sign_feature)
+    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign=args[5])
     return compiled_features
 
 # Lists for recording data produced by algorithm
@@ -198,7 +199,7 @@ if save_data == 'n':
     print "ecg end: %s" % ecg_end
 
 data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
-        "Machine Learning Models": [y_regress_name, y_class_name, x_regress_name, x_class_name]}
+        "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
 
 if save_data == 'y':
     with open('%s.p' % save_data_name, 'wb') as f:
