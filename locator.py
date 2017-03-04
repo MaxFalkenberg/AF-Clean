@@ -1,5 +1,5 @@
 """
-Runs the locator algorithm but without the animation (animation in pyqt_locator.py)
+Runs the simple locator algorithm but without the animation (animation in pyqt_locator.py)
 """
 
 import numpy as np
@@ -15,11 +15,6 @@ import cPickle
 args = sys.argv
 # Loading in Machine Learning models
 #####################################
-# y_regress_name = 'y_regress_rt_5'
-# y_class_name = 'y_class_rt_2'
-# x_regress_name = 'x_regress_rt_3'
-# x_class_name = 'x_class_rt_4'  # "classifier" without sign information
-
 y_regress = joblib.load(args[1])
 y_estimator = joblib.load(args[2])
 x_regress = joblib.load(args[3])
