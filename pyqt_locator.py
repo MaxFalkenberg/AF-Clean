@@ -15,10 +15,10 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-y_regress = joblib.load(args[1])  # joblib.load('y_regress_rt_5.pkl')
-y_estimator = joblib.load(args[2])  # joblib.load('y_class_rt_2.pkl')
-x_regress = joblib.load(args[3])  # joblib.load('x_regress_rt_3.pkl')
-x_class = joblib.load(args[4])  # joblib.load('x_class_rt_4.pkl')
+y_regress = joblib.load(args[1])
+y_estimator = joblib.load(args[2])
+x_regress = joblib.load(args[3])
+x_class = joblib.load(args[4])
 #####################################
 
 # Initialising the Heart structure
