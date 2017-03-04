@@ -62,6 +62,7 @@ def rt_ecg_gathering(ecg_list):
     compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign=args[5])
     return compiled_features
 
+
 # Lists for recording data produced by algorithm
 ecg_counter = [0]*number_of_rotors
 ecg_start = [0]*number_of_rotors
@@ -198,9 +199,9 @@ if save_data == 'n':
     print "ecg start: %s" % ecg_start
     print "ecg end: %s" % ecg_end
 
-data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
-        "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
+final_data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
+              "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
 
 if save_data == 'y':
     with open('%s.p' % save_data_name, 'wb') as f:
-        cPickle.dump(data, f)
+        cPickle.dump(final_data, f)
