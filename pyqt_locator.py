@@ -24,14 +24,14 @@ x_class = joblib.load(args[4])
 # Initialising the Heart structure
 a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
 # Randomises the rotor x,y position
-cp_x_pos = randint(0, 180)
+cp_x_pos = randint(30, 169)
 cp_y_pos = randint(0, 199)
 a.set_pulse(60, [[cp_y_pos], [cp_x_pos]])
 tissue_reset = False
 
 # Initialising ECG recording (randomises the probe x,y position)
-current_ecg_x_pos = randint(3, 196)
-current_ecg_y_pos = randint(3, 196)
+current_ecg_x_pos = randint(30, 169)
+current_ecg_y_pos = randint(0, 199)
 ecg_processing = at.ECG(centre=(current_ecg_y_pos, current_ecg_x_pos), m='g_single')
 
 # Initialising the animation window
@@ -187,21 +187,21 @@ def update_data():
                     if x_class_value == 1:
                         previousR = "Rotor Found"
                         # reseting the process.
-                        current_ecg_y_pos = randint(3, 196)
-                        current_ecg_x_pos = randint(3, 196)
+                        current_ecg_y_pos = randint(0, 199)
+                        current_ecg_x_pos = randint(30, 169)
                         state = 0
                         ecg_count = 0
 
                 if y_class_value == 0:
                     y_short_memory.append(current_ecg_y_pos)
                     current_ecg_y_pos -= y_vector
-                    if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
+                    if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                         current_ecg_y_pos %= 200
                     if current_ecg_y_pos in y_short_memory:
                         previousR = "Y Loop"
                         ecg_count = 0
-                        current_ecg_x_pos = randint(3, 196)
-                        current_ecg_y_pos = randint(3, 196)
+                        current_ecg_x_pos = randint(30, 169)
+                        current_ecg_y_pos = randint(0, 199)
 
             if state == 1:
                 # ECG Recording and feature gathering
@@ -219,21 +219,21 @@ def update_data():
                     del x_short_memory
                     x_short_memory = []
                     # reseting the process.
-                    current_ecg_y_pos = randint(3, 196)
-                    current_ecg_x_pos = randint(3, 196)
+                    current_ecg_y_pos = randint(0, 199)
+                    current_ecg_x_pos = randint(30, 169)
                     state = 0
                     ecg_count = 0
 
                 if x_class_value == 0:
                     x_short_memory.append(current_ecg_x_pos)
                     current_ecg_x_pos -= x_vector
-                    if current_ecg_x_pos > 200 or current_ecg_x_pos < 0:
+                    if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                         current_ecg_x_pos %= 200
                     if current_ecg_x_pos in x_short_memory:
                         previousR = 'X Loop'
                         ecg_count = 0
-                        current_ecg_x_pos = randint(3, 196)
-                        current_ecg_y_pos = randint(3, 196)
+                        current_ecg_x_pos = randint(30, 169)
+                        current_ecg_y_pos = randint(0, 199)
 
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
             vLine.setPos(current_ecg_x_pos + 0.5)
