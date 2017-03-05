@@ -30,7 +30,8 @@ if model_choice == 'r':
 
     if target == 'x':
         # Prunes all the probe features not to do with Y vector
-        X = X[np.array(X['X Axis True'])]
+
+        X = X[np.abs(X['Vector Y 0']) < 3]
         probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector Y 0', 'Theta 0', 'Distance 0', 'Nu','X Axis True', 'Y Axis True', 'Circuit True']
         all_features = X.columns
         for feature in probe_features:
@@ -61,7 +62,7 @@ if model_choice == 'c':
         y = y.astype(int)
 
     if target == 'x':
-        X = X[np.abs(X['Vector Y 0']) < 4]
+        X = X[np.abs(X['Vector Y 0']) < 3]
         probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector Y 0', 'Theta 0', 'Distance 0', 'Nu']
         all_features = X.columns
         for feature in probe_features:

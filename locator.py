@@ -1,9 +1,10 @@
 """
-Runs the locator algorithm but without the animation (animation in pyqt_locator.py)
+Runs the simple locator algorithm but without the animation (animation in pyqt_locator.py)
 """
 
 import numpy as np
 import copy
+import sys
 from sklearn.externals import joblib
 from random import randint
 import analysis_theano as at
@@ -11,17 +12,13 @@ from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_
 import propagate_singlesource as ps
 import cPickle
 
+args = sys.argv
 # Loading in Machine Learning models
 #####################################
-y_regress_name = 'y_regress_rt_4'
-y_class_name = 'y_class_rt_1'
-x_regress_name = 'x_regress_rt_2'
-x_class_name = 'x_classifier_rt_1'
-
-y_regress = joblib.load('%s.pkl' % y_regress_name)
-y_estimator = joblib.load('%s.pkl' % y_class_name)
-x_regress = joblib.load('%s.pkl' % x_regress_name)
-x_class = joblib.load('%s.pkl' % x_class_name)
+y_regress = joblib.load(args[1])
+y_estimator = joblib.load(args[2])
+x_regress = joblib.load(args[3])
+x_class = joblib.load(args[4])
 #####################################
 
 # length of time for recording -> process (should be set to cover at least two waveform periods)
@@ -57,8 +54,9 @@ def rt_ecg_gathering(ecg_list):
     uncompiled_features = []
     for index in range(9):
         uncompiled_features.append(feature_extract_multi_test_rt(index, voltages))
-    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features))
+    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign=args[5])
     return compiled_features
+
 
 # Lists for recording data produced by algorithm
 ecg_counter = [0]*number_of_rotors
@@ -73,7 +71,7 @@ for i in range(number_of_rotors):
     # Initialising the Heart structure
     a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
     # Randomises the rotor x,y position
-    cp_x_pos = randint(0, 199)
+    cp_x_pos = randint(20, 180)
     cp_y_pos = randint(0, 199)
     a.set_pulse(60, [[cp_y_pos], [cp_x_pos]])
     rotor[i] = (cp_x_pos, cp_y_pos)
@@ -196,9 +194,9 @@ if save_data == 'n':
     print "ecg start: %s" % ecg_start
     print "ecg end: %s" % ecg_end
 
-data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
-        "Machine Learning Models": [y_regress_name, y_class_name, x_regress_name, x_class_name]}
+final_data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
+              "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
 
 if save_data == 'y':
     with open('%s.p' % save_data_name, 'wb') as f:
-        cPickle.dump(data, f)
+        cPickle.dump(final_data, f)
