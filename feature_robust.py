@@ -6,28 +6,53 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.cross_validation import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from Functions import print_progress
 import cPickle
 from Functions import feature_prune
 
+while True:
+    input_list = ['c', 'r']
+    RFtype = raw_input("Classifier or Regressor (c/r): ")
+    if RFtype in input_list:
+        break
+
+model_number = int(raw_input("Number of models: "))
+
 datafile = raw_input("Pandas dataframe to open: ")
 X = pd.read_hdf("%s.h5" % datafile)
+
+if RFtype == 'c':
+    y = X.pop('Target 0')
+    y = y.astype(int)
+if RFtype == 'r':
+    y = X.pop('Distance 0')
+
+rows = model_number
+# For finding feature robustness for multi-electrode
+# y = X.pop('Multi Target 0')
+# y = y.astype(int)
+#
+# rows = 15
 # y = X.pop('Multi Target 0')
 # y = y.astype(int)
 
-y = X.pop('Vector Y 0')
-feature_prune(X, [ 'Target 0', 'Vector X 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0'])
+# For y-vector trees
+# y = X.pop('Vector Y 0')
+# feature_prune(X, [ 'Target 0', 'Vector X 0', 'Multi Target 0', 'Nu', 'Theta 0', 'Distance 0'])
+#
+# rows = 5
 
-rows = 5
 robustness_datagrid = np.zeros((rows, len(X.columns)))
 
 pp = 0
 print_progress(pp, rows, prefix='Progress:', suffix='Complete', bar_length=50)
 for row in range(rows):
     X_train, X_test, y_train, y_test = train_test_split(X, y)
-    forest = RandomForestRegressor(n_estimators=15)
+    if RFtype == 'c':
+        forest = RandomForestClassifier(n_estimators=15)
+    if RFtype == 'r':
+        forest = RandomForestRegressor(n_estimators=15)
     forest.fit(X_train, y_train)
     robustness_datagrid[row] = forest.feature_importances_
     pp += 1

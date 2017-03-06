@@ -10,14 +10,13 @@ print "\n"
 datafile = raw_input("Pandas dataframe to open: ")
 dataframe = pd.read_hdf("%s.h5" % datafile)
 
-# print "\n"
-# print "Dataframe description:"
-# with open(os.path.join('Data_desc', '%s.txt' % datafile)) as f:
-#     print f.read()
-# print "\n"
-
+print "\n"
+print "Dataframe description:"
+with open('%s.txt' % datafile) as f:
+    print f.read()
+print "\n"
 # Depending on the RF type, removes one of the target observations.
-observation_style = raw_input("Classisfication/Regression (c/r): ")
+observation_style = raw_input("Classisfication/Regression/Multi-electrode Classification (c/r/mc): ")
 prune = raw_input("Prune features? (y/n): ")
 
 # filename
@@ -27,8 +26,8 @@ filename = raw_input("Saved file name: ")
 # Need to Alter this to be consistent with double (or more) sources.
 probe_features = ['Crit Position', 'Crit Position 0', 'Crit Position 1', 'Probe Position',
                   'Unit Vector X', 'Unit Vector X 0', 'Unit Vector X 1', 'Unit Vector Y', 'Unit Vector Y 0',
-                  'Unit Vector Y 1', 'Theta', 'Theta 0', 'Theta 1', 'Probe Number',
-                  'Nearest Crit Position','Vector X 0','Vector Y 0','Sample Length','Nu']
+                  'Unit Vector Y 1', 'Theta', 'Theta 0', 'Theta 1', 'Vector X 0', 'Vector Y 0',
+                  'Nearest Crit Position', 'index', 'Nu', 'Probe Number']
 
 # Deletes features from the dataframe that are in probe_features
 all_features = list(dataframe.columns)
@@ -43,8 +42,16 @@ if prune == 'y':
 
 if observation_style == 'c':
     del dataframe['Distance 0']
+    if 'Multi Target 0' in dataframe.columns:
+        del dataframe['Multi Target 0']
 
 if observation_style == 'r':
     del dataframe['Target 0']
+    if 'Multi Target 0' in dataframe.columns:
+        del dataframe['Multi Target 0']
+
+if observation_style == 'mc':
+    del dataframe['Target 0']
+    del dataframe['Distance 0']
 
 dataframe.to_hdf("%s.h5" % filename, 'w')

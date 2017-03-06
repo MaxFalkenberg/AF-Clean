@@ -60,12 +60,12 @@ class Heart:
         index = centre
         self.circuit_index = centre
         self.circuit_set = True
-        self.cell_vert[index:index + 27] = False
-        self.cell_vert[(index - 200)%40000: (index - 200 + 27)%40000] = False
+        self.cell_vert[index:index + 28] = False
+        self.cell_vert[(index - 200)%40000: (index - 200 + 28)%40000] = False
         self.cell_vert[index - 1] = True
         self.cell_vert[(index - 201)%40000] = True
-        self.cell_vert[(index + 28)%40000] = True
-        self.cell_vert[(index + 28 - 200)%40000] = True
+        self.cell_vert[(index + 29)%40000] = True
+        self.cell_vert[(index + 29 - 200)%40000] = True
 
         self.cell_grid[index - 1] = False
         y,x = np.unravel_index(index,(200,200))

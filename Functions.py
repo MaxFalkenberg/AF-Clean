@@ -8,11 +8,12 @@ from astropy.stats import LombScargle
 from itertools import product
 from numpy.fft import rfft
 from numpy.fft import irfft
+from scipy.stats import mode
 from sklearn.tree import export_graphviz
 import subprocess
 import sys
 import scipy.signal as ss
-import nolds
+# import nolds
 import scipy.stats as stats
 import pandas as pd
 
@@ -1216,6 +1217,207 @@ def feature_extract_multi_test(number, ecg_vals, cp, probes, nu):
     return features
 
 
+def feature_extract_multi_test_rt(number, ecg_vals):
+    """
+    Extracts features for the current itteration's ECG at the probe position
+    corresponding to probes[number]. Not currently written to return values in a
+    particular format.
+
+    USING THIS FOR FEATURE EXTRACTION IN REAL TIME (ONLY RETURNS LIST WITHOUT RELATIVE POSITION IDENTIFIERS)
+
+    :param number: Index in data.
+    :param ecg_vals: The ecg voltages.
+    # :param cp: The position of the critical point.
+    # :param probes: The probe position.
+    :return:
+    """
+    ecg = ecg_vals[number]
+    index = np.arange(1,len(ecg) + 1)
+    # f,p = LombScargle(index,ecg).autopower()
+    # per = int(np.round(1./f[np.argmax(p[(1./f) > 5.])]))
+
+    # DONT THINK I NEED ANY OF THIS (JUST POSITION INFO)
+
+    # crit_point = cp.tolist() #Index of critical point
+    # # probe_number = probe_number.tolist()
+    # probe_point = np.ravel_multi_index(probes.astype('int')[number], (200, 200))
+    # y,x = np.unravel_index(cp,(200,200))
+    # # dist = roll_dist(cp)[int(probes[number][0])][int(probes[number][1])] #Distance of probe from CP
+    #
+    # dist = []
+    # unit_vector_x = []
+    # unit_vector_y = []
+    # vec_x = []
+    # vec_y = []
+    # theta = []
+    # target = []
+    # multi_target = []
+    # cp = np.atleast_1d(cp)
+    # x = np.atleast_1d(x)
+    # y = np.atleast_1d(y)
+    # for i in range(len(cp)):
+    #     def cp_vector(y_probe,x_probe):
+    #         x_vector = int(x_probe) - x[i]
+    #         y_vector = int(y_probe) - y[i]
+    #         if y_vector > 100:
+    #             y_vector -= 200
+    #         elif y_vector <= -100:
+    #             y_vector += 200
+    #
+    #         r = ((x_vector ** 2) + (y_vector ** 2)) ** 0.5
+    #         c = (x_vector + (1j * y_vector)) /r
+    #         theta = np.angle(c)
+    #         return r,float(x_vector)/r,float(y_vector)/r,theta,float(x_vector),float(y_vector)
+    #     a,b,c,d,e,f = cp_vector(probes[number][0],probes[number][1])
+    #     if a <= np.sqrt(200):
+    #         t = 1
+    #     else:
+    #         t = 0
+    #     if np.absolute(e) < 4 and np.absolute(f) < 4:
+    #         m = True
+    #     else:
+    #         m = False
+    #     dist.append(a)
+    #     unit_vector_x.append(b)
+    #     unit_vector_y.append(c)
+    #     theta.append(d)
+    #     target.append(t)
+    #     vec_x.append(e)
+    #     vec_y.append(f)
+    #     multi_target.append(m)
+    # nearest = [np.argmin(dist)]
+
+    signs = np.sign(np.diff(np.sign(ecg)))
+    crossovers = np.argwhere(signs == -1).flatten()
+    # print crossovers
+    start = crossovers[0]
+    noise = []
+    for i in range(1,len(crossovers)):
+        per = crossovers[i] - start
+        if per >= 50:
+            end = crossovers[i]
+            break
+        else:
+            noise.append(crossovers[i])
+    print end - start
+    ecg = ecg[:2*per]
+    # print start, end
+    ft = rfft(ecg)  # Real valued FT of original ECG
+    ft_abs = np.absolute(ft)  # Takes absolute value of FT
+    ft_max10 = np.argsort(ft_abs)[-3:]  # Finds 9 largest frequency fundamentals
+    ft_max = np.min(ft_max10)
+    freq = np.fft.rfftfreq(ecg.size, d=1.)
+    freq_main = np.fft.rfftfreq(ecg.size, d=1.)[ft_max]
+    # FEATURE (Should be the same for all ECGs if correctly sampled.)
+    period = int(1. / freq_main)
+    ft[ft_max + 1:] = 0
+    ft[:ft_max] = 0
+    ift = irfft(ft)
+    start = np.argmax(ift[:period])
+    #start = 0
+    end = start + period
+    sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
+    # sample_double =ecg[start:end + (2 * period)]
+    length,minmax,mean,var,skew,kurt = stats.describe(sample_)
+    min_value,max_value = minmax
+    #mean = np.mean(sample_)
+    ft_samp = rfft(sample_)[:3]  # Real valued FT of sample ECG
+    freq_samp = np.fft.rfftfreq(sample_.size, d=1.)[:9]
+    ft_samp_abs = np.absolute(ft_samp)  # Takes absolute value of FT
+    # print freq_samp, end - start
+    # print len(sample_),start,per, np.gradient(np.sign(ecg))
+    ft_samp_abs_rel2 = ft_samp_abs / ft_samp_abs[2]
+    # ft_samp_max10 = np.argsort(ft_samp_abs)[-9:]  # Finds 9 largest frequency fundamentals
+
+    grad = np.gradient(sample_)
+    stat_points = []
+    # stat_diffs = []
+
+    #entropy = nolds.sampen(sample_double)
+    #hurst = nolds.hurst_rs(sample_double)
+    # dfa = nolds.dfa(sample_double)
+    #corr_dim = nolds.corr_dim(sample_double,1)
+
+    # FEATURE: Maximum value of sample ECG
+    #max_value = np.max(sample_)
+    max_arg = np.argmax(sample_)
+    # FEATURE: Minimum value of sample ECG
+    #min_value = np.min(sample_)
+    min_arg = np.argmin(sample_)
+    # FEATURE: Difference of the above
+    minmax_dif = max_value - min_value
+    minmax_half = (max_value + min_value)/2
+    try:
+        arghalf = np.argwhere(sample_[max_arg:min_arg] < minmax_half)[0]
+    except:
+        arghalf = np.array([0])
+    #half_ratio = float(arghalf - max_arg) / float(min_arg - max_arg)
+    #std_full = np.std(sample_)
+
+    std_postmin = np.std(sample_[min_arg:])
+    # FEATURE: Sample ECG intensity defined as sum of absolute voltages
+    # sample_int = np.sum(np.absolute(sample_))
+    # sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # sample_int_neg = np.sum(sample_[sample_ < 0.])
+    # FEATURE (Should be the same for all ECGs. If this is differnt from usual sample is wrong.)
+    sample_len = len(sample_)
+    # FEATURE: Sum of all positive voltages
+    # sample_int_pos = np.sum(sample_[sample_ >= 0.])
+    # Feature: Sum of all negative voltages
+    # sample_int_neg = np.sum(sample_[sample_ < 0.])
+
+    # FEATURE: Maximum of first order gradient of ECG
+    grad_max = np.max(grad)
+    # FEATURE: Minimum of first order gradient of ECG
+    # grad_min = np.min(grad)
+    # FEATURE: Difference of the above
+    # grad_diff = grad_max - grad_min
+    # FEATURE: Argument at gradient Minimum
+    # grad_argmin = np.argmin(grad)
+    # FEATURE: Argument at gradient Maximum
+    # grad_argmax = np.argmax(grad)
+    # FEATURE: Difference in Max and Min arguments. Gives idea of ECG curvature.
+    # grad_argdiff = grad_argmax - grad_argmin
+
+
+    # g_temp = grad[max_arg:min_arg + 1]
+    # if len(g_temp) == 0:
+    #     g_temp = grad[min_arg:max_arg + 1]
+    #     grad_minmax_mean =  - np.mean(g_temp)
+    # else:
+    #     grad_minmax_mean = np.mean(g_temp)
+    #
+    # if len(sample_[:max_arg]) == 0:
+    #     std_premax = - np.std(sample_[max_arg:])
+    # else:
+    #     std_premax = np.std(sample_[:max_arg])
+    # if len(sample_[max_arg:min_arg]) == 0:
+    #     std_minmax =  - np.std(sample_[min_arg:max_arg])
+    # else:
+    #     std_minmax = np.std(sample_[max_arg:min_arg])
+
+
+    # covariance = np.cov(sample_)
+    for i in range(len(grad) - 1):
+        if grad[i] * grad[i + 1] < 0:
+            stat_points.append(i)
+    # FEATURE: The position of the first stationary point
+    arg_firststat = stat_points[0]
+
+    """
+    Think about a way to deal with nans in RFC (might not matter)
+    """
+    #entropy,hurst,corr_dim,dfa,
+    features = np.array([start, mean,skew,kurt,max_value, min_value, minmax_dif, max_arg,min_arg,minmax_half,arghalf[0],
+                        std_postmin,
+                        sample_len, grad_max,
+                         arg_firststat]
+                        + ft_samp_abs.tolist() +  ft_samp_abs_rel2.tolist())
+                        # RElative position identifiers.
+                        # + cp.tolist() + [probe_point] + dist + vec_x + vec_y + unit_vector_x + unit_vector_y + theta + target + multi_target + nearest + [nu]+ [int(number)/9])
+    return features
+
+
 def feature_extract_keras(number, ecg_vals, cp, probes, nu, min = None):
     """
     Extracts features for the current itteration's ECG at the probe position
@@ -1346,6 +1548,66 @@ def process_multi_feature(T):
     total = np.concatenate([centre,mean,std,kurtosis,skewness,vs_bar,vs_centreratio,vf_bar,hs_bar,hs_centreratio,hf_bar,d11_bar,d12_bar,d21_bar,dn11_bar,dn12_bar,dn21_bar,axisfocus,diagfocus,focusratio,focus])
     return total
 
+def sign_solver(Start, half_period = 30.):
+    T = Start.astype('float')
+    v63,v74,v85,v30,v41,v52 = T[6]-T[3],T[7]-T[4],T[8]-T[5],T[3]-T[0],T[4]-T[1],T[5]-T[2]
+    h87,h76,h54,h43,h21,h10 = T[8]-T[7],T[7]-T[6],T[5]-T[4],T[4]-T[3],T[2]-T[1],T[1]-T[0]
+
+    v63_copy1,v74_copy1,v85_copy1,v30_copy1,v41_copy1,v52_copy1 = np.copy(v63),np.copy(v74),np.copy(v85),np.copy(v30),np.copy(v41),np.copy(v52)
+    v63_copy2,v74_copy2,v85_copy2,v30_copy2,v41_copy2,v52_copy2 = np.copy(v63),np.copy(v74),np.copy(v85),np.copy(v30),np.copy(v41),np.copy(v52)
+
+    v63_copy1[v63_copy1 > half_period] -= (2*half_period)
+    v74_copy1[v74_copy1 > half_period] -= (2*half_period)
+    v85_copy1[v85_copy1 > half_period] -= (2*half_period)
+    v30_copy1[v30_copy1 > half_period] -= (2*half_period)
+    v41_copy1[v41_copy1 > half_period] -= (2*half_period)
+    v52_copy1[v52_copy1 > half_period] -= (2*half_period)
+
+    v63_copy2[v63_copy2 < -half_period] %= (2*half_period)
+    v74_copy2[v74_copy2 < -half_period] %= (2*half_period)
+    v85_copy2[v85_copy2 < -half_period] %= (2*half_period)
+    v30_copy2[v30_copy2 < -half_period] %= (2*half_period)
+    v41_copy2[v41_copy2 < -half_period] %= (2*half_period)
+    v52_copy2[v52_copy2 < -half_period] %= (2*half_period)
+
+    v63_sign = np.sign(v63 * np.sign(v63_copy1) * np.sign(v63_copy2))
+    v74_sign = np.sign(v74 * np.sign(v74_copy1) * np.sign(v74_copy2))
+    v85_sign = np.sign(v85 * np.sign(v85_copy1) * np.sign(v85_copy2))
+    v30_sign = np.sign(v30 * np.sign(v30_copy1) * np.sign(v30_copy2))
+    v41_sign = np.sign(v41 * np.sign(v41_copy1) * np.sign(v41_copy2))
+    v52_sign = np.sign(v52 * np.sign(v52_copy1) * np.sign(v52_copy2))
+
+    v_sign = (v63_sign +v74_sign +v85_sign +v30_sign +v41_sign +v52_sign )/6
+
+
+    h87_copy1,h76_copy1,h54_copy1,h43_copy1,h21_copy1,h10_copy1 = np.copy(h87),np.copy(h76),np.copy(h54),np.copy(h43),np.copy(h21),np.copy(h10)
+    h87_copy2,h76_copy2,h54_copy2,h43_copy2,h21_copy2,h10_copy2 = np.copy(h87),np.copy(h76),np.copy(h54),np.copy(h43),np.copy(h21),np.copy(h10)
+
+    h87_copy1[h87_copy1 > half_period] -= (2*half_period)
+    h76_copy1[h76_copy1 > half_period] -= (2*half_period)
+    h54_copy1[h54_copy1 > half_period] -= (2*half_period)
+    h43_copy1[h43_copy1 > half_period] -= (2*half_period)
+    h21_copy1[h21_copy1 > half_period] -= (2*half_period)
+    h10_copy1[h10_copy1 > half_period] -= (2*half_period)
+
+    h87_copy2[h87_copy2 < -half_period] %= (2*half_period)
+    h76_copy2[h76_copy2 < -half_period] %= (2*half_period)
+    h54_copy2[h54_copy2 < -half_period] %= (2*half_period)
+    h43_copy2[h43_copy2 < -half_period] %= (2*half_period)
+    h21_copy2[h21_copy2 < -half_period] %= (2*half_period)
+    h10_copy2[h10_copy2 < -half_period] %= (2*half_period)
+
+    h87_sign = np.sign(h87 * np.sign(h87_copy1) * np.sign(h87_copy2))
+    h76_sign = np.sign(h76 * np.sign(h76_copy1) * np.sign(h76_copy2))
+    h54_sign = np.sign(h54 * np.sign(h54_copy1) * np.sign(h54_copy2))
+    h43_sign = np.sign(h43 * np.sign(h43_copy1) * np.sign(h43_copy2))
+    h21_sign = np.sign(h21 * np.sign(h21_copy1) * np.sign(h21_copy2))
+    h10_sign = np.sign(h10 * np.sign(h10_copy1) * np.sign(h10_copy2))
+
+    h_sign = (h87_sign +h76_sign +h54_sign +h43_sign +h21_sign +h10_sign )/6
+    axes_sign = np.absolute(v_sign) + np.absolute(h_sign)
+    return np.array([v_sign, h_sign, axes_sign])
+
 
 def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
     dataframe = dataframe.copy()
@@ -1365,18 +1627,23 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
 
     for i in index:
         T = dataframe.iloc[i:i+9].as_matrix()
+        S =  dataframe.iloc[i:i+9]['Start'].as_matrix()
         X = process_multi_feature(T)
+        Y = sign_solver(S)
         # print i, np.shape(T), np.shape(X)
-        feature_list.append(X)
+        feature_list.append(np.concatenate([X,Y]))
     X = np.vstack(feature_list)
     X[X == np.inf] = np.nan
-    prefixes = ['Probe Centre: ','Mean Probes: ' ,'Std Probes: ','Kurtosis Probes: ','Skewness Probes' ,'Vertical Singles Mean: ','Vertical Singles Centre Ratio: ','Vertical Full Mean: ','Horizontal Singles Mean: ','Horizontal Singles Centre Ratio: ','Horizontal Full Mean: ','Diagonal 11 Mean: ','Diagonal 12 Mean: ','Diagonal 21 Mean: ','Diagonal N11 Mean: ','Diagonal N12 Mean: ','Diagonal N21 Mean: ','Focus Axis Orientation: ','Focus Diag Orientation: ','Focus Ratio: ','Focus: ']
+    prefixes = ['Probe Centre: ','Mean Probes: ' ,'Std Probes: ','Kurtosis Probes: ','Skewness Probes' ,'Vertical Singles Mean: ','Vertical Singles Centre Ratio: ','Vertical Full Mean: ','Horizontal Singles Mean: ',
+    'Horizontal Singles Centre Ratio: ','Horizontal Full Mean: ','Diagonal 11 Mean: ','Diagonal 12 Mean: ','Diagonal 21 Mean: ','Diagonal N11 Mean: ','Diagonal N12 Mean: ','Diagonal N21 Mean: ','Focus Axis Orientation: ',
+    'Focus Diag Orientation: ','Focus Ratio: ','Focus: ']#,'V63: ','V74: ','V85: ','V30: ','V41: ','V52: ','H87: ','H76: ','H54: ','H43: ', 'H21: ','H10: ']
     suffixes = dataframe.keys().tolist()
     keys = []
     for i in prefixes:
         for j in suffixes:
             temp = i + j
             keys.append(temp)
+    keys = keys + ['V Sign', 'H Sign', 'Axes Sign']
     print np.shape(metadata)
     df = pd.DataFrame(X,columns = keys)
     df = df.join(metadata.reset_index())
@@ -1384,6 +1651,28 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
 
     name = raw_input("Save Filename: ")
     df.to_hdf(name + '.h5','w')
+
+
+def multi_feature_compile_rt(uncompiled, sign="record sign"):
+    """
+    Compiles all the ecg features into a single multi probe feature array. This is then fed into a RF model.
+    :param uncompiled: Uncompiled ecg features.
+    :param sign: Flag to work out the sign features.
+    :return:
+    """
+    # Compiles all the features
+    compiled = process_multi_feature(uncompiled)
+    if sign == "record sign":
+        signs = sign_solver(uncompiled[:, 0])
+        compiled = np.concatenate([compiled,signs])
+    # Cleans all inf values
+    compiled[compiled == np.inf] = 99999.
+    if np.isinf(compiled).any():
+        print "Infinity came through"
+    if np.isnan(compiled).any():
+        print "NAN came through"
+    return np.nan_to_num(compiled)
+
 
 def visualize_tree(tree, feature_names):
     """Create tree png using graphviz.
@@ -1393,11 +1682,11 @@ def visualize_tree(tree, feature_names):
     tree -- scikit-learn DecsisionTree.
     feature_names -- list of feature names.
     """
-    with open("dt2.dot", 'w') as f:
+    with open("dt3.dot", 'w') as f:
         export_graphviz(tree, out_file=f,
                         feature_names=feature_names, filled=True, rounded=True)
 
-    command = ["dot", "-Tpdf", "dt2.dot", "-o", "dt2.pdf"]
+    command = ["dot", "-Tpdf", "dt3.dot", "-o", "dt3.pdf"]
     try:
         subprocess.check_call(command)
     except:
@@ -1422,6 +1711,21 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
     filled_length = int(round(bar_length * iteration / float(total)))
     bar = '#' * filled_length + '-' * (bar_length - filled_length)
     sys.stdout.write('\r%s |%s| %s%s %s' % (prefix, bar, percent, '%', suffix)),
+    if iteration == total:
+        sys.stdout.write('\n')
+    sys.stdout.flush()
+
+
+def print_counter(iteration, total, prefix='Counter', suffix='Rotors complete'):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+    """
+    sys.stdout.write('\r%s: %s/%s %s' % (prefix, iteration, total, suffix)),
     if iteration == total:
         sys.stdout.write('\n')
     sys.stdout.flush()
@@ -1493,7 +1797,7 @@ def fcplot(X, feature, clim = None, condition = None):
     plt.show()
     # return x,y,fea
 
-def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save  = False, ret = False):
+def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save=False):
 
     # try:
     #     d = X['Distance 0']
@@ -1565,13 +1869,13 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
 
     if clim == None:
         clim = [np.nanmin(z),np.nanmax(z)]
-        print(clim)
+        # print(clim)
     plt.figure(figsize =(10.,10.))
     plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm)
     plt.colorbar(shrink=0.4, pad = 0.07)
     plt.xlabel('x', fontsize = 18)
     plt.ylabel('y', fontsize = 18)
-    plt.title(feature, fontsize = 18)
+    # plt.title(feature, fontsize = 18)
     if save:
         words = [feature]
         words = [w.replace(':', '_') for w in words]
@@ -1583,8 +1887,60 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
     #     print(np.shape(z))
     #     plt.show()
 
-    if ret:
-        return z
+    return z#, clim, feature
+
+
+def modeplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save=False):
+
+    try:
+        d = X['Distance 0']
+        t = X['Theta 0']
+    except:
+        d = X['Distance']
+        t = X['Theta']
+    if condition == None:
+        rad = np.array(d)
+        theta = np.array(t)
+        f = np.array(X[feature])
+
+    else:
+        rad = np.array(d)[condition]
+        theta = np.array(t)[condition]
+        f = np.array(X[feature])[condition]
+
+    rad = rad[np.logical_not(np.isnan(theta))]
+    f = f[np.logical_not(np.isnan(theta))]
+    theta = theta[np.logical_not(np.isnan(theta))]
+
+    x = rad * np.cos(theta)
+    y = rad * np.sin(theta)
+
+    x = x.astype('int')
+    y = y.astype('int')
+    x /= binsize
+    y /= binsize
+    x += np.absolute(np.min(x))
+    y += np.absolute(np.min(y))
+    z = [ [[] for _ in range(np.max(x)+1)] for _ in range(np.max(y)+1)]
+    count = np.zeros((np.max(y) + 1, np.max(x) + 1))
+
+    for i in range(len(x)):
+        z[y[i]][x[i]] += [float(f[i])]
+        count[y[i]][x[i]] = 1.
+
+    for index_1, value_1 in enumerate(z):
+        for index_2, value_2 in enumerate(value_1):
+            if value_2:
+                z[index_1][index_2] = mode(value_2)[0][0]
+            else:
+                z[index_1][index_2] = 0.0
+
+    z /= count
+
+    if clim == None:
+        clim = [np.nanmin(z),np.nanmax(z)]
+
+    return z, clim, feature
 
 def diff_plot(array1,array2,title = 'Default',save = False):
     plt.figure(figsize =(10.,10.))
@@ -1638,16 +1994,57 @@ def target_creation(row):
         return 0
 
 
-def distance(col1, col2):
+def distance(x_vectors, y_vectors, y_scale=1, x_scale=1):
+    # Old method for re-scaling
     """
     Function used to rework out the distance in a pandas dataframe (use in ipython). Need to convert the columns into
     tuples via np.unravel_index.
-    The y value is multiplied by 3.
-    :param col1: df['Crit Position']
+    :param col1: df['Crit Position 0']
     :param col2: df['Probe Position']
-    :return:
+    :param y_scale: scaling for y
+    :param x_scale: sacling for x
+    :return: New distance
     """
-    x_vectors = [(value1[1]-value2[1]) for value1, value2 in zip(col1,col2)]
-    y_vectors = [(value1[0]-value2[0]) for value1, value2 in zip(col1,col2)]
-    y_vectors = [y-200 if y>100 else y+200 if y<=-100 else y for y in y_vectors]
-    return [np.sqrt((3*y)**2 + x**2) for y, x in zip(y_vectors,x_vectors)]
+
+    # col1_values = [int(x) for x in col1.values]
+    # col2_values = [int(x) for x in col2.values]
+    # col1_t = [np.unravel_index(index, dims=(200, 200)) for index in col1_values]
+    # col2_t = [np.unravel_index(index, dims=(200, 200)) for index in col2_values]
+    # x_vectors = [(value1[1]-value2[1]) for value1, value2 in zip(col1_t,col2_t)]
+    # y_vectors = [(value1[0]-value2[0]) for value1, value2 in zip(col1_t,col2_t)]
+    # y_vectors = [y-200 if y>100 else y+200 if y<=-100 else y for y in y_vectors]
+    # return [np.sqrt((y_scale*y)**2 + (x_scale*x)**2) for y, x in zip(y_vectors,x_vectors)]
+
+    """
+<<<<<<< HEAD
+    :param x_vectors: df['Vector X 0']
+    :param y_vectors: df['Vector Y 0']
+    :param y_scale: scaling for y
+    :param x_scale: sacling for x
+    :return: New distance
+    """
+
+    return [np.sqrt((y_scale*y)**2 + (x_scale*x)**2) for y, x in zip(y_vectors.values,x_vectors.values)]
+
+
+def y_vector_classifier(x):
+    """
+    :param x: pandas series
+    :param threshold:
+    :return: turns vector data into classifier information.
+    """
+    if np.abs(x) >= 3:
+        return 0
+    if np.abs(x) < 3:
+        return 1
+
+def x_vector_classifier(x):
+    """
+    :param x: pandas series
+    :param threshold:
+    :return: turns vector data into classifier information.
+    """
+    if np.abs(x) >= 8:
+        return 0
+    if np.abs(x) < 8:
+        return 1
