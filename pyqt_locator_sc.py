@@ -108,7 +108,7 @@ State 0 - always measure and process ECG
 y_regress_treshold = 3
 
 
-def rt_ecg_gathering(ecg_list, sign_feature=True):
+def rt_ecg_gathering(ecg_list, sign_feature="record sign"):
     """
     Records the ECGS, Gathers the features and compiles them.
     :param ecg_list: Raw data from animation_grid (t, (x,y))
@@ -152,7 +152,7 @@ def update_data():
 
             if state == 0:
                 # ECG Recording and feature gathering
-                sample = rt_ecg_gathering(process_list)
+                sample = rt_ecg_gathering(process_list, "record sign")
                 hsign = sample[-2]
                 print hsign
                 # Get deprication warning if this is not done.
@@ -183,11 +183,11 @@ def update_data():
                 if y_class_value == 0:
                     y_short_memory.append(current_ecg_y_pos)
                     current_ecg_y_pos -= y_vector
-                    current_ecg_x_pos -= 3 * hsign * np.absolute(y_vector)
+                    current_ecg_x_pos -= int(3 * hsign * np.absolute(hsign) * np.absolute(y_vector))
                     if current_ecg_y_pos > 199 or current_ecg_y_pos < 0: #Is this an error?
                         current_ecg_y_pos %= 200
                     if current_ecg_x_pos > 199 or current_ecg_x_pos <0:
-                        current_ecg_x_pos += 3 * hsign * np.absolute(y_vector)
+                        current_ecg_x_pos += int(3 * hsign *np.absolute(hsign) * np.absolute(y_vector))
                     if current_ecg_y_pos in y_short_memory:
                         print "Entered Y Loop"
                         # print "Loop: %s" % y_short_memory
@@ -201,7 +201,7 @@ def update_data():
 
             if state == 1:
                 # ECG Recording and feature gathering
-                sample = rt_ecg_gathering(process_list)
+                sample = rt_ecg_gathering(process_list, "record sign")
                 hsign = sample[-2]
                 print hsign
                 # Get deprication warning if this is not done.
@@ -225,8 +225,8 @@ def update_data():
 
                 if x_class_value == 0:
                     x_short_memory.append(current_ecg_x_pos)
-                    current_ecg_x_pos -= x_vector
-                    if current_ecg_x_pos > 200 or current_ecg_x_pos < 0:
+                    current_ecg_x_pos -= x_vector + 13
+                    if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                         current_ecg_x_pos %= 200
                     if current_ecg_x_pos in x_short_memory:
                         print "Entered X Loop"

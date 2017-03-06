@@ -1299,6 +1299,7 @@ def feature_extract_multi_test_rt(number, ecg_vals):
             break
         else:
             noise.append(crossovers[i])
+    print end - start
     ecg = ecg[:2*per]
     # print start, end
     ft = rfft(ecg)  # Real valued FT of original ECG

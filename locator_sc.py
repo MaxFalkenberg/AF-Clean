@@ -45,7 +45,7 @@ if save_data == 'y':
     save_data_name = raw_input("Saved datafile name: ")
 
 
-def rt_ecg_gathering(ecg_list, sign_feature=True):
+def rt_ecg_gathering(ecg_list, sign_feature="record sign"):
     """
     Records the ECGS, Gathers the features and compiles them.
     :param ecg_list: Raw data from animation_grid (t, (x,y))

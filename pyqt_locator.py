@@ -113,7 +113,7 @@ State 0 - always measure and process ECG
 y_regress_treshold = 3
 
 
-def rt_ecg_gathering(ecg_list, sign_feature=True):
+def rt_ecg_gathering(ecg_list, sign_feature="record sign"):
     """
     Records the ECGS, Gathers the features and compiles them.
     :param ecg_list: Raw data from animation_grid (t, (x,y))
