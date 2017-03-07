@@ -225,6 +225,16 @@ hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('r', width=2))
 view.addItem(vLine, ignoreBounds=True)
 view.addItem(hLine, ignoreBounds=True)
 
+# Constraint graphics
+xUline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('c', width=2))
+xLline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('b', width=2))
+yUline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('y', width=2))
+yLline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('m', width=2))
+view.addItem(xUline, ignoreBounds=True)
+view.addItem(xLline, ignoreBounds=True)
+view.addItem(yUline, ignoreBounds=True)
+view.addItem(yLline, ignoreBounds=True)
+
 # time step
 ptr1 = 0
 ecg_count = 0
@@ -277,8 +287,12 @@ def update_data():
 
     # Initial Crosshair drawing
     if ptr1 == 0:
-        vLine.setPos(current_ecg_x_pos + 0.5)
-        hLine.setPos(current_ecg_y_pos + 0.5)
+        vLine.setPos(current_ecg_x_pos)
+        hLine.setPos(current_ecg_y_pos)
+        yUline.setPos(constrainedx[1])
+        yLline.setPos(constrainedx[0])
+        xUline.setPos(300)
+        xLline.setPos(300)
 
     # If flag triggered, then start taking measurments.
     if ECG_start_flag:
@@ -313,10 +327,20 @@ def update_data():
 
                     if x_class_value == 1:
                         previousR = "Rotor Found"
+                        del y_short_memory
+                        y_short_memory = []
+                        del vsign_short_memory
+                        vsign_short_memory = []
+                        del constrainedy
+                        constrainedy = [None, None]
                         current_ecg_y_pos = randint(20, 179)  # reseting the process.
                         current_ecg_x_pos = randint(20, 179)
                         state = 0
                         ecg_count = 0
+                        yUline.setPos(constrainedx[1])
+                        yLline.setPos(constrainedx[0])
+                        xUline.setPos(300)
+                        xLline.setPos(300)
 
                 if y_class_value == 0:
                     y_short_memory.append(current_ecg_y_pos)
@@ -340,6 +364,10 @@ def update_data():
                             current_ecg_x_pos = randint(20, 179)
                             state = 0
                             ecg_count = 0
+                            yUline.setPos(constrainedx[1])
+                            yLline.setPos(constrainedx[0])
+                            xUline.setPos(300)
+                            xLline.setPos(300)
 
                     else:
                         likelyp = prediction(y_probarg, vector_constraint=vecdistance(current_ecg_y_pos,
@@ -362,6 +390,8 @@ def update_data():
                             constrainedy = [None, None]
                             current_ecg_x_pos = randint(20, 179)
                             current_ecg_y_pos = randint(20, 179)
+                            yUline.setPos(constrainedx[1])
+                            yLline.setPos(constrainedx[0])
 
                         print constrainedy
 
@@ -380,6 +410,16 @@ def update_data():
                     current_ecg_y_pos = randint(0, 199)
                     state = 0
                     ecg_count = 0
+                    del x_short_memory
+                    x_short_memory = []
+                    del hsign_short_memory
+                    hsign_short_memory = []
+                    del constrainedx
+                    constrainedx = [20, 179]
+                    yUline.setPos(constrainedx[1])
+                    yLline.setPos(constrainedx[0])
+                    xUline.setPos(300)
+                    xLline.setPos(300)
 
                 if x_class_value == 0:
                     x_short_memory.append(current_ecg_x_pos)
@@ -399,6 +439,10 @@ def update_data():
                         current_ecg_y_pos = randint(0, 199)
                         state = 0
                         ecg_count = 0
+                        yUline.setPos(constrainedx[1])
+                        yLline.setPos(constrainedx[0])
+                        xUline.setPos(300)
+                        xLline.setPos(300)
 
                     else:
                         likelyp = prediction(x_probarg, vector_constraint=vecdistance(current_ecg_x_pos,
@@ -422,10 +466,21 @@ def update_data():
                             current_ecg_x_pos = randint(20, 179)
                             current_ecg_y_pos = randint(0, 199)
                             state = 0
+                            yUline.setPos(constrainedx[1])
+                            yLline.setPos(constrainedx[0])
+                            xUline.setPos(300)
+                            xLline.setPos(300)
 
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
-            vLine.setPos(current_ecg_x_pos + 0.5)
-            hLine.setPos(current_ecg_y_pos + 0.5)
+            vLine.setPos(current_ecg_x_pos)
+            hLine.setPos(current_ecg_y_pos)
+            if constrainedy[0] is not None:
+                xLline.setPos(constrainedy[0])
+            if constrainedy[1] is not None:
+                xUline.setPos(constrainedy[1])
+            yLline.setPos(constrainedx[0])
+            yUline.setPos(constrainedx[1])
+
             del process_list
             process_list = []
             update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR)
