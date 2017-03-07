@@ -179,12 +179,10 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
             constrained_[0] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == -2:  # Passed boundry (top to bottom)
-            print "Passed boundry"
             if constrained_[0] is None:
                 constrained_[0] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == 2:  # Passed boundry (bottom to top)
-            print "Passed boundry"
             if constrained_[1] is None:
                 constrained_[1] = current_ecg_pos_
 
