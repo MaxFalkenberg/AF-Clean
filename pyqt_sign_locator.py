@@ -388,8 +388,8 @@ def update_data():
                             constrainedy = [None, None]
                             current_ecg_x_pos = randint(20, 179)
                             current_ecg_y_pos = randint(20, 179)
-                            yUline.setPos(constrainedx[1])
-                            yLline.setPos(constrainedx[0])
+                            yUline.setPos(300)
+                            yLline.setPos(300)
 
             if state == 1:
                 sample = rt_ecg_gathering(process_list, sign_para='record_sign')  # ECG feature Recording
