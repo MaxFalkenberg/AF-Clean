@@ -1652,7 +1652,7 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
     df.to_hdf(name + '.h5','w')
 
 
-def multi_feature_compile_rt(uncompiled, sign="record sign"):
+def multi_feature_compile_rt(uncompiled, sign="record_sign"):
     """
     Compiles all the ecg features into a single multi probe feature array. This is then fed into a RF model.
     :param uncompiled: Uncompiled ecg features.
@@ -1661,7 +1661,7 @@ def multi_feature_compile_rt(uncompiled, sign="record sign"):
     """
     # Compiles all the features
     compiled = process_multi_feature(uncompiled)
-    if sign == "record sign":
+    if sign == "record_sign":
         signs = sign_solver(uncompiled[:, 0])
         compiled = np.concatenate([compiled,signs])
     # Cleans all inf values
