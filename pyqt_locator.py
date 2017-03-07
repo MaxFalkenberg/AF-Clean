@@ -113,7 +113,7 @@ State 0 - always measure and process ECG
 y_regress_treshold = 3
 
 
-def rt_ecg_gathering(ecg_list, sign_feature=True):
+def rt_ecg_gathering(ecg_list, sign_feature="record_sign"):
     """
     Records the ECGS, Gathers the features and compiles them.
     :param ecg_list: Raw data from animation_grid (t, (x,y))
@@ -170,7 +170,6 @@ def update_data():
             if state == 0:
                 # ECG Recording and feature gathering
                 sample = rt_ecg_gathering(process_list)
-                print sample[441: 445]
                 ecg_count += 1
                 # Get deprication warning if this is not done.
                 sample = sample.reshape(1, -1)
@@ -187,8 +186,10 @@ def update_data():
                     if x_class_value == 1:
                         previousR = "Rotor Found"
                         # reseting the process.
-                        current_ecg_y_pos = randint(3, 196)
-                        current_ecg_x_pos = randint(3, 196)
+                        del y_short_memory
+                        y_short_memory = []
+                        current_ecg_y_pos = randint(20, 179)
+                        current_ecg_x_pos = randint(20, 179)
                         state = 0
                         ecg_count = 0
 
@@ -219,8 +220,8 @@ def update_data():
                     del x_short_memory
                     x_short_memory = []
                     # reseting the process.
-                    current_ecg_y_pos = randint(3, 196)
-                    current_ecg_x_pos = randint(3, 196)
+                    current_ecg_y_pos = randint(0, 199)
+                    current_ecg_x_pos = randint(20, 179)
                     state = 0
                     ecg_count = 0
 
@@ -232,8 +233,11 @@ def update_data():
                     if current_ecg_x_pos in x_short_memory:
                         previousR = 'X Loop'
                         ecg_count = 0
-                        current_ecg_x_pos = randint(3, 196)
-                        current_ecg_y_pos = randint(3, 196)
+                        del x_short_memory
+                        x_short_memory = []
+                        current_ecg_x_pos = randint(20, 179)
+                        current_ecg_y_pos = randint(0, 199)
+                        state = 0
 
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
             vLine.setPos(current_ecg_x_pos + 0.5)
