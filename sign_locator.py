@@ -346,7 +346,7 @@ for i in range(number_of_rotors):
                         ECG_located_flag = True
                         check[i] = 0
                         del constrainedx
-                        constrainedy = [None, None]
+                        constrainedx = [20, 179]
                         del x_short_memory  # Checks for loops
                         x_short_memory = []
 
