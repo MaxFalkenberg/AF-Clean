@@ -20,7 +20,7 @@ if model_choice == 'r':
     from sklearn.ensemble import RandomForestRegressor
     if target == 'y':
         # Prunes all the probe features not to do with Y vector
-        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector X 0', 'Theta 0', 'Distance 0', 'Nu']
+        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector X 0', 'Theta 0', 'Distance 0', 'Nu', 'X Axis True', 'Y Axis True', 'Circuit True']
         all_features = X.columns
         for feature in probe_features:
             if feature in all_features:
@@ -30,8 +30,9 @@ if model_choice == 'r':
 
     if target == 'x':
         # Prunes all the probe features not to do with Y vector
+
         X = X[np.abs(X['Vector Y 0']) < 3]
-        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector Y 0', 'Theta 0', 'Distance 0', 'Nu']
+        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector Y 0', 'Theta 0', 'Distance 0', 'Nu','X Axis True', 'Y Axis True', 'Circuit True']
         all_features = X.columns
         for feature in probe_features:
             if feature in all_features:
@@ -49,7 +50,8 @@ if model_choice == 'c':
     output_choice = raw_input("Predict or Probabilities (pre\pro): ")
     from sklearn.ensemble import RandomForestClassifier
     if target == 'y':
-        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector X 0', 'Theta 0', 'Distance 0', 'Nu']
+        X = X[np.array(X['X Axis True'])]
+        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector X 0','X Axis True','Vector Y 0', 'Theta 0', 'Distance 0', 'Nu', 'Y Axis True']
         all_features = X.columns
         for feature in probe_features:
             if feature in all_features:
