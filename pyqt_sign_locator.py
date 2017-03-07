@@ -393,8 +393,6 @@ def update_data():
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
 
-                        print constrainedy
-
             if state == 1:
                 sample = rt_ecg_gathering(process_list, sign_para='record_sign')  # ECG feature Recording
                 ecg_count += 1
