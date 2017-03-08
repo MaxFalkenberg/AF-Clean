@@ -57,7 +57,7 @@ if model_choice == 'c':
             if feature in all_features:
                 del X['%s' % feature]
 
-        y = X.pop('Circuit True')
+        y = X.pop('Vector Y 0')
         # y = y.apply(y_vector_classifier)
         y = y.astype(int)
 
@@ -70,7 +70,7 @@ if model_choice == 'c':
                 del X['%s' % feature]
 
         y = X.pop('Vector X 0')
-        y = y.apply(x_vector_classifier)
+        # y = y.apply(x_vector_classifier)
         y = y.astype(int)
 
     print "Training"
