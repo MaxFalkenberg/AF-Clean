@@ -334,7 +334,7 @@ for i in range(number_of_rotors):
                     x_ecg_num += 1
                     sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                     hsign = sample[0, :][-2]  # Gets the h sign
-                    sample_ = sample[0, :][0:-3].reshape(1, -1) # Takes a sample without sign information
+                    sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
                     x_class_value = x_class.predict(sample_)[0]
                     x_probarg = movingaverage(x_classifier_full.predict_proba(sample_)[0, :], 10)  # Prob map
                     x_class_value = x_class.predict(sample_)[0]
@@ -358,7 +358,7 @@ for i in range(number_of_rotors):
 
                         # Tries the constrained row.
                         if condistance(constrainedx) == 1:
-                            check[i] += 1
+                            check[i] += 2
                             final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
                             ecg_end[i] = final_rotor_position
                             ecg_counter[i] = (y_ecg_num, x_ecg_num)
