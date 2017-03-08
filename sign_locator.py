@@ -398,9 +398,8 @@ if save_data == 'n':
     print "ecg start: %s" % ecg_start
     print "check: %s" % check
 
-print "END"
 final_data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
-              "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
+              "Check": check, "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
 
 if save_data == 'y':
     with open('%s.p' % save_data_name, 'wb') as f:
