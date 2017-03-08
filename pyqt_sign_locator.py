@@ -304,9 +304,10 @@ def update_data():
 
         if ptr1 % process_length == 0 and ptr1 != stability_time:
 
+            sample = rt_ecg_gathering(process_list, sign_para=args[5])  # ECG Recording and feature gathering
+            ecg_count += 1
+
             if state == 0:
-                sample = rt_ecg_gathering(process_list, sign_para=args[5])  # ECG Recording and feature gathering
-                ecg_count += 1
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 vsign = sample[0, :][-3]
                 sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
@@ -392,8 +393,6 @@ def update_data():
                             xLline.setPos(300)
 
             if state == 1:
-                sample = rt_ecg_gathering(process_list, sign_para='record_sign')  # ECG feature Recording
-                ecg_count += 1
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 hsign = sample[0, :][-2]  # Gets the h sign
                 sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
