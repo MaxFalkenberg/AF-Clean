@@ -217,21 +217,21 @@ def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res):
 # Animation grid
 animation_grid = np.zeros(a.shape)
 
+# Constraint graphics
+xUline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('c', width=4))
+xLline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('b', width=4))
+yUline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('y', width=4))
+yLline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('y', width=4))
+view.addItem(xUline, ignoreBounds=True)
+view.addItem(xLline, ignoreBounds=True)
+view.addItem(yUline, ignoreBounds=True)
+view.addItem(yLline, ignoreBounds=True)
+
 # Crosshair setup
 vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('r', width=2))
 hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('r', width=2))
 view.addItem(vLine, ignoreBounds=True)
 view.addItem(hLine, ignoreBounds=True)
-
-# Constraint graphics
-xUline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('c', width=2))
-xLline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('b', width=2))
-yUline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('y', width=2))
-yLline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('m', width=2))
-view.addItem(xUline, ignoreBounds=True)
-view.addItem(xLline, ignoreBounds=True)
-view.addItem(yUline, ignoreBounds=True)
-view.addItem(yLline, ignoreBounds=True)
 
 # time step
 ptr1 = 0
@@ -285,12 +285,12 @@ def update_data():
 
     # Initial Crosshair drawing
     if ptr1 == 0:
-        vLine.setPos(current_ecg_x_pos)
-        hLine.setPos(current_ecg_y_pos)
         yUline.setPos(constrainedx[1])
         yLline.setPos(constrainedx[0])
         xUline.setPos(300)
         xLline.setPos(300)
+        vLine.setPos(current_ecg_x_pos + 0.5)
+        hLine.setPos(current_ecg_y_pos + 0.5)
 
     # If flag triggered, then start taking measurments.
     if ECG_start_flag:
@@ -388,8 +388,8 @@ def update_data():
                             constrainedy = [None, None]
                             current_ecg_x_pos = randint(20, 179)
                             current_ecg_y_pos = randint(20, 179)
-                            yUline.setPos(300)
-                            yLline.setPos(300)
+                            xUline.setPos(300)
+                            xLline.setPos(300)
 
             if state == 1:
                 sample = rt_ecg_gathering(process_list, sign_para='record_sign')  # ECG feature Recording
@@ -468,14 +468,14 @@ def update_data():
                             xLline.setPos(300)
 
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
-            vLine.setPos(current_ecg_x_pos)
-            hLine.setPos(current_ecg_y_pos)
             if constrainedy[0] is not None:
                 xLline.setPos(constrainedy[0])
             if constrainedy[1] is not None:
                 xUline.setPos(constrainedy[1])
             yLline.setPos(constrainedx[0])
             yUline.setPos(constrainedx[1])
+            vLine.setPos(current_ecg_x_pos + 0.5)
+            hLine.setPos(current_ecg_y_pos + 0.5)
 
             del process_list
             process_list = []
