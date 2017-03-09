@@ -71,14 +71,14 @@ for i in range(number_of_rotors):
     # Initialising the Heart structure
     a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
     # Randomises the rotor x,y position
-    cp_x_pos = randint(20, 180)
+    cp_x_pos = randint(30, 169)
     cp_y_pos = randint(0, 199)
     a.set_pulse(60, [[cp_y_pos], [cp_x_pos]])
     rotor[i] = (cp_x_pos, cp_y_pos)
 
     # Initialising ECG recording (randomises the probe x,y position)
-    current_ecg_x_pos = randint(3, 196)
-    current_ecg_y_pos = randint(3, 196)
+    current_ecg_x_pos = randint(20, 179)
+    current_ecg_y_pos = randint(0, 199)
     ecg_processing = at.ECG(centre=(current_ecg_y_pos, current_ecg_x_pos), m='g_single')
     ecg_start[i] = (current_ecg_x_pos, current_ecg_y_pos)
 
