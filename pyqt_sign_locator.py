@@ -145,12 +145,15 @@ def prediction(prob_map, vector_constraint, axis):
         lower_index = ref + vector_constraint[0]
         upper_index = ref + vector_constraint[1]
         constrained_prob = prob_map[upper_index:lower_index + 1]  # create the range for examining the probabilities.
-        possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
-        possible_points = [x + upper_index for x in possible_points_detail]
-        if len(possible_points) == 1:
-            return possible_points[0]
-        if len(possible_points) > 1:
-            return int(np.mean(possible_points))
+        if np.max(constrained_prob) < 0.4:
+            return int(float(lower_index + upper_index) / 2)
+        else:
+            possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
+            possible_points = [x + upper_index for x in possible_points_detail]
+            if len(possible_points) == 1:
+                return possible_points[0]
+            if len(possible_points) > 1:
+                return int(np.mean(possible_points))
 
 
 def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_, axis):

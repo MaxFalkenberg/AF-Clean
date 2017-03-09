@@ -22,7 +22,6 @@ ECG_count = data['ECG Counter']  # Total
 ECG_check = data['Check']
 
 zipped_data = zip(ECG_start, ECG_end, rotor_position, ECG_count, ECG_check)
-
 print zipped_data
 
 yLoop_number = ECG_end.count('Y LOOP')
@@ -30,6 +29,9 @@ xLoop_number = [x[0] for x in ECG_end].count('X LOOP')
 print yLoop_number
 print xLoop_number
 
+# yLoop_number = ECG_end.count('Y LOOP')
+# xLoop_number = ECG_end.count('X LOOP')
+#
 # succesful_locations = [x for x in zipped_data if type(x[1]) is tuple]
 # unsuccesful_locations = [x for x in zipped_data if type(x[1]) is not tuple]
 #
