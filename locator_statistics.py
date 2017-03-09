@@ -56,6 +56,7 @@ def vector_distance(rotor, ecg):
     :param ecg:
     :return:
     """
+    print ecg[0],rotor[0]
     x_vector = ecg[0] - rotor[0]
     y_vector = ecg[1] - rotor[1]
     if y_vector > 100:
@@ -134,4 +135,3 @@ plt.figure()
 succ_yecg_num = [x[3][0] for x in zipped_data if type(x[1]) is tuple]
 plt.scatter(start_x_dis, succ_yecg_num)
 plt.show()
-

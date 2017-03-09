@@ -127,22 +127,22 @@ def prediction(prob_map, vector_constraint, axis):
         ref = None
         if axis == 'x':
             ref = 99
-            if vector_constraint[0] > 100:  # Largest possible vector constraints (Only happens for the x axis. Shouldn't happen for y.)
-                vector_constraint[0] = 100
-            if vector_constraint[1] < -99:
-                vector_constraint[1] = -99
         if axis == 'y':
             ref = 176
         lower_index = ref + vector_constraint[0]
         upper_index = ref + vector_constraint[1]
-
         constrained_prob = prob_map[upper_index:lower_index + 1]  # create the range for examining the probabilities.
-        possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
-        possible_points = [x + upper_index for x in possible_points_detail]
-        if len(possible_points) == 1:
-            return possible_points[0]
-        if len(possible_points) > 1:
-            return int(np.mean(possible_points))
+        if np.max(constrained_prob) < 0.4:
+            print 1
+            return int(float(lower_index + upper_index) / 2)
+        else:
+            print 2
+            possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
+            possible_points = [x + upper_index for x in possible_points_detail]
+            if len(possible_points) == 1:
+                return possible_points[0]
+            if len(possible_points) > 1:
+                return int(np.mean(possible_points))
 
 
 def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_):

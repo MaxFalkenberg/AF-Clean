@@ -71,6 +71,19 @@ def movingaverage(values, weight):
     sma = np.convolve(values, np.ones((weight,)) / weight, mode='same')
     return sma
 
+def winsum(interval, window_size):
+    window = np.ones(int(window_size))
+    return np.convolve(interval, window, 'same')
+
+def reg_predictor(probs,thr = 0.4):
+    ws = 2
+    while np.max(probs) < thr:
+        probs = winsum(probs,ws)
+        ws += 1
+        if ws == 5:
+            break
+    return probs
+
 
 def vecdistance(current_pos, constaints):
     """
@@ -93,9 +106,14 @@ def vecdistance(current_pos, constaints):
         lower_vector = -(lower - current_pos)
     if lower > current_pos:
         lower_vector = (current_pos + (200 % lower))
-    if current_pos == 0:
-        lower_vector = lower
-        upper_vector = -upper
+    # if current_pos == 0:
+    #     lower_vector = lower
+    #     upper_vector = -upper
+
+    if lower_vector > 100:  # Largest possible vector constraints (Only happens for the x axis. Shouldn't happen for y.)
+        lower_vector = 100
+    if upper_vector < -99:
+        upper_vector = -99
 
     return [lower_vector, upper_vector]
 
@@ -140,12 +158,49 @@ def prediction(prob_map, vector_constraint, axis):
         lower_index = ref + vector_constraint[0]
         upper_index = ref + vector_constraint[1]
         constrained_prob = prob_map[upper_index:lower_index + 1]  # create the range for examining the probabilities.
-        possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
-        possible_points = [x + upper_index for x in possible_points_detail]
-        if len(possible_points) == 1:
-            return possible_points[0]
-        if len(possible_points) > 1:
-            return int(np.mean(possible_points))
+        if np.max(constrained_prob) < 0.4:
+            print 1
+            return int(float(lower_index + upper_index) / 2)
+        else:
+            print 2
+            possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
+            possible_points = [x + upper_index for x in possible_points_detail]
+            if len(possible_points) == 1:
+                return possible_points[0]
+            if len(possible_points) > 1:
+                return int(np.mean(possible_points))
+
+
+# def prediction(prob_map, vector_constraint, axis):
+#     """
+#     makes a vector prediction
+#     :param prob_map:
+#     :param vector_constraint:
+#     :param axis:
+#     :return:
+#     """
+#     if vector_constraint is None:
+#         possible_points = np.argwhere(prob_map == np.amax(prob_map)).flatten()
+#         if len(possible_points) == 1:
+#             return possible_points[0]
+#         if len(possible_points) > 1:
+#             return int(np.mean(possible_points))
+#     else:
+#         ref = None
+#         if axis == 'x':
+#             ref = 99
+#         if axis == 'y':
+#             ref = 176
+#         lower_index = ref + vector_constraint[0]
+#         upper_index = ref + vector_constraint[1]
+#         print lower_index,upper_index
+#         constrained_prob = prob_map[upper_index:lower_index + 1]  # create the range for examining the probabilities.
+#         possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
+#         possible_points = [x + upper_index for x in possible_points_detail]
+#         if len(possible_points) == 1:
+#             return possible_points[0]
+#         if len(possible_points) > 1:
+#             return int(np.mean(possible_points))
 
 
 def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_):
@@ -312,7 +367,7 @@ def update_data():
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                 sample_ = sample[0, :][0:].reshape(1, -1)
                 y_class_value = y_class.predict(sample_)[0]
-                y_probarg = movingaverage(y_classifier_full.predict_proba(sample_)[0, :], 10)
+                y_probarg = reg_predictor(y_classifier_full.predict_proba(sample_)[0, :])
 
                 if y_class_value == 1:
                     state = 1  # Change to state 1 for y axis regression/classification.
@@ -375,11 +430,14 @@ def update_data():
                         prev_y_vector = y_vector
                         current_ecg_y_pos -= y_vector
 
-                        if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
+                        if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
 
                         if current_ecg_y_pos in y_short_memory:
                             previousR = "Y Loop"
+                            print current_ecg_y_pos
+                            print prev_y_vector
+                            print constrainedy
                             ecg_count = 0
                             del y_short_memory
                             y_short_memory = []
@@ -399,7 +457,7 @@ def update_data():
                 hsign = sample[0, :][-2]  # Gets the h sign
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign
                 sample_ = sample[0, :][:].reshape(1, -1)  # Takes a sample without sign information
-                x_probarg = movingaverage(x_classifier_full.predict_proba(sample_)[0, :], 10)  # Prob map
+                x_probarg = reg_predictor(x_classifier_full.predict_proba(sample_)[0, :])  # Prob map
                 x_class_value = x_class.predict(sample_)[0]
 
                 if x_class_value == 1:
@@ -449,7 +507,7 @@ def update_data():
                         prev_x_vector = x_vector
                         current_ecg_x_pos -= x_vector
 
-                        if current_ecg_x_pos > 200 or current_ecg_x_pos < 0:
+                        if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                             current_ecg_x_pos %= 200
 
                         if current_ecg_x_pos in x_short_memory:
