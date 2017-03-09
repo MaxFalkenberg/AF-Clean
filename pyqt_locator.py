@@ -240,7 +240,6 @@ def update_data():
                         current_ecg_y_pos = randint(0, 199)
                         state = 0
 
-
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
             vLine.setPos(current_ecg_x_pos + 0.5)
             hLine.setPos(current_ecg_y_pos + 0.5)
