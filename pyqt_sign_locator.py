@@ -206,16 +206,18 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
     return constrained_, sign_short_memory_
 
 
-def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res):
+def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const):
     """
 
     :return:
     """
     text = """Rotor Position: (%s, %s)<br>\n
-              Current Probe Position: (%s, %s)<br>\n
+              Probe Position: (%s, %s)<br>\n
               <br>\n
               Number of ECGs: %s<br>\n
-              Previous Result: %s """ % (rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res)
+              Previous Result: %s<br>\n
+              X axis Constraint: %s<br>\n
+              Y axis Constraint: %s""" % (rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const)
     label.setText(text)
 
 
@@ -276,7 +278,8 @@ ECG_start_flag = False
 # Sate for pipe work.
 state = 0
 
-update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR)
+update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
+                  constrainedy, constrainedx)
 
 
 # Updates the frames and goes through pipework for ECG processing and machine learning processes.
@@ -325,8 +328,6 @@ def update_data():
                     y_short_memory = []
                     del vsign_short_memory
                     vsign_short_memory = []
-                    del constrainedy
-                    constrainedy = [None, None]
                     x_class_value = x_class.predict(sample_)[0]
 
                     if x_class_value == 1:
@@ -383,22 +384,22 @@ def update_data():
                         if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
 
-                        if current_ecg_y_pos in y_short_memory:
-                            previousR = "Y Loop"
-                            print current_ecg_y_pos
-                            print prev_y_vector
-                            print constrainedy
-                            ecg_count = 0
-                            del y_short_memory
-                            y_short_memory = []
-                            del vsign_short_memory
-                            vsign_short_memory = []
-                            del constrainedy
-                            constrainedy = [None, None]
-                            current_ecg_x_pos = randint(20, 179)
-                            current_ecg_y_pos = randint(20, 179)
-                            xUline.setPos(300)
-                            xLline.setPos(300)
+                        # if current_ecg_y_pos in y_short_memory:
+                        #     previousR = "Y Loop"
+                        #     print current_ecg_y_pos
+                        #     print prev_y_vector
+                        #     print constrainedy
+                        #     ecg_count = 0
+                        #     del y_short_memory
+                        #     y_short_memory = []
+                        #     del vsign_short_memory
+                        #     vsign_short_memory = []
+                        #     del constrainedy
+                        #     constrainedy = [None, None]
+                        #     current_ecg_x_pos = randint(20, 179)
+                        #     current_ecg_y_pos = randint(20, 179)
+                        #     xUline.setPos(300)
+                        #     xLline.setPos(300)
 
             if state == 1:
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
@@ -419,6 +420,8 @@ def update_data():
                     hsign_short_memory = []
                     del constrainedx
                     constrainedx = [20, 179]
+                    del constrainedy
+                    constrainedy = [None, None]
                     yUline.setPos(constrainedx[1])
                     yLline.setPos(constrainedx[0])
                     xUline.setPos(300)
@@ -438,6 +441,8 @@ def update_data():
                         hsign_short_memory = []
                         del constrainedx
                         constrainedx = [20, 179]
+                        del constrainedy
+                        constrainedy = [None, None]
                         current_ecg_x_pos = randint(20, 179)
                         current_ecg_y_pos = randint(0, 199)
                         state = 0
@@ -457,22 +462,24 @@ def update_data():
                         if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                             current_ecg_x_pos %= 200
 
-                        if current_ecg_x_pos in x_short_memory:
-                            previousR = 'X Loop'
-                            ecg_count = 0
-                            del x_short_memory
-                            x_short_memory = []
-                            del hsign_short_memory
-                            hsign_short_memory = []
-                            del constrainedx
-                            constrainedx = [20, 179]
-                            current_ecg_x_pos = randint(20, 179)
-                            current_ecg_y_pos = randint(0, 199)
-                            state = 0
-                            yUline.setPos(constrainedx[1])
-                            yLline.setPos(constrainedx[0])
-                            xUline.setPos(300)
-                            xLline.setPos(300)
+                        # if current_ecg_x_pos in x_short_memory:
+                        #     previousR = 'X Loop'
+                        #     ecg_count = 0
+                        #     del x_short_memory
+                        #     x_short_memory = []
+                        #     del hsign_short_memory
+                        #     hsign_short_memory = []
+                        #     del constrainedx
+                        #     constrainedx = [20, 179]
+                        #     del constrainedy
+                        #     constrainedy = [None, None]
+                        #     current_ecg_x_pos = randint(20, 179)
+                        #     current_ecg_y_pos = randint(0, 199)
+                        #     state = 0
+                        #     yUline.setPos(constrainedx[1])
+                        #     yLline.setPos(constrainedx[0])
+                        #     xUline.setPos(300)
+                        #     xLline.setPos(300)
 
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
             if constrainedy[0] is not None:
@@ -486,7 +493,8 @@ def update_data():
 
             del process_list
             process_list = []
-            update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR)
+            update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
+                              constrainedy, constrainedx)
 
     # time.sleep(1/120.)  # gives more stable fps.
     img.setImage(data.T)  # puts animation grid on image.
