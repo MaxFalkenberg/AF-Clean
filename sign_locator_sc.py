@@ -66,16 +66,6 @@ def winsum(interval, window_size):
     window = np.ones(int(window_size))
     return np.convolve(interval, window, 'same')
 
-# def reg_predictor(probs,thr = 0.3):
-#     ws = 2
-#     while np.max(probs) < thr:
-#         probs = winsum(probs,ws)
-#         ws += 1
-#         if ws == 5:
-#             nz = np.nonzero(probs)[0]
-#             m = int(np.mean(nz))
-#             return int(m)
-#     return np.argmax(probs)
 
 def reg_predictor(probs,thr = 0.4):
     ws = 2
@@ -156,10 +146,8 @@ def prediction(prob_map, vector_constraint, axis):
         upper_index = ref + vector_constraint[1]
         constrained_prob = prob_map[upper_index:lower_index + 1]  # create the range for examining the probabilities.
         if np.max(constrained_prob) < 0.4:
-            print 1
             return int(float(lower_index + upper_index) / 2)
         else:
-            print 2
             possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
             possible_points = [x + upper_index for x in possible_points_detail]
             if len(possible_points) == 1:
@@ -193,9 +181,15 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
     if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
+            if prev_vector < -3 and constrained_[0] is not None:
+                constrained_[0] += 3
+                constrained_[0] %= 200
             constrained_[1] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
+            if prev_vector > 3 and constrained_[1] is not None:
+                constrained_[1] -= 3
+                constrained_[1] %= 200
             constrained_[0] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == -2:  # Passed boundry (top to bottom)
@@ -209,12 +203,18 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector > 0 and vsign_diff == 0:  # Potential updataing of upper constraint
             if constrained_[0] is None:
                 constrained_[1] = current_ecg_pos_
+                if prev_vector > 3:
+                    constrained_[1] -= 3
+                    constrained_[1] %= 200
             if condistance(constrained_) > condistance([constrained_[0], current_ecg_pos_]):
                 constrained_[1] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == 0:  # Potential updating of lower constraint
             if constrained_[1] is None:
                 constrained_[0] = current_ecg_pos_
+                if prev_vector < -3:
+                    constrained_[0] += 3
+                    constrained_[0] %= 200
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
                 constrained_[0] = current_ecg_pos_
 
@@ -349,6 +349,8 @@ for i in range(number_of_rotors):
                             # Loop Check
                             if current_ecg_y_pos in y_short_memory:
                                 final_rotor_position = ("X LOOP", "Y LOOP")
+                                if y_short_memory[-1] - y_short_memory[-2] == 0:
+                                    final_rotor_position = '-O-'
                                 ecg_end[i] = final_rotor_position
                                 ecg_counter[i] = ecg_num
                                 ECG_located_flag = True
@@ -403,6 +405,8 @@ for i in range(number_of_rotors):
                             # Loop Check
                             if current_ecg_x_pos in x_short_memory:
                                 final_rotor_position = ("X LOOP", current_ecg_y_pos)
+                                if x_short_memory[-1] - x_short_memory[-2] == 0:
+                                    final_rotor_position = ("-O-", current_ecg_y_pos)
                                 ecg_end[i] = final_rotor_position
                                 ecg_counter[i] = ecg_num
                                 ECG_located_flag = True
