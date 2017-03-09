@@ -1299,7 +1299,7 @@ def feature_extract_multi_test_rt(number, ecg_vals):
             break
         else:
             noise.append(crossovers[i])
-    print end - start
+    # print end - start
     ecg = ecg[:2*per]
     # print start, end
     ft = rfft(ecg)  # Real valued FT of original ECG
@@ -1666,6 +1666,7 @@ def multi_feature_compile_rt(uncompiled, sign="record_sign"):
         signs = sign_solver(uncompiled[:, 0])
         compiled = np.concatenate([compiled,signs])
     # Cleans all inf values
+    # print np.shape(compiled)
     compiled[compiled == np.inf] = 99999.
     if np.isinf(compiled).any():
         print "Infinity came through"
@@ -2028,3 +2029,33 @@ def x_vector_classifier(x):
         return 0
     if np.abs(x) < 8:
         return 1
+
+def winsum(interval, window_size):
+    window = np.ones(int(window_size))
+    return np.convolve(interval, window, 'same')
+
+def ypredictor(probs,thr = 0.3):
+    ws = 2
+    xs = np.arange(-99,101)
+    while np.max(probs) < thr:
+        probs = winsum(probs,ws)
+        ws += 1
+        if ws == 5:
+            nz = xs[probs != 0]
+            m = np.mean(nz)
+            if m > 0:
+                m = np.mean(nz[nz>0])
+                return int(m)
+            else:
+                m = np.mean(nz[nz<=0])
+                return int(m)
+    return xs[np.argmax(probs)]
+    # p = xs[probs == np.max(probs)]
+    # if len(p) == 1:
+    #     return np.argmax(probs)
+    # else:
+    #     if np.all(p>0) or np.all(p<0):
+    #         pred = int(np.mean(p))
+    #         return pred
+    #     else:
+    #         return np.argmax(probs)
