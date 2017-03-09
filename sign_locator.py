@@ -145,13 +145,14 @@ def prediction(prob_map, vector_constraint, axis):
             return int(np.mean(possible_points))
 
 
-def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_):
+def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_, axis):
     """
 
     :param prev_vector:
     :param sign_short_memory_:
     :param current_ecg_pos_:
     :param constrained_:
+    :param axis:
     :return:
     """
     if len(sign_short_memory_) == 1:  # Assigns the first constraint (for y case or if on boundry).
@@ -171,15 +172,17 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
 
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
-            if prev_vector < -3 and constrained_[0] is not None:
-                constrained_[0] += 3
-                constrained_[0] %= 200
+            if axis == 'x':
+                if prev_vector < -3 and constrained_[0] is not None:
+                    constrained_[0] += 3
+                    constrained_[0] %= 200
             constrained_[1] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
-            if prev_vector > 3 and constrained_[1] is not None:
-                constrained_[1] -= 3
-                constrained_[1] %= 200
+            if axis == 'x':
+                if prev_vector > 3 and constrained_[1] is not None:
+                    constrained_[1] -= 3
+                    constrained_[1] %= 200
             constrained_[0] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == -2:  # Passed boundry (top to bottom)
@@ -193,18 +196,20 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector > 0 and vsign_diff == 0:  # Potential updataing of upper constraint
             if constrained_[0] is None:
                 constrained_[1] = current_ecg_pos_
-                if prev_vector > 3:
-                    constrained_[1] -= 3
-                    constrained_[1] %= 200
+                if axis == 'x':
+                    if prev_vector > 3:
+                        constrained_[1] -= 3
+                        constrained_[1] %= 200
             if condistance(constrained_) > condistance([constrained_[0], current_ecg_pos_]):
                 constrained_[1] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == 0:  # Potential updating of lower constraint
             if constrained_[1] is None:
                 constrained_[0] = current_ecg_pos_
-                if prev_vector < -3:
-                    constrained_[0] += 3
-                    constrained_[0] %= 200
+                if axis == 'x':
+                    if prev_vector < -3:
+                        constrained_[0] += 3
+                        constrained_[0] %= 200
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
                 constrained_[0] = current_ecg_pos_
 
@@ -311,7 +316,7 @@ for i in range(number_of_rotors):
                         y_short_memory.append(current_ecg_y_pos)
                         vsign_short_memory.append(vsign)
                         constrainedy, vsign_short_memory = constrained_finder(prev_y_vector, vsign_short_memory,
-                                                                              current_ecg_y_pos, constrainedy)
+                                                                              current_ecg_y_pos, constrainedy, axis='x')
 
                         # Tries the constrained row.
                         if condistance(constrainedy) == 1:
@@ -368,7 +373,7 @@ for i in range(number_of_rotors):
                         x_short_memory.append(current_ecg_x_pos)
                         hsign_short_memory.append(hsign)
                         constrainedx, hsign_short_memory = constrained_finder(prev_x_vector, hsign_short_memory,
-                                                                              current_ecg_x_pos, constrainedx)
+                                                                              current_ecg_x_pos, constrainedx, axis='y')
 
                         # Tries the constrained row.
                         if condistance(constrainedx) == 1:
