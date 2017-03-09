@@ -93,9 +93,14 @@ def vecdistance(current_pos, constaints):
         lower_vector = -(lower - current_pos)
     if lower > current_pos:
         lower_vector = (current_pos + (200 % lower))
-    if current_pos == 0:
-        lower_vector = lower
-        upper_vector = -upper
+    # if current_pos == 0:    #  This might have caused the error seen.
+    #     lower_vector = lower
+    #     upper_vector = -upper
+
+    if lower_vector > 100:  # Largest possible vector constraints (Only happens for the x axis. Shouldn't happen for y.)
+        lower_vector = 100
+    if upper_vector < -99:
+        upper_vector = -99
 
     return [lower_vector, upper_vector]
 
@@ -375,11 +380,14 @@ def update_data():
                         prev_y_vector = y_vector
                         current_ecg_y_pos -= y_vector
 
-                        if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
+                        if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
 
                         if current_ecg_y_pos in y_short_memory:
                             previousR = "Y Loop"
+                            print current_ecg_y_pos
+                            print prev_y_vector
+                            print constrainedy
                             ecg_count = 0
                             del y_short_memory
                             y_short_memory = []
@@ -446,7 +454,7 @@ def update_data():
                         prev_x_vector = x_vector
                         current_ecg_x_pos -= x_vector
 
-                        if current_ecg_x_pos > 200 or current_ecg_x_pos < 0:
+                        if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                             current_ecg_x_pos %= 200
 
                         if current_ecg_x_pos in x_short_memory:

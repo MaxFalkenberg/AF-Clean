@@ -85,9 +85,9 @@ def vecdistance(current_pos, constaints):
         lower_vector = -(lower - current_pos)
     if lower > current_pos:
         lower_vector = (current_pos + (200 % lower))
-    if current_pos == 0:
-        lower_vector = lower
-        upper_vector = -upper
+    # if current_pos == 0:    #  This might have caused the error seen.
+    #     lower_vector = lower
+    #     upper_vector = -upper
 
     return [lower_vector, upper_vector]
 
@@ -127,10 +127,15 @@ def prediction(prob_map, vector_constraint, axis):
         ref = None
         if axis == 'x':
             ref = 99
+            if vector_constraint[0] > 100:  # Largest possible vector constraints (Only happens for the x axis. Shouldn't happen for y.)
+                vector_constraint[0] = 100
+            if vector_constraint[1] < -99:
+                vector_constraint[1] = -99
         if axis == 'y':
             ref = 176
         lower_index = ref + vector_constraint[0]
         upper_index = ref + vector_constraint[1]
+
         constrained_prob = prob_map[upper_index:lower_index + 1]  # create the range for examining the probabilities.
         possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
         possible_points = [x + upper_index for x in possible_points_detail]
@@ -171,12 +176,10 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
             constrained_[0] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == -2:  # Passed boundry (top to bottom)
-            print "Passed boundry"
             if constrained_[0] is None:
                 constrained_[0] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == 2:  # Passed boundry (bottom to top)
-            print "Passed boundry"
             if constrained_[1] is None:
                 constrained_[1] = current_ecg_pos_
 
@@ -240,8 +243,7 @@ for i in range(number_of_rotors):
     constrainedy = [None, None]
     constrainedx = [20, 179]
 
-    y_ecg_num = 0  # Number of y ecgs
-    x_ecg_num = 0  # Number of x ecgs
+    ecg_num = 0  # Number of ecgs
     process_list = []  # process list
     final_rotor_position = None  # Final rotor position tuple
     ECG_start_flag = False  # Setting measurment flag to False (ecg measurments start when flag is triggered).
@@ -267,10 +269,12 @@ for i in range(number_of_rotors):
 
             if ptr1 % process_length == 0 and ptr1 != stability_time:
 
+                sample = rt_ecg_gathering(process_list, sign_para=args[5])
+                # ECG Recording and feature gathering
+                ecg_num += 1
+
                 # X AXIS FINDING
                 if state == 0:
-                    sample = rt_ecg_gathering(process_list, sign_para=args[5])  # ECG Recording and feature gathering
-                    y_ecg_num += 1
                     sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                     vsign = sample[0, :][-3]
                     sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sig information.
@@ -283,12 +287,11 @@ for i in range(number_of_rotors):
                         del vsign_short_memory
                         del constrainedy
                         x_class_value = x_class.predict(sample_)[0]
-                        print (current_ecg_y_pos, cp_y_pos)
 
                         if x_class_value == 1:
                             final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
                             ecg_end[i] = final_rotor_position
-                            ecg_counter[i] = (y_ecg_num, 0)
+                            ecg_counter[i] = ecg_num
                             ECG_located_flag = True
 
                     if y_class_value == 0:
@@ -306,7 +309,7 @@ for i in range(number_of_rotors):
                             if x_class_value == 1:
                                 final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
                                 ecg_end[i] = final_rotor_position
-                                ecg_counter[i] = (y_ecg_num, 0)
+                                ecg_counter[i] = ecg_num
                                 ECG_located_flag = True
 
                         else:
@@ -316,22 +319,18 @@ for i in range(number_of_rotors):
                             prev_y_vector = y_vector
                             current_ecg_y_pos -= y_vector
 
-                            if current_ecg_y_pos > 200 or current_ecg_y_pos < 0:
+                            if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                                 current_ecg_y_pos %= 200
 
                             # Loop Check
                             if current_ecg_y_pos in y_short_memory:
                                 final_rotor_position = "Y LOOP"
                                 ecg_end[i] = final_rotor_position
-                                ecg_counter[i] = (y_ecg_num, 0)
+                                ecg_counter[i] = ecg_num
                                 ECG_located_flag = True
-
-                        print constrainedy
 
                 # Y AXIS FINDING
                 if state == 1:
-                    sample = rt_ecg_gathering(process_list, sign_para='record_sign')  # ECG feature Recording
-                    x_ecg_num += 1
                     sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                     hsign = sample[0, :][-2]  # Gets the h sign
                     sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
@@ -342,7 +341,7 @@ for i in range(number_of_rotors):
                     if x_class_value == 1:
                         final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
                         ecg_end[i] = final_rotor_position
-                        ecg_counter[i] = (y_ecg_num, x_ecg_num)
+                        ecg_counter[i] = ecg_num
                         ECG_located_flag = True
                         check[i] = 0
                         del constrainedx
@@ -361,7 +360,7 @@ for i in range(number_of_rotors):
                             check[i] += 2
                             final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
                             ecg_end[i] = final_rotor_position
-                            ecg_counter[i] = (y_ecg_num, x_ecg_num)
+                            ecg_counter[i] = ecg_num
                             ECG_located_flag = True
 
                         else:
@@ -371,17 +370,15 @@ for i in range(number_of_rotors):
                             prev_x_vector = x_vector
                             current_ecg_x_pos -= x_vector
 
-                            if current_ecg_x_pos > 200 or current_ecg_x_pos < 0:
+                            if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                                 current_ecg_x_pos %= 200
 
                             # Loop Check
                             if current_ecg_x_pos in x_short_memory:
                                 final_rotor_position = ("X LOOP", current_ecg_y_pos)
                                 ecg_end[i] = final_rotor_position
-                                ecg_counter[i] = (y_ecg_num, x_ecg_num)
+                                ecg_counter[i] = ecg_num
                                 ECG_located_flag = True
-
-                        print constrainedx
 
                 del process_list
                 process_list = []
