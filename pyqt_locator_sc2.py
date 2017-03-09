@@ -9,16 +9,16 @@ from sklearn.externals import joblib
 from random import randint
 import analysis_theano as at
 from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_compile_rt
-import propagate_singlesource as ps
+import propagate_singlecircuit as ps
 
-args = sys.argv
+# args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-y_regress = joblib.load(args[1])
-y_estimator = joblib.load(args[2])
-x_regress = joblib.load(args[3])
-x_class = joblib.load(args[4])
+y_regress = joblib.load('modeldump\sc4k_yreg.pkl')
+y_estimator = joblib.load('modeldump\sc4k_xaxis_class.pkl')
+x_regress = joblib.load('modeldump\sc4k_xreg.pkl')
+x_class = joblib.load('modeldump\sc4k_target_xaxisrestricted.pkl')
 #####################################
 
 # Initialising the Heart structure
@@ -26,7 +26,7 @@ a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
 # Randomises the rotor x,y position
 cp_x_pos = randint(30, 169)
 cp_y_pos = randint(0, 199)
-a.set_pulse(60, [[cp_y_pos], [cp_x_pos]])
+a.set_circuit(np.ravel_multi_index([cp_y_pos,cp_x_pos],(200,200)))
 tissue_reset = False
 
 # Initialising ECG recording (randomises the probe x,y position)

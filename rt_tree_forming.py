@@ -50,8 +50,8 @@ if model_choice == 'c':
     output_choice = raw_input("Predict or Probabilities (pre\pro): ")
     from sklearn.ensemble import RandomForestClassifier
     if target == 'y':
-        X = X[np.array(X['X Axis True'])]
-        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector X 0','X Axis True','Vector Y 0', 'Theta 0', 'Distance 0', 'Nu', 'Y Axis True']
+        # X = X[np.array(X['X Axis True'])]
+        probe_features = ['Circuit True','index', 'Target 0', 'Multi Target 0', 'Vector X 0','X Axis True', 'Theta 0', 'Distance 0', 'Nu', 'Y Axis True']
         all_features = X.columns
         for feature in probe_features:
             if feature in all_features:
@@ -63,7 +63,7 @@ if model_choice == 'c':
 
     if target == 'x':
         X = X[np.abs(X['Vector Y 0']) < 3]
-        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector Y 0', 'Theta 0', 'Distance 0', 'Nu']
+        probe_features = ['index', 'Target 0', 'Multi Target 0', 'Vector Y 0', 'Theta 0', 'Distance 0', 'Nu','X Axis True','Y Axis True','Circuit True']
         all_features = X.columns
         for feature in probe_features:
             if feature in all_features:
@@ -79,6 +79,7 @@ if model_choice == 'c':
     dtree.fit(X_train, y_train)
     if output_choice == 'pre':
         y_pred = dtree.predict(X_test)
+        y_prob = dtree.predict_proba(X_test)
         final_frame = pd.DataFrame({'Test': y_test, 'Prediction': y_pred})
         print final_frame
         print(metrics.classification_report(y_test, y_pred))
