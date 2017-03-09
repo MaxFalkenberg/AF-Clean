@@ -177,10 +177,17 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
 
     if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
+
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
+            if prev_vector < -3 and constrained_[0] is not None:
+                constrained_[0] += 3
+                constrained_[0] %= 200
             constrained_[1] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
+            if prev_vector > 3 and constrained_[1] is not None:
+                constrained_[1] -= 3
+                constrained_[1] %= 200
             constrained_[0] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == -2:  # Passed boundry (top to bottom)
@@ -194,12 +201,18 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector > 0 and vsign_diff == 0:  # Potential updataing of upper constraint
             if constrained_[0] is None:
                 constrained_[1] = current_ecg_pos_
+                if prev_vector > 3:
+                    constrained_[1] -= 3
+                    constrained_[1] %= 200
             if condistance(constrained_) > condistance([constrained_[0], current_ecg_pos_]):
                 constrained_[1] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == 0:  # Potential updating of lower constraint
             if constrained_[1] is None:
                 constrained_[0] = current_ecg_pos_
+                if prev_vector < -3:
+                    constrained_[0] += 3
+                    constrained_[0] %= 200
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
                 constrained_[0] = current_ecg_pos_
 
@@ -318,6 +331,7 @@ def update_data():
             if state == 0:
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 vsign = sample[0, :][-3]
+                # first potential x constraint
                 sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                 y_class_value = y_class.predict(sample_)[0]
                 y_probarg = movingaverage(y_classifier_full.predict_proba(sample_)[0, :], 10)
@@ -379,27 +393,32 @@ def update_data():
                                                                                       constrainedy), axis='x')
                         y_vector = y_classifier_full.classes_[likelyp]
                         prev_y_vector = y_vector
+                        # if np.abs(y_vector) > 3:
+                        #     pad_place = np.where(np.array(constrainedy) == current_ecg_y_pos)[0][0]
+                        #     if pad_place == 1:
+                        #         cons
                         current_ecg_y_pos -= y_vector
 
                         if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
 
                         # if current_ecg_y_pos in y_short_memory:
-                        #     previousR = "Y Loop"
-                        #     print current_ecg_y_pos
-                        #     print prev_y_vector
-                        #     print constrainedy
-                        #     ecg_count = 0
-                        #     del y_short_memory
-                        #     y_short_memory = []
-                        #     del vsign_short_memory
-                        #     vsign_short_memory = []
-                        #     del constrainedy
-                        #     constrainedy = [None, None]
-                        #     current_ecg_x_pos = randint(20, 179)
-                        #     current_ecg_y_pos = randint(20, 179)
-                        #     xUline.setPos(300)
-                        #     xLline.setPos(300)
+                        #     print "Loop Y condition"
+                        #     loop_place = np.where(np.array(constrainedy) == current_ecg_y_pos)[0][0]
+                        #     if loop_place == 0:
+                        #         current_ecg_y_pos += 1
+                        #         if current_ecg_y_pos > 199:
+                        #             current_ecg_y_pos %= 200
+                        #         constrainedy[0] += 1
+                        #         if constrainedy[0] > 199:
+                        #             constrainedy[0] %= 200
+                        #     if loop_place == 1:
+                        #         current_ecg_y_pos -= 1
+                        #         if current_ecg_y_pos < 0:
+                        #             current_ecg_y_pos %= 200
+                        #         constrainedy[1] -= 1
+                        #         if constrainedy[1] < 0:
+                        #             constrainedy[1] %= 200
 
             if state == 1:
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
@@ -462,24 +481,23 @@ def update_data():
                         if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                             current_ecg_x_pos %= 200
 
-                        # if current_ecg_x_pos in x_short_memory:
-                        #     previousR = 'X Loop'
-                        #     ecg_count = 0
-                        #     del x_short_memory
-                        #     x_short_memory = []
-                        #     del hsign_short_memory
-                        #     hsign_short_memory = []
-                        #     del constrainedx
-                        #     constrainedx = [20, 179]
-                        #     del constrainedy
-                        #     constrainedy = [None, None]
-                        #     current_ecg_x_pos = randint(20, 179)
-                        #     current_ecg_y_pos = randint(0, 199)
-                        #     state = 0
-                        #     yUline.setPos(constrainedx[1])
-                        #     yLline.setPos(constrainedx[0])
-                        #     xUline.setPos(300)
-                        #     xLline.setPos(300)
+                        if current_ecg_x_pos in x_short_memory:
+                            print "X LOOP condition."
+                            loop_place = np.where(np.array(constrainedx) == current_ecg_x_pos)[0][0]
+                            if loop_place == 0:
+                                current_ecg_x_pos += 1
+                                if current_ecg_x_pos > 199:
+                                    current_ecg_x_pos %= 200
+                                constrainedx[0] += 1
+                                if constrainedx[0] > 199:
+                                    constrainedx[0] %= 200
+                            if loop_place == 1:
+                                current_ecg_x_pos -= 1
+                                if current_ecg_x_pos < 0:
+                                    current_ecg_x_pos %= 200
+                                constrainedx[1] -= 1
+                                if constrainedx[1] < 0:
+                                    constrainedx[1] %= 200
 
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
             if constrainedy[0] is not None:
@@ -496,7 +514,7 @@ def update_data():
             update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
                               constrainedy, constrainedx)
 
-    # time.sleep(1/120.)  # gives more stable fps.
+    time.sleep(1/120.)  # gives more stable fps.
     img.setImage(data.T)  # puts animation grid on image.
 
     # Stuff to do with time and fps.
