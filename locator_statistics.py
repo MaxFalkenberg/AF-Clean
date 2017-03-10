@@ -24,7 +24,7 @@ Zero_check = data['Zero Check']  # either 0, 1, 3
 
 zipped_data = zip(ECG_start, ECG_end, rotor_position, ECG_count, Constraint_check, Zero_check)
 
-yLoop_number = ECG_end.count(('NA', 'Y LOOP'))
+yLoop_number = ECG_end.count(("NA", "Y LOOP"))
 xLoop_number = [x[0] for x in ECG_end].count('X LOOP')
 
 succesful_locations = [x for x in zipped_data if type(x[1][0]) is not str]
@@ -84,7 +84,7 @@ print "Mean x distance from rotor: {:.3f} ".format(np.mean(end_abs_x_dis)) \
       + u"\u00B1" + " {:.3f}".format(np.std(end_abs_x_dis, ddof=1))
 
 plt.figure(figsize=(10, 5))
-n = plt.hist(distances, bins=100)
+n = plt.hist(distances, bins=30)
 plt.vlines(np.mean(distances), ymin=0, ymax=max(n[0]), colors='r', linestyles='dashed', linewidths=2)
 plt.title('Rotor Distance Histogram.')
 plt.xlabel('Distance from final probe to rotor')
