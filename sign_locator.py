@@ -214,11 +214,12 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
     return constrained_, sign_short_memory_
 
 # Lists for recording data produced by algorithm
-ecg_counter = [0]*number_of_rotors
-ecg_start = [0]*number_of_rotors
-ecg_end = [0]*number_of_rotors
-rotor = [0]*number_of_rotors
-check = [0]*number_of_rotors
+ecg_counter = [0]*number_of_rotors      # Total
+ecg_start = [0]*number_of_rotors        # (x, y)
+ecg_end = [0]*number_of_rotors          # (x, y)
+rotor = [0]*number_of_rotors            # (x, y)
+constrain_check = [0]*number_of_rotors  # num
+zero_check = [0]*number_of_rotors       # num
 
 pp = 0
 print_counter(pp, number_of_rotors)
@@ -299,9 +300,6 @@ for i in range(number_of_rotors):
 
                     if y_class_value == 1:
                         state = 1  # Change to state 1 for y axis regression/classification.
-                        del y_short_memory  # Checks for loops
-                        del vsign_short_memory
-                        del constrainedy
                         x_class_value = x_class.predict(sample_)[0]
 
                         if x_class_value == 1:
@@ -318,7 +316,7 @@ for i in range(number_of_rotors):
 
                         # Tries the constrained row.
                         if condistance(constrainedy) == 1:
-                            check[i] += 1
+                            constrain_check[i] += 1
                             state = 1
                             x_class_value = x_class.predict(sample_)[0]
 
@@ -340,12 +338,22 @@ for i in range(number_of_rotors):
 
                             # Loop Check
                             if current_ecg_y_pos in y_short_memory:
-                                final_rotor_position = "Y LOOP"
                                 if y_short_memory[-1] - y_short_memory[-2] == 0:
-                                    final_rotor_position = '-O-'
-                                ecg_end[i] = final_rotor_position
-                                ecg_counter[i] = ecg_num
-                                ECG_located_flag = True
+                                    state = 1  # Change to state 1 for y axis regression/classification.
+                                    zero_check[i] += 1
+                                    x_class_value = x_class.predict(sample_)[0]
+
+                                    if x_class_value == 1:
+                                        final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
+                                        ecg_end[i] = final_rotor_position
+                                        ecg_counter[i] = ecg_num
+                                        ECG_located_flag = True
+
+                                else:
+                                    final_rotor_position = ("NA", "Y LOOP")
+                                    ecg_end[i] = final_rotor_position
+                                    ecg_counter[i] = ecg_num
+                                    ECG_located_flag = True
 
                 # Y AXIS FINDING
                 if state == 1:
@@ -361,10 +369,8 @@ for i in range(number_of_rotors):
                         ecg_end[i] = final_rotor_position
                         ecg_counter[i] = ecg_num
                         ECG_located_flag = True
-                        check[i] = 0
-                        del constrainedx
+                        constrain_check[i] = 0
                         constrainedx = [20, 179]
-                        del x_short_memory  # Checks for loops
                         x_short_memory = []
 
                     if x_class_value == 0:
@@ -375,7 +381,7 @@ for i in range(number_of_rotors):
 
                         # Tries the constrained row.
                         if condistance(constrainedx) == 1:
-                            check[i] += 2
+                            constrain_check[i] += 2
                             final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
                             ecg_end[i] = final_rotor_position
                             ecg_counter[i] = ecg_num
@@ -395,7 +401,8 @@ for i in range(number_of_rotors):
                             if current_ecg_x_pos in x_short_memory:
                                 final_rotor_position = ("X LOOP", current_ecg_y_pos)
                                 if x_short_memory[-1] - x_short_memory[-2] == 0:
-                                    final_rotor_position = ("-O-", current_ecg_y_pos)
+                                    final_rotor_position = (current_ecg_x_pos, current_ecg_y_pos)
+                                    zero_check[i] += 2
                                 ecg_end[i] = final_rotor_position
                                 ecg_counter[i] = ecg_num
                                 ECG_located_flag = True
@@ -413,10 +420,12 @@ if save_data == 'n':
     print "rotor position: %s" % rotor
     print "ecg end: %s" % ecg_end
     print "ecg start: %s" % ecg_start
-    print "check: %s" % check
+    print "constraint check: %s" % constrain_check
+    print "zero check: %s" % zero_check
 
 final_data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
-              "Check": check, "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
+              "Constraint Check": constrain_check, "Zero Check": zero_check,
+              "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
 
 if save_data == 'y':
     with open('%s.p' % save_data_name, 'wb') as f:
