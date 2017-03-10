@@ -1309,13 +1309,13 @@ def feature_extract_multi_test_rt(number, ecg_vals):
     freq = np.fft.rfftfreq(ecg.size, d=1.)
     freq_main = np.fft.rfftfreq(ecg.size, d=1.)[ft_max]
     # FEATURE (Should be the same for all ECGs if correctly sampled.)
-    period = int(1. / freq_main)
+    # period = int(1. / freq_main)
     ft[ft_max + 1:] = 0
     ft[:ft_max] = 0
     ift = irfft(ft)
-    start = np.argmax(ift[:period])
+    start = np.argmax(ift[:per])
     #start = 0
-    end = start + period
+    end = start + per
     sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency.
     # sample_double =ecg[start:end + (2 * period)]
     length,minmax,mean,var,skew,kurt = stats.describe(sample_)
@@ -1478,13 +1478,13 @@ def feature_extract_keras(number, ecg_vals, cp, probes, nu, min = None):
     freq = np.fft.rfftfreq(ecg.size, d=1.)
     freq_main = np.fft.rfftfreq(ecg.size, d=1.)[ft_max]
     # FEATURE (Should be the same for all ECGs if correctly sampled.)
-    period = int(1. / freq_main)
+    # period = int(1. / freq_main)
     ft[ft_max + 1:] = 0
     ft[:ft_max] = 0
     ift = irfft(ft)
-    start = np.argmax(ift[:period])
+    start = np.argmax(ift[:per])
     #start = 0
-    end = start + period
+    end = start + per
     sample_ = ecg[start:end]  # Crops original ECG according to fundamental frequency
     sample_ += 27.
     sample_ /= 51.

@@ -196,13 +196,13 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
     if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
-            if prev_vector < -3 and constrained_[0] is not None:
+            if prev_vector < -5 and constrained_[0] is not None:
                 constrained_[0] += 3
                 constrained_[0] %= 200
             constrained_[1] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
-            if prev_vector > 3 and constrained_[1] is not None:
+            if prev_vector > 5 and constrained_[1] is not None:
                 constrained_[1] -= 3
                 constrained_[1] %= 200
             constrained_[0] = current_ecg_pos_
@@ -218,7 +218,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector > 0 and vsign_diff == 0:  # Potential updataing of upper constraint
             if constrained_[0] is None:
                 constrained_[1] = current_ecg_pos_
-                if prev_vector > 3:
+                if prev_vector > 5:
                     constrained_[1] -= 3
                     constrained_[1] %= 200
             if condistance(constrained_) > condistance([constrained_[0], current_ecg_pos_]):
@@ -227,7 +227,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector < 0 and vsign_diff == 0:  # Potential updating of lower constraint
             if constrained_[1] is None:
                 constrained_[0] = current_ecg_pos_
-                if prev_vector < -3:
+                if prev_vector < -5:
                     constrained_[0] += 3
                     constrained_[0] %= 200
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
