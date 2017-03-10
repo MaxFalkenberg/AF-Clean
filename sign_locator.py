@@ -89,6 +89,11 @@ def vecdistance(current_pos, constaints):
     #     lower_vector = lower
     #     upper_vector = -upper
 
+    if lower_vector > 100:  # Largest possible vector constraints (Only happens for the x axis. Shouldn't happen for y.)
+        lower_vector = 100
+    if upper_vector < -99:
+        upper_vector = -99
+
     return [lower_vector, upper_vector]
 
 
