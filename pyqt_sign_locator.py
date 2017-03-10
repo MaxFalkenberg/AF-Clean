@@ -146,10 +146,8 @@ def prediction(prob_map, vector_constraint, axis):
         upper_index = ref + vector_constraint[1]
         constrained_prob = prob_map[upper_index:lower_index + 1]  # create the range for examining the probabilities.
         if np.max(constrained_prob) < 0.4:
-            print 1
             return int(float(lower_index + upper_index) / 2)
         else:
-            print 2
             possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
             possible_points = [x + upper_index for x in possible_points_detail]
             if len(possible_points) == 1:
@@ -158,13 +156,14 @@ def prediction(prob_map, vector_constraint, axis):
                 return int(np.mean(possible_points))
 
 
-def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_):
+def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_, axis):
     """
 
     :param prev_vector:
     :param sign_short_memory_:
     :param current_ecg_pos_:
     :param constrained_:
+    :param axis:
     :return:
     """
     if len(sign_short_memory_) == 1:  # Assigns the first constraint (for y case or if on boundry).
@@ -184,15 +183,17 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
 
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
-            if prev_vector < -3 and constrained_[0] is not None:
-                constrained_[0] += 3
-                constrained_[0] %= 200
+            if axis == 'x':
+                if prev_vector < -3 and constrained_[0] is not None:
+                    constrained_[0] += 3
+                    constrained_[0] %= 200
             constrained_[1] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
-            if prev_vector > 3 and constrained_[1] is not None:
-                constrained_[1] -= 3
-                constrained_[1] %= 200
+            if axis == 'x':
+                if prev_vector > 3 and constrained_[1] is not None:
+                    constrained_[1] -= 3
+                    constrained_[1] %= 200
             constrained_[0] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == -2:  # Passed boundry (top to bottom)
@@ -206,18 +207,20 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector > 0 and vsign_diff == 0:  # Potential updataing of upper constraint
             if constrained_[0] is None:
                 constrained_[1] = current_ecg_pos_
-                if prev_vector > 3:
-                    constrained_[1] -= 3
-                    constrained_[1] %= 200
+                if axis == 'x':
+                    if prev_vector > 3:
+                        constrained_[1] -= 3
+                        constrained_[1] %= 200
             if condistance(constrained_) > condistance([constrained_[0], current_ecg_pos_]):
                 constrained_[1] = current_ecg_pos_
 
         if prev_vector < 0 and vsign_diff == 0:  # Potential updating of lower constraint
             if constrained_[1] is None:
                 constrained_[0] = current_ecg_pos_
-                if prev_vector < -3:
-                    constrained_[0] += 3
-                    constrained_[0] %= 200
+                if axis == 'x':
+                    if prev_vector < -3:
+                        constrained_[0] += 3
+                        constrained_[0] %= 200
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
                 constrained_[0] = current_ecg_pos_
 
@@ -235,7 +238,8 @@ def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_c
               Number of ECGs: %s<br>\n
               Previous Result: %s<br>\n
               X axis Constraint: %s<br>\n
-              Y axis Constraint: %s""" % (rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const)
+              Y axis Constraint: %s""" % (rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res,
+                                          xaxis_const, yaxis_const)
     label.setText(text)
 
 
@@ -350,7 +354,7 @@ def update_data():
                     x_class_value = x_class.predict(sample_)[0]
 
                     if x_class_value == 1:
-                        previousR = "Rotor Found"
+                        previousR = "(%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
                         del y_short_memory
                         y_short_memory = []
                         del vsign_short_memory
@@ -370,13 +374,13 @@ def update_data():
                     y_short_memory.append(current_ecg_y_pos)
                     vsign_short_memory.append(vsign)
                     constrainedy, vsign_short_memory = constrained_finder(prev_y_vector, vsign_short_memory,
-                                                                          current_ecg_y_pos, constrainedy)
+                                                                          current_ecg_y_pos, constrainedy, axis='x')
                     if condistance(constrainedy) == 1:
                         state = 1
                         x_class_value = x_class.predict(sample_)[0]
 
                         if x_class_value == 1:
-                            previousR = "Rotor Found"
+                            previousR = "(%s, %s) (Constrained)" % (current_ecg_x_pos, current_ecg_y_pos)
                             # reseting the process.
                             del y_short_memory
                             y_short_memory = []
@@ -397,33 +401,37 @@ def update_data():
                         likelyp = prediction(y_probarg, vector_constraint=vecdistance(current_ecg_y_pos,
                                                                                       constrainedy), axis='x')
                         y_vector = y_classifier_full.classes_[likelyp]
+
+                        if y_vector == 0:
+                            state = 1  # Change to state 1 for y axis regression/classification.
+                            del y_short_memory
+                            y_short_memory = []
+                            del vsign_short_memory
+                            vsign_short_memory = []
+                            x_class_value = x_class.predict(sample_)[0]
+
+                            if x_class_value == 1:
+                                previousR = "(%s, %s) (0 Y Jump)" % (current_ecg_x_pos, current_ecg_y_pos)
+                                del y_short_memory
+                                y_short_memory = []
+                                del vsign_short_memory
+                                vsign_short_memory = []
+                                del constrainedy
+                                constrainedy = [None, None]
+                                current_ecg_y_pos = randint(20, 179)  # reseting the process.
+                                current_ecg_x_pos = randint(20, 179)
+                                state = 0
+                                ecg_count = 0
+                                yUline.setPos(constrainedx[1])
+                                yLline.setPos(constrainedx[0])
+                                xUline.setPos(300)
+                                xLline.setPos(300)  # If it predicts a jump of 0, then take the position it's on.
+
                         prev_y_vector = y_vector
-                        # if np.abs(y_vector) > 3:
-                        #     pad_place = np.where(np.array(constrainedy) == current_ecg_y_pos)[0][0]
-                        #     if pad_place == 1:
-                        #         cons
                         current_ecg_y_pos -= y_vector
 
                         if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
-
-                        # if current_ecg_y_pos in y_short_memory:
-                        #     print "Loop Y condition"
-                        #     loop_place = np.where(np.array(constrainedy) == current_ecg_y_pos)[0][0]
-                        #     if loop_place == 0:
-                        #         current_ecg_y_pos += 1
-                        #         if current_ecg_y_pos > 199:
-                        #             current_ecg_y_pos %= 200
-                        #         constrainedy[0] += 1
-                        #         if constrainedy[0] > 199:
-                        #             constrainedy[0] %= 200
-                        #     if loop_place == 1:
-                        #         current_ecg_y_pos -= 1
-                        #         if current_ecg_y_pos < 0:
-                        #             current_ecg_y_pos %= 200
-                        #         constrainedy[1] -= 1
-                        #         if constrainedy[1] < 0:
-                        #             constrainedy[1] %= 200
 
             if state == 1:
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
@@ -433,7 +441,7 @@ def update_data():
                 x_class_value = x_class.predict(sample_)[0]
 
                 if x_class_value == 1:
-                    previousR = "Rotor Found"
+                    previousR = "(%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
                     current_ecg_x_pos = randint(20, 179)
                     current_ecg_y_pos = randint(0, 199)
                     state = 0
@@ -455,9 +463,10 @@ def update_data():
                     x_short_memory.append(current_ecg_x_pos)
                     hsign_short_memory.append(hsign)
                     constrainedx, hsign_short_memory = constrained_finder(prev_x_vector, hsign_short_memory,
-                                                                          current_ecg_x_pos, constrainedx)
-                    if condistance(constrainedx) == 1:
-                        previousR = "Constrained to axis (Need some results recording here)"
+                                                                          current_ecg_x_pos, constrainedx, axis='y')
+
+                    if condistance(constrainedx) == 1:  # Row is constrained to be have distance 1, take position.
+                        previousR = "(%s, %s) (Constrained)" % (current_ecg_x_pos, current_ecg_y_pos)
                         state = 1
                         del x_short_memory
                         x_short_memory = []
@@ -480,6 +489,26 @@ def update_data():
                         likelyp = prediction(x_probarg, vector_constraint=vecdistance(current_ecg_x_pos,
                                                                                       constrainedx), axis='y')
                         x_vector = x_classifier_full.classes_[likelyp]
+
+                        if x_vector == 0:  # If the predicted X jump is
+                            previousR = "(%s, %s) (0 X Jump)" % (current_ecg_x_pos, current_ecg_y_pos)
+                            current_ecg_x_pos = randint(20, 179)
+                            current_ecg_y_pos = randint(0, 199)
+                            state = 0
+                            ecg_count = 0
+                            del x_short_memory
+                            x_short_memory = []
+                            del hsign_short_memory
+                            hsign_short_memory = []
+                            del constrainedx
+                            constrainedx = [20, 179]
+                            del constrainedy
+                            constrainedy = [None, None]
+                            yUline.setPos(constrainedx[1])
+                            yLline.setPos(constrainedx[0])
+                            xUline.setPos(300)
+                            xLline.setPos(300)
+
                         prev_x_vector = x_vector
                         current_ecg_x_pos -= x_vector
 
@@ -488,21 +517,6 @@ def update_data():
 
                         if current_ecg_x_pos in x_short_memory:
                             print "X LOOP condition."
-                            loop_place = np.where(np.array(constrainedx) == current_ecg_x_pos)[0][0]
-                            if loop_place == 0:
-                                current_ecg_x_pos += 1
-                                if current_ecg_x_pos > 199:
-                                    current_ecg_x_pos %= 200
-                                constrainedx[0] += 1
-                                if constrainedx[0] > 199:
-                                    constrainedx[0] %= 200
-                            if loop_place == 1:
-                                current_ecg_x_pos -= 1
-                                if current_ecg_x_pos < 0:
-                                    current_ecg_x_pos %= 200
-                                constrainedx[1] -= 1
-                                if constrainedx[1] < 0:
-                                    constrainedx[1] %= 200
 
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
             if constrainedy[0] is not None:
