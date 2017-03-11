@@ -112,7 +112,7 @@ yTP = yclass_confusion_data.count(1)
 yFP = yclass_confusion_data.count(0)
 
 print 'Total Number of rotors: %s' % len(rotor_position)
-print '{:.2f}% of rotors had a predicited prediction.'.format(len(succesful_locations)/float(len(ECG_start)) * 100)
+print '{:.2f}% of rotors had a predicited position.'.format(len(succesful_locations)/float(len(ECG_start)) * 100)
 print '{:.2f}% resulted in Y Loops.'.format(yLoop_number/float(len(ECG_start)) * 100)
 print '{:.2f}% resulted in X Loops.'.format(xLoop_number/float(len(ECG_start)) * 100)
 
