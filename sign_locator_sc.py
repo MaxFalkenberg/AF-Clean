@@ -236,8 +236,26 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
                 constrained_[0] = current_ecg_pos_
 
-    print constrained_
     return constrained_, sign_short_memory_
+
+def autojump_constrainx(h_sign, constrained_, x_pos):
+    constrained_copy = np.array(constrained_)
+    if np.absolute(h_sign) < 0.6 or constrained_[1] - constrained_[0] < 30:
+        return constrained_
+    elif h_sign == 1: #Constrain right
+        constrained_[1] = x_pos
+    elif h_sign >= 0.6: #Constrain right with pad
+        constrained_[1] = x_pos + 10
+    elif h_sign == -1: #Constrain left
+        constrained_[0] = x_pos
+    elif h_sign <= -0.6: #Constrain left with pad
+        constrained_[0] = x_pos - 10
+    if constrained_[0] < constrained_copy[0]:
+        constrained_[0] = constrained_copy[0]
+    if constrained_[1] > constrained_copy[1]:
+        constrained_[1] = constrained_copy[1]
+    return constrained_
+
 
 # Lists for recording data produced by algorithm
 ecg_counter = [0]*number_of_rotors      # Total
@@ -319,6 +337,8 @@ for i in range(number_of_rotors):
                 if state == 0:
                     sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                     vsign = sample[0, :][-3]
+                    hsign = sample[0, :][-2]
+                    constrainedx = autojump_constrainx(h_sign = hsign, constrained_ = constrainedx, x_pos = current_ecg_x_pos)
                     # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sig information.
                     sample_ = sample[0, :][0:].reshape(1, -1)
                     y_class_value = y_class.predict(sample_)[0]

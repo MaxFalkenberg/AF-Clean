@@ -196,13 +196,13 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
     if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
-            if prev_vector < -5 and constrained_[0] is not None:
+            if prev_vector < -4 and constrained_[0] is not None:
                 constrained_[0] += 3
                 constrained_[0] %= 200
             constrained_[1] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
-            if prev_vector > 5 and constrained_[1] is not None:
+            if prev_vector > 4 and constrained_[1] is not None:
                 constrained_[1] -= 3
                 constrained_[1] %= 200
             constrained_[0] = current_ecg_pos_
@@ -218,7 +218,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector > 0 and vsign_diff == 0:  # Potential updataing of upper constraint
             if constrained_[0] is None:
                 constrained_[1] = current_ecg_pos_
-                if prev_vector > 5:
+                if prev_vector > 4:
                     constrained_[1] -= 3
                     constrained_[1] %= 200
             if condistance(constrained_) > condistance([constrained_[0], current_ecg_pos_]):
@@ -227,13 +227,31 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector < 0 and vsign_diff == 0:  # Potential updating of lower constraint
             if constrained_[1] is None:
                 constrained_[0] = current_ecg_pos_
-                if prev_vector < -5:
+                if prev_vector < -4:
                     constrained_[0] += 3
                     constrained_[0] %= 200
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
                 constrained_[0] = current_ecg_pos_
 
     return constrained_, sign_short_memory_
+
+def autojump_constrainx(h_sign, constrained_, x_pos):
+    constrained_copy = np.array(constrained_)
+    if np.absolute(h_sign) < 0.6 or constrained_[1] - constrained_[0] < 30:
+        return constrained_
+    elif h_sign == 1: #Constrain right
+        constrained_[1] = x_pos
+    elif h_sign >= 0.6: #Constrain right with pad
+        constrained_[1] = x_pos + 10
+    elif h_sign == -1: #Constrain left
+        constrained_[0] = x_pos
+    elif h_sign <= -0.6: #Constrain left with pad
+        constrained_[0] = x_pos - 10
+    if constrained_[0] < constrained_copy[0]:
+        constrained_[0] = constrained_copy[0]
+    if constrained_[1] > constrained_copy[1]:
+        constrained_[1] = constrained_copy[1]
+    return constrained_
 
 
 def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const):
@@ -346,6 +364,8 @@ def update_data():
                 ecg_count += 1
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 vsign = sample[0, :][-3]
+                hsign = sample[0, :][-2]
+                constrainedx = autojump_constrainx(h_sign = hsign, constrained_ = constrainedx, x_pos = current_ecg_x_pos)
                 # first potential x constraint
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                 sample_ = sample[0, :][0:].reshape(1, -1)
