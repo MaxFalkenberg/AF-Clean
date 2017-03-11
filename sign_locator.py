@@ -114,12 +114,12 @@ def condistance(constraint):
         return upper + (200 % lower)
 
 
-def prediction(prob_map, vector_constraint, axis):
+def prediction(prob_map, vector_constraint, axis_target):
     """
     makes a vector prediction
     :param prob_map:
     :param vector_constraint:
-    :param axis:
+    :param axis_target:
     :return:
     """
     if vector_constraint is None:
@@ -130,9 +130,9 @@ def prediction(prob_map, vector_constraint, axis):
             return int(np.mean(possible_points))
     else:
         ref = None
-        if axis == 'x':
+        if axis_target == 'x':
             ref = 99
-        if axis == 'y':
+        if axis_target == 'y':
             ref = 176
         lower_index = ref + vector_constraint[0]
         upper_index = ref + vector_constraint[1]
@@ -148,14 +148,14 @@ def prediction(prob_map, vector_constraint, axis):
                 return int(np.mean(possible_points))
 
 
-def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_, axis):
+def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_, axis_target):
     """
 
     :param prev_vector:
     :param sign_short_memory_:
     :param current_ecg_pos_:
     :param constrained_:
-    :param axis:
+    :param axis_target:
     :return:
     """
     if len(sign_short_memory_) == 1:  # Assigns the first constraint (for y case or if on boundry).
@@ -175,14 +175,14 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
 
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
-            if axis == 'x':
+            if axis_target == 'x':
                 if prev_vector < -3 and constrained_[0] is not None:
                     constrained_[0] += 3
                     constrained_[0] %= 200
             constrained_[1] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
-            if axis == 'x':
+            if axis_target == 'x':
                 if prev_vector > 3 and constrained_[1] is not None:
                     constrained_[1] -= 3
                     constrained_[1] %= 200
@@ -199,7 +199,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector > 0 and vsign_diff == 0:  # Potential updataing of upper constraint
             if constrained_[0] is None:
                 constrained_[1] = current_ecg_pos_
-                if axis == 'x':
+                if axis_target == 'x':
                     if prev_vector > 3:
                         constrained_[1] -= 3
                         constrained_[1] %= 200
@@ -209,7 +209,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
         if prev_vector < 0 and vsign_diff == 0:  # Potential updating of lower constraint
             if constrained_[1] is None:
                 constrained_[0] = current_ecg_pos_
-                if axis == 'x':
+                if axis_target == 'x':
                     if prev_vector < -3:
                         constrained_[0] += 3
                         constrained_[0] %= 200
@@ -299,7 +299,7 @@ for i in range(number_of_rotors):
                 if state == 0:
                     sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                     vsign = sample[0, :][-3]
-                    sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sig information.
+                    sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                     y_class_value = y_class.predict(sample_)[0]
                     y_probarg = movingaverage(y_classifier_full.predict_proba(sample_)[0, :], 10)
 
@@ -317,7 +317,8 @@ for i in range(number_of_rotors):
                         y_short_memory.append(current_ecg_y_pos)
                         vsign_short_memory.append(vsign)
                         constrainedy, vsign_short_memory = constrained_finder(prev_y_vector, vsign_short_memory,
-                                                                              current_ecg_y_pos, constrainedy, axis='x')
+                                                                              current_ecg_y_pos, constrainedy,
+                                                                              axis_target='x')
 
                         # Tries the constrained row.
                         if condistance(constrainedy) == 1:
@@ -332,8 +333,9 @@ for i in range(number_of_rotors):
                                 ECG_located_flag = True
 
                         else:
-                            likelyp = prediction(y_probarg, vector_constraint=vecdistance(current_ecg_y_pos,
-                                                 constrainedy), axis='x')
+                            likelyp = prediction(y_probarg,
+                                                 vector_constraint=vecdistance(current_ecg_y_pos, constrainedy),
+                                                 axis_target='x')
                             y_vector = y_classifier_full.classes_[likelyp]
                             prev_y_vector = y_vector
                             current_ecg_y_pos -= y_vector
@@ -382,7 +384,8 @@ for i in range(number_of_rotors):
                         x_short_memory.append(current_ecg_x_pos)
                         hsign_short_memory.append(hsign)
                         constrainedx, hsign_short_memory = constrained_finder(prev_x_vector, hsign_short_memory,
-                                                                              current_ecg_x_pos, constrainedx, axis='y')
+                                                                              current_ecg_x_pos, constrainedx,
+                                                                              axis_target='y')
 
                         # Tries the constrained row.
                         if condistance(constrainedx) == 1:
@@ -393,8 +396,9 @@ for i in range(number_of_rotors):
                             ECG_located_flag = True
 
                         else:
-                            likelyp = prediction(x_probarg, vector_constraint=vecdistance(current_ecg_x_pos,
-                                                                                          constrainedx), axis='y')
+                            likelyp = prediction(x_probarg,
+                                                 vector_constraint=vecdistance(current_ecg_x_pos, constrainedx),
+                                                 axis_target='y')
                             x_vector = x_classifier_full.classes_[likelyp]
                             prev_x_vector = x_vector
                             current_ecg_x_pos -= x_vector

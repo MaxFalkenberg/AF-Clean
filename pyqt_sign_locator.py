@@ -93,9 +93,6 @@ def vecdistance(current_pos, constaints):
         lower_vector = -(lower - current_pos)
     if lower > current_pos:
         lower_vector = (current_pos + (200 % lower))
-    # if current_pos == 0:    #  This might have caused the error seen.
-    #     lower_vector = lower
-    #     upper_vector = -upper
 
     if lower_vector > 100:  # Largest possible vector constraints (Only happens for the x axis. Shouldn't happen for y.)
         lower_vector = 100
@@ -227,19 +224,32 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
     return constrained_, sign_short_memory_
 
 
-def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const):
+def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const, nypos, nxpos, nyloop,
+                      nxloop, nycons, nxcons, nyz, nxz):
     """
 
     :return:
     """
-    text = """Rotor Position: (%s, %s)<br>\n
+    text = """###################################<br>\n
+              <br>\n
+              Rotor Position: (%s, %s)<br>\n
               Probe Position: (%s, %s)<br>\n
               <br>\n
-              Number of ECGs: %s<br>\n
               Previous Result: %s<br>\n
-              X axis Constraint: %s<br>\n
-              Y axis Constraint: %s""" % (rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res,
-                                          xaxis_const, yaxis_const)
+              Y Constraint: %s<br>\n
+              X Constraint: %s<br>\n
+              <br>\n
+              Number of ECGs: %s<br>\n
+              Number of Positive Y Classifications: %s<br>\n
+              Number of Positive X Classifications: %s<br>\n
+              Number of Y Loops: %s<br>\n
+              Number of X Loops: %s<br>\n
+              Number of Fully Constrained X Axis: %s<br>\n
+              Number of Fully Constrained Y Axis: %s<br>\n
+              Number of Y Zeros Jumps: %s<br>\n
+              Number of Z Zeros Jumps: %s<br>\n """ % (rotor_x, rotor_y, ecg_x, ecg_y, prev_res,
+                                                       xaxis_const, yaxis_const, ecg_num,nypos, nxpos, nyloop,
+                                                       nxloop, nycons, nxcons, nyz, nxz)
     label.setText(text)
 
 
@@ -265,6 +275,14 @@ view.addItem(hLine, ignoreBounds=True)
 # time step
 ptr1 = 0
 ecg_count = 0
+num_ypos_class = 0
+num_xpos_class = 0
+num_Yloops = 0
+num_Xloops = 0
+num_yconstraint = 0
+num_xconstraint = 0
+num_yzjump = 0
+num_xzjump = 0
 previousR = "None"
 updateTime = ptime.time()
 fps = 0
@@ -301,14 +319,16 @@ ECG_start_flag = False
 state = 0
 
 update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
-                  constrainedy, constrainedx)
+                  constrainedy, constrainedx, num_ypos_class, num_xpos_class, num_Yloops,
+                      num_Xloops, num_yconstraint, num_xconstraint, num_yzjump, num_xzjump)
 
 
 # Updates the frames and goes through pipework for ECG processing and machine learning processes.
 def update_data():
     global updateTime, fps, ptr1, process_list, ECG_start_flag, state, vsign_short_memory, constrainedy, constrainedx
     global current_ecg_y_pos, current_ecg_x_pos, y_short_memory, x_short_memory, ecg_count, previousR, prev_y_vector
-    global prev_x_vector, hsign_short_memory
+    global prev_x_vector, hsign_short_memory, num_ypos_class, num_xpos_class, num_Yloops, num_Xloops, num_yconstraint
+    global num_xconstraint, num_xzjump, num_yzjump
 
     data = a.propagate(ecg=True)
     data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
@@ -341,9 +361,9 @@ def update_data():
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 vsign = sample[0, :][-3]
                 # first potential x constraint
-                sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
-                y_class_value = y_class.predict(sample_)[0]
-                y_probarg = movingaverage(y_classifier_full.predict_proba(sample_)[0, :], 10)
+                # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
+                y_class_value = y_class.predict(sample)[0]
+                y_probarg = movingaverage(y_classifier_full.predict_proba(sample)[0, :], 10)
 
                 if y_class_value == 1:
                     state = 1  # Change to state 1 for y axis regression/classification.
@@ -351,7 +371,8 @@ def update_data():
                     y_short_memory = []
                     del vsign_short_memory
                     vsign_short_memory = []
-                    x_class_value = x_class.predict(sample_)[0]
+                    x_class_value = x_class.predict(sample)[0]
+                    num_ypos_class += 1
 
                     if x_class_value == 1:
                         previousR = "(%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
@@ -369,6 +390,7 @@ def update_data():
                         yLline.setPos(constrainedx[0])
                         xUline.setPos(300)
                         xLline.setPos(300)
+                        num_xpos_class += 1
 
                 if y_class_value == 0:
                     y_short_memory.append(current_ecg_y_pos)
@@ -377,7 +399,8 @@ def update_data():
                                                                           current_ecg_y_pos, constrainedy, axis='x')
                     if condistance(constrainedy) == 1:
                         state = 1
-                        x_class_value = x_class.predict(sample_)[0]
+                        x_class_value = x_class.predict(sample)[0]
+                        num_yconstraint += 1
 
                         if x_class_value == 1:
                             previousR = "(%s, %s) (Constrained)" % (current_ecg_x_pos, current_ecg_y_pos)
@@ -392,6 +415,7 @@ def update_data():
                             current_ecg_x_pos = randint(20, 179)
                             state = 0
                             ecg_count = 0
+                            num_xpos_class += 1
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             xUline.setPos(300)
@@ -408,7 +432,8 @@ def update_data():
                             y_short_memory = []
                             del vsign_short_memory
                             vsign_short_memory = []
-                            x_class_value = x_class.predict(sample_)[0]
+                            x_class_value = x_class.predict(sample)[0]
+                            num_yzjump += 1
 
                             if x_class_value == 1:
                                 previousR = "(%s, %s) (0 Y Jump)" % (current_ecg_x_pos, current_ecg_y_pos)
@@ -422,6 +447,7 @@ def update_data():
                                 current_ecg_x_pos = randint(20, 179)
                                 state = 0
                                 ecg_count = 0
+                                num_xpos_class += 1
                                 yUline.setPos(constrainedx[1])
                                 yLline.setPos(constrainedx[0])
                                 xUline.setPos(300)
@@ -436,9 +462,9 @@ def update_data():
             if state == 1:
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 hsign = sample[0, :][-2]  # Gets the h sign
-                sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
-                x_probarg = movingaverage(x_classifier_full.predict_proba(sample_)[0, :], 10)  # Prob map
-                x_class_value = x_class.predict(sample_)[0]
+                # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
+                x_probarg = movingaverage(x_classifier_full.predict_proba(sample)[0, :], 10)  # Prob map
+                x_class_value = x_class.predict(sample)[0]
 
                 if x_class_value == 1:
                     previousR = "(%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
@@ -454,6 +480,7 @@ def update_data():
                     constrainedx = [20, 179]
                     del constrainedy
                     constrainedy = [None, None]
+                    num_xpos_class += 1
                     yUline.setPos(constrainedx[1])
                     yLline.setPos(constrainedx[0])
                     xUline.setPos(300)
@@ -480,6 +507,7 @@ def update_data():
                         current_ecg_y_pos = randint(0, 199)
                         state = 0
                         ecg_count = 0
+                        num_xconstraint += 1
                         yUline.setPos(constrainedx[1])
                         yLline.setPos(constrainedx[0])
                         xUline.setPos(300)
@@ -490,12 +518,13 @@ def update_data():
                                                                                       constrainedx), axis='y')
                         x_vector = x_classifier_full.classes_[likelyp]
 
-                        if x_vector == 0:  # If the predicted X jump is
+                        if x_vector == 0:  # If the predicted X jump is 0
                             previousR = "(%s, %s) (0 X Jump)" % (current_ecg_x_pos, current_ecg_y_pos)
                             current_ecg_x_pos = randint(20, 179)
                             current_ecg_y_pos = randint(0, 199)
                             state = 0
                             ecg_count = 0
+                            num_xzjump += 1
                             del x_short_memory
                             x_short_memory = []
                             del hsign_short_memory
@@ -516,7 +545,25 @@ def update_data():
                             current_ecg_x_pos %= 200
 
                         if current_ecg_x_pos in x_short_memory:
-                            print "X LOOP condition."
+                            previousR = '(X LOOP, %s)' % current_ecg_y_pos
+                            state = 1
+                            del x_short_memory
+                            x_short_memory = []
+                            del hsign_short_memory
+                            hsign_short_memory = []
+                            del constrainedx
+                            constrainedx = [20, 179]
+                            del constrainedy
+                            constrainedy = [None, None]
+                            current_ecg_x_pos = randint(20, 179)
+                            current_ecg_y_pos = randint(0, 199)
+                            state = 0
+                            ecg_count = 0
+                            num_Xloops += 1
+                            yUline.setPos(constrainedx[1])
+                            yLline.setPos(constrainedx[0])
+                            xUline.setPos(300)
+                            xLline.setPos(300)
 
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
             if constrainedy[0] is not None:
@@ -531,7 +578,8 @@ def update_data():
             del process_list
             process_list = []
             update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
-                              constrainedy, constrainedx)
+                              constrainedy, constrainedx, num_ypos_class, num_xpos_class, num_Yloops,
+                              num_Xloops, num_yconstraint, num_xconstraint, num_yzjump, num_xzjump)
 
     time.sleep(1/120.)  # gives more stable fps.
     img.setImage(data.T)  # puts animation grid on image.
