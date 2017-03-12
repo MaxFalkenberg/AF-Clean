@@ -297,9 +297,11 @@ for i in range(number_of_rotors):
 
                 # X AXIS FINDING
                 if state == 0:
-                    sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
-                    vsign = sample[0, :][-3]
-                    sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
+                    # sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
+                    sample_ = sample.reshape(1, -1)  # Get deprication warning if this is not done.
+                    vsign = sample_[0, :][-3]
+                    # vsign = sample[0, :][-3]
+                    # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                     y_class_value = y_class.predict(sample_)[0]
                     y_probarg = movingaverage(y_classifier_full.predict_proba(sample_)[0, :], 10)
 
@@ -364,9 +366,11 @@ for i in range(number_of_rotors):
 
                 # Y AXIS FINDING
                 if state == 1:
-                    sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
-                    hsign = sample[0, :][-2]  # Gets the h sign
-                    sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
+                    sample_ = sample.reshape(1, -1)  # Get deprication warning if this is not done.
+                    # sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
+                    hsign = sample_[0, :][-2]  # Gets the h sign
+                    # hsign = sample[0, :][-2]  # Gets the h sign
+                    # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
                     x_class_value = x_class.predict(sample_)[0]
                     x_probarg = movingaverage(x_classifier_full.predict_proba(sample_)[0, :], 10)  # Prob map
                     x_class_value = x_class.predict(sample_)[0]
