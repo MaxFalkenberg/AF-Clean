@@ -284,8 +284,15 @@ for i in range(number_of_rotors):
     # Randomises the rotor x,y position
     cp_x_pos = randint(30, 169)
     cp_y_pos = randint(0, 199)
-    a.set_circuit(np.ravel_multi_index([cp_y_pos,cp_x_pos],(200,200)))
-    rotor[i] = (cp_x_pos, cp_y_pos)
+    cp_x_pos2 = randint(30, 169)
+    cp_y_pos2 = randint(0, 199)
+    while np.absolute(cp_y_pos2 - cp_y_pos) < 10 and np.absolute(cp_x_pos2 - cp_x_pos) < 40:
+        cp_x_pos = randint(30, 169)
+        cp_y_pos = randint(0, 199)
+        cp_x_pos2 = randint(30, 169)
+        cp_y_pos2 = randint(0, 199)
+    a.set_multi_circuit(np.ravel_multi_index([cp_y_pos,cp_x_pos],(200,200)),np.ravel_multi_index([cp_y_pos2,cp_x_pos2],(200,200)))
+    rotor[i] = (cp_x_pos, cp_y_pos) #THIS NEEDS TO BE ADAPTED TO  CIRCUITS
 
     # Initialising ECG recording (randomises the probe x,y position)
     current_ecg_x_pos = randint(20, 179)
