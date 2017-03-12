@@ -27,14 +27,7 @@ a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
 # Randomises the rotor x,y position
 cp_x_pos = randint(30, 169)
 cp_y_pos = randint(0, 199)
-cp_x_pos2 = randint(30, 169)
-cp_y_pos2 = randint(0, 199)
-while np.absolute(cp_y_pos2 - cp_y_pos) < 10 and np.absolute(cp_x_pos2 - cp_x_pos) < 40:
-    cp_x_pos = randint(30, 169)
-    cp_y_pos = randint(0, 199)
-    cp_x_pos2 = randint(30, 169)
-    cp_y_pos2 = randint(0, 199)
-a.set_multi_circuit(np.ravel_multi_index([cp_y_pos,cp_x_pos],(200,200)),np.ravel_multi_index([cp_y_pos2,cp_x_pos2],(200,200)))
+a.set_circuit(np.ravel_multi_index([cp_y_pos,cp_x_pos],(200,200)))
 tissue_reset = False
 
 # Initialising ECG recording (randomises the probe x,y position)
@@ -382,11 +375,11 @@ def update_data():
                 ecg_count += 1
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 vsign = sample[0, :][-3]
-                # hsign = sample[0, :][-2]
-                # print hsign
-                # constrainedx = autojump_constrainx(h_sign = hsign, constrained_ = constrainedx, x_pos = current_ecg_x_pos, constrainedy = constrainedy)
-                # con_midpoint = int(np.mean(constrainedx))
-                # current_ecg_x_pos = con_midpoint
+                hsign = sample[0, :][-2]
+                print hsign
+                constrainedx = autojump_constrainx(h_sign = hsign, constrained_ = constrainedx, x_pos = current_ecg_x_pos, constrainedy = constrainedy)
+                con_midpoint = int(np.mean(constrainedx))
+                current_ecg_x_pos = con_midpoint
                 # first potential x constraint
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                 sample_ = sample[0, :][0:].reshape(1, -1)

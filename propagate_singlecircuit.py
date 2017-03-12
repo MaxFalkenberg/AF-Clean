@@ -68,8 +68,36 @@ class Heart:
         self.cell_vert[(index + 29 - 200)%40000] = True
 
         self.cell_grid[index - 1] = False
+
         y,x = np.unravel_index(index,(200,200))
         Heart.set_pulse(self,60,[[y],[x]])
+
+    def set_multi_circuit(self,centre1,centre2):
+
+        self.circuit_set = True
+        self.circuit_multi_set = True
+
+        self.circuit_index1 = centre1
+        self.cell_vert[self.circuit_index1:self.circuit_index1 + 28] = False
+        self.cell_vert[(self.circuit_index1 - 200)%40000: (self.circuit_index1 - 200 + 28)%40000] = False
+        self.cell_vert[self.circuit_index1 - 1] = True
+        self.cell_vert[(self.circuit_index1 - 201)%40000] = True
+        self.cell_vert[(self.circuit_index1 + 29)%40000] = True
+        self.cell_vert[(self.circuit_index1 + 29 - 200)%40000] = True
+        self.cell_grid[self.circuit_index1 - 1] = False
+
+        self.circuit_index2 = centre2
+        self.cell_vert[self.circuit_index2:self.circuit_index2 + 28] = False
+        self.cell_vert[(self.circuit_index2 - 200)%40000: (self.circuit_index2 - 200 + 28)%40000] = False
+        self.cell_vert[self.circuit_index2 - 1] = True
+        self.cell_vert[(self.circuit_index2 - 201)%40000] = True
+        self.cell_vert[(self.circuit_index2 + 29)%40000] = True
+        self.cell_vert[(self.circuit_index2 + 29 - 200)%40000] = True
+        self.cell_grid[self.circuit_index2 - 1] = False
+
+        y,x = np.unravel_index(self.circuit_index1,(200,200))
+        y2,x2 = np.unravel_index(self.circuit_index2,(200,200))
+        Heart.set_pulse(self,60,[[y,y2],[x,x2]])
 
 
     def set_pulse(self, rate, vectors=None):
@@ -180,7 +208,11 @@ class Heart:
 
             self.t += 1
             if self.t == 1 and self.circuit_set == True:
-                self.cell_grid[self.circuit_index - 1] = True
+                if self.circuit_multi_set:
+                    self.cell_grid[self.circuit_index1 - 1] = True
+                    self.cell_grid[self.circuit_index2 - 1] = True
+                else:
+                    self.cell_grid[self.circuit_index - 1] = True
             try:
                 if self.pulse_norm:
                     if self.t % self.pulse_rate == 0:

@@ -347,10 +347,10 @@ for i in range(number_of_rotors):
                 if state == 0:
                     sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                     vsign = sample[0, :][-3]
-                    # hsign = sample[0, :][-2]
-                    # constrainedx = autojump_constrainx(h_sign = hsign, constrained_ = constrainedx, x_pos = current_ecg_x_pos, constrainedy = constrainedy)
-                    # con_midpoint = int(np.mean(constrainedx))
-                    # current_ecg_x_pos = con_midpoint
+                    hsign = sample[0, :][-2]
+                    constrainedx = autojump_constrainx(h_sign = hsign, constrained_ = constrainedx, x_pos = current_ecg_x_pos, constrainedy = constrainedy)
+                    con_midpoint = int(np.mean(constrainedx))
+                    current_ecg_x_pos = con_midpoint
                     # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sig information.
                     sample_ = sample[0, :][0:].reshape(1, -1)
                     y_class_value = y_class.predict(sample_)[0]
