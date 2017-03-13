@@ -1577,7 +1577,16 @@ def sign_solver(Start, half_period = 30.):
     v41_sign = np.sign(v41 * np.sign(v41_copy1) * np.sign(v41_copy2))
     v52_sign = np.sign(v52 * np.sign(v52_copy1) * np.sign(v52_copy2))
 
+    v63_bsign = v63 * np.sign(v63_copy1) * np.sign(v63_copy2)
+    v74_bsign = v74 * np.sign(v74_copy1) * np.sign(v74_copy2)
+    v85_bsign = v85 * np.sign(v85_copy1) * np.sign(v85_copy2)
+    v30_bsign = v30 * np.sign(v30_copy1) * np.sign(v30_copy2)
+    v41_bsign = v41 * np.sign(v41_copy1) * np.sign(v41_copy2)
+    v52_bsign = v52 * np.sign(v52_copy1) * np.sign(v52_copy2)
+
     v_sign = (v63_sign +v74_sign +v85_sign +v30_sign +v41_sign +v52_sign )/6
+    b_sum = ((v63_bsign +v74_bsign +v85_bsign) / 3) - ((v30_bsign +v41_bsign +v52_bsign ) / 3)
+    b_sign = ((v63_sign +v74_sign +v85_sign) / 3) - ((v30_sign +v41_sign +v52_sign ) / 3)
 
 
     h87_copy1,h76_copy1,h54_copy1,h43_copy1,h21_copy1,h10_copy1 = np.copy(h87),np.copy(h76),np.copy(h54),np.copy(h43),np.copy(h21),np.copy(h10)
@@ -1606,7 +1615,7 @@ def sign_solver(Start, half_period = 30.):
 
     h_sign = (h87_sign +h76_sign +h54_sign +h43_sign +h21_sign +h10_sign )/6
     axes_sign = np.absolute(v_sign) + np.absolute(h_sign)
-    return np.array([v_sign, h_sign, axes_sign])
+    return np.array([v_sign, h_sign, axes_sign, b_sign, b_sum])
 
 
 def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
@@ -1662,8 +1671,11 @@ def multi_feature_compile_rt(uncompiled, sign="record_sign"):
     """
     # Compiles all the features
     compiled = process_multi_feature(uncompiled)
-    if sign == "record_sign":
+    if sign == "record_sign" or sign == "record_sign_plus":
         signs = sign_solver(uncompiled[:, 0])
+        print signs
+        signs = signs[:-2]
+        bsigns = signs[-2:]
         compiled = np.concatenate([compiled,signs])
     # Cleans all inf values
     # print np.shape(compiled)
@@ -1672,7 +1684,10 @@ def multi_feature_compile_rt(uncompiled, sign="record_sign"):
         print "Infinity came through"
     if np.isnan(compiled).any():
         print "NAN came through"
-    return np.nan_to_num(compiled)
+    if sign == "record_sign_plus":
+        return np.nan_to_num(compiled),bsigns
+    else:
+        return np.nan_to_num(compiled)
 
 
 def visualize_tree(tree, feature_names):
@@ -1880,6 +1895,65 @@ def binplot(X, feature, clim = None, condition = None, binsize = 1, split = 'non
         words = [w.replace(' ', '_') for w in words]
         print words
         plt.savefig(words[0] + '.png')
+        plt.close()
+    else:
+        print(np.shape(z))
+        plt.show()
+
+    return z#, clim, feature
+
+def binplot_pretty(X, feature, clim = None, title = 'Default', binsize = 1, split = 'none', save=False):
+
+    try:
+        d = X['Distance 0']
+        t = X['Theta 0']
+    except:
+        d = X['Distance']
+        t = X['Theta']
+
+    rad = np.array(d)
+    theta = np.array(t)
+    f = np.array(X[feature])
+
+    rad = rad[np.logical_not(np.isnan(theta))]
+    f = f[np.logical_not(np.isnan(theta))]
+    theta = theta[np.logical_not(np.isnan(theta))]
+
+
+    x = rad * np.cos(theta)
+    y = rad * np.sin(theta)
+
+    x = x.astype('int')
+    y = y.astype('int')
+    x /= binsize
+    y /= binsize
+    x += np.absolute(np.min(x))
+    y += np.absolute(np.min(y))
+    z = np.zeros((np.max(y) + 1, np.max(x) + 1), dtype = 'float')
+    count = np.copy(z)
+
+    for i in range(len(x)):
+        z[y[i]][x[i]] += float(f[i])
+        count[y[i]][x[i]] += 1.
+    z /= count
+
+
+    cm = plt.cm.get_cmap('coolwarm')
+
+    if clim == None:
+        clim = [np.nanmin(z),np.nanmax(z)]
+        # print(clim)
+    plt.figure(figsize =(10.,10.))
+    plt.imshow(z,vmin = clim[0],vmax = clim[1], interpolation="nearest", origin="lower", cmap = cm,extent=[-180, 180, -99, 100])
+    cbar = plt.colorbar(shrink=0.4, pad = 0.07)
+    cbar.ax.tick_params(labelsize=15)
+    plt.xlabel('X', fontsize = 18)
+    plt.ylabel('Y', fontsize = 18)
+    plt.title(title, fontsize = 21)
+    plt.tick_params(axis='both', which='major', labelsize=15)
+    if save:
+        save_data_name = raw_input("Saved datafile name: ")
+        plt.savefig(save_data_name + '.pdf')
         plt.close()
     else:
         print(np.shape(z))

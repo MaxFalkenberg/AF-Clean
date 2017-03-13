@@ -70,8 +70,8 @@ def rt_ecg_gathering(ecg_list, sign_para):
     uncompiled_features = []
     for index in range(9):
         uncompiled_features.append(feature_extract_multi_test_rt(index, voltages))
-    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign='record_sign')
-    return compiled_features
+    compiled_features, bsigns = multi_feature_compile_rt(np.array(uncompiled_features), sign='record_sign_plus')
+    return compiled_features, bsigns
 
 
 def movingaverage(values, weight):
@@ -240,37 +240,6 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
 
     return constrained_, sign_short_memory_
 
-def autojump_constrainx(h_sign, constrained_, x_pos, constrainedy):
-    constrained_copy = np.array(constrained_)
-    if np.absolute(h_sign) < 0.8 or constrained_[1] - constrained_[0] < 50:
-        return constrained_
-    if constrainedy[1] != None and constrainedy[0] != None:
-        if np.absolute(constrainedy[1] - constrainedy[0]) < 50:
-            return constrained_
-    if h_sign == 1: #Constrain right
-        constrained_[1] = x_pos
-    elif h_sign >= 0.8: #Constrain right with pad
-        constrained_[1] = x_pos + 24
-    elif h_sign == -1: #Constrain left
-        constrained_[0] = x_pos
-    elif h_sign <= -0.8: #Constrain left with pad
-        constrained_[0] = x_pos - 24
-    if constrained_[0] < constrained_copy[0]:
-        constrained_[0] = constrained_copy[0]
-    if constrained_[1] > constrained_copy[1]:
-        constrained_[1] = constrained_copy[1]
-    if constrained_[1] - np.mean(constrained_) < 24:
-        m = int(np.mean(constrained_))
-        constrained_[0] = m - 24
-        constrained_[1] = m + 24
-        if constrained_[0] < constrained_copy[0]:
-            d = constrained_copy[0] - constrained_[0]
-            constrained_ += d
-        if constrained_[1] > constrained_copy[1]:
-            d = constrained_[1] - constrained_copy[1]
-            constrained_ -= d
-    return constrained_
-
 
 def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const):
     """
@@ -378,7 +347,7 @@ def update_data():
         if ptr1 % process_length == 0 and ptr1 != stability_time:
 
             if state == 0:
-                sample = rt_ecg_gathering(process_list, sign_para="record_sign")  # ECG Recording and feature gathering
+                sample, bsigns = rt_ecg_gathering(process_list, sign_para="record_sign_plus")  # ECG Recording and feature gathering
                 ecg_count += 1
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 vsign = sample[0, :][-3]
@@ -461,6 +430,7 @@ def update_data():
                         #     if pad_place == 1:
                         #         cons
                         current_ecg_y_pos -= y_vector
+                        # print y_vector
 
                         if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
@@ -484,7 +454,7 @@ def update_data():
                         #             constrainedy[1] %= 200
 
             if state == 1:
-                sample = rt_ecg_gathering(process_list, sign_para='record_sign')  # ECG feature Recording
+                sample, bsigns = rt_ecg_gathering(process_list, sign_para='record_sign_plus')  # ECG feature Recording
                 ecg_count += 1
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 hsign = sample[0, :][-2]  # Gets the h sign
