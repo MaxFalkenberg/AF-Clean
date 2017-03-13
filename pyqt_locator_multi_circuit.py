@@ -16,10 +16,10 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
-y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
-x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
-x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+y_classifier_full = joblib.load(args[1])
+y_class = joblib.load(args[2])
+x_classifier_full = joblib.load(args[3])
+x_class = joblib.load(args[4])
 #####################################
 
 # Initialising the Heart structure
@@ -151,7 +151,7 @@ def conposition(lower, upper):
     :return:
     """
     if upper > lower:
-        return range(0, lower) + range(upper, 200)
+        return range(lower, upper)
     if lower > upper:
         return range(lower, 200) + range(0, upper)
 
@@ -201,18 +201,21 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
     :param perm_constraints:
     :return:
     """
+    print sign_short_memory_
+
     if len(sign_short_memory_) == 1:  # Assigns the first constraint (for y case or if on boundry).
-
+        print "Start"
         sign = sign_short_memory_[0]
-
         if sign < 0:
             constrained_[0] = current_ecg_pos_
             if perm_constraints and axis == 'x':
+                print perminant_constraints
                 constrained_[1] = perm_constraints[0][1]
 
         if sign > 0:
             constrained_[1] = current_ecg_pos_
-            if perm_constraints and axis == 'y':
+            if perm_constraints and axis == 'x':
+                print perminant_constraints
                 constrained_[0] = perm_constraints[0][0]
 
         if sign == 0:  # Starts right on the boundry
@@ -264,10 +267,13 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
                 constrained_[0] = current_ecg_pos_
 
+    print constrained_
+
     return constrained_, sign_short_memory_
 
 
-def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const, nypos, nxpos, nyloop,
+def update_label_text(rotor_x_1, rotor_y_1, rotor_x_2, rotor_y_2,
+                      ecg_x, ecg_y, ecg_num, prev_res, xaxis_const, yaxis_const, Pconst, nypos, nxpos, nyloop,
                       nxloop, nycons, nxcons, nyz, nxz):
     """
 
@@ -275,12 +281,14 @@ def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_c
     """
     text = """###################################<br>\n
               <br>\n
-              Rotor Position: (%s, %s)<br>\n
+              Rotor 1 Position: (%s, %s)<br>\n
+              Rotor 2 Position: (%s, %s)<br>\n
               Probe Position: (%s, %s)<br>\n
               <br>\n
               Previous Result: %s<br>\n
               Y Constraint: %s<br>\n
               X Constraint: %s<br>\n
+              Perminant Constraint: %s<br>\n
               <br>\n
               Number of ECGs: %s<br>\n
               Number of Positive Y Classifications: %s<br>\n
@@ -290,9 +298,9 @@ def update_label_text(rotor_x, rotor_y, ecg_x, ecg_y, ecg_num, prev_res, xaxis_c
               Number of Fully Constrained X Axis: %s<br>\n
               Number of Fully Constrained Y Axis: %s<br>\n
               Number of Y Zeros Jumps: %s<br>\n
-              Number of Z Zeros Jumps: %s<br>\n """ % (rotor_x, rotor_y, ecg_x, ecg_y, prev_res,
-                                                       xaxis_const, yaxis_const, ecg_num,nypos, nxpos, nyloop,
-                                                       nxloop, nycons, nxcons, nyz, nxz)
+              Number of Z Zeros Jumps: %s<br>\n """ % (rotor_x_1, rotor_y_1, rotor_x_2, rotor_y_2, ecg_x, ecg_y,
+                                                       prev_res, xaxis_const, yaxis_const, Pconst, ecg_num, nypos,
+                                                       nxpos, nyloop, nxloop, nycons, nxcons, nyz, nxz)
     label.setText(text)
 
 
@@ -377,8 +385,8 @@ ECG_start_flag = False
 # Sate for pipe work.
 state = 0
 
-update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
-                  constrainedy, constrainedx, num_ypos_class, num_xpos_class, num_Yloops,
+update_label_text(cp_x_pos, cp_y_pos, cp_x_pos2, cp_y_pos2, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
+                  constrainedy, constrainedx, perminant_constraints, num_ypos_class, num_xpos_class, num_Yloops,
                   num_Xloops, num_yconstraint, num_xconstraint, num_yzjump, num_xzjump)
 
 
@@ -462,11 +470,11 @@ def update_data():
                         # ONE OF THE ROTORS IS FOUND
                         else:
                             rotors_found += 1
-                            upper = current_ecg_y_pos - 5
+                            upper = current_ecg_y_pos - 10
                             upper %= 200
-                            lower = current_ecg_y_pos + 5
+                            lower = current_ecg_y_pos + 10
                             lower %= 200
-                            perminant_constraints.append((lower, upper))
+                            perminant_constraints.append([lower, upper])
                             current_ecg_x_pos = randint(20, 179)
                             current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
                             xUline.setPos(300)
@@ -519,11 +527,11 @@ def update_data():
                             # ONE OF THE ROTORS IS FOUND
                             else:
                                 rotors_found += 1
-                                upper = current_ecg_y_pos - 5
+                                upper = current_ecg_y_pos - 10
                                 upper %= 200
-                                lower = current_ecg_y_pos + 5
+                                lower = current_ecg_y_pos + 10
                                 lower %= 200
-                                perminant_constraints.append((lower, upper))
+                                perminant_constraints.append([lower, upper])
                                 current_ecg_x_pos = randint(20, 179)
                                 current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
                                 xUline.setPos(300)
@@ -609,11 +617,11 @@ def update_data():
 
                     else:
                         rotors_found += 1
-                        upper = current_ecg_y_pos - 5
+                        upper = current_ecg_y_pos - 10
                         upper %= 200
-                        lower = current_ecg_y_pos + 5
+                        lower = current_ecg_y_pos + 10
                         lower %= 200
-                        perminant_constraints.append((lower, upper))
+                        perminant_constraints.append([lower, upper])
                         current_ecg_x_pos = randint(20, 179)
                         current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
                         xUline.setPos(300)
@@ -659,11 +667,11 @@ def update_data():
 
                         else:
                             rotors_found += 1
-                            upper = current_ecg_y_pos - 5
+                            upper = current_ecg_y_pos - 10
                             upper %= 200
-                            lower = current_ecg_y_pos + 5
+                            lower = current_ecg_y_pos + 10
                             lower %= 200
-                            perminant_constraints.append((lower, upper))
+                            perminant_constraints.append([lower, upper])
                             current_ecg_x_pos = randint(20, 179)
                             current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
                             xUline.setPos(300)
@@ -736,7 +744,6 @@ def update_data():
                 xLline.setPos(constrainedy[0])
             if constrainedy[1] is not None:
                 xUline.setPos(constrainedy[1])
-            print constrainedx
             yLline.setPos(constrainedx[0])
             yUline.setPos(constrainedx[1])
             vLine.setPos(current_ecg_x_pos + 0.5)
@@ -744,11 +751,12 @@ def update_data():
 
             del process_list
             process_list = []
-            update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
-                              constrainedy, constrainedx, num_ypos_class, num_xpos_class, num_Yloops,
-                              num_Xloops, num_yconstraint, num_xconstraint, num_yzjump, num_xzjump)
+            update_label_text(cp_x_pos, cp_y_pos, cp_x_pos2, cp_y_pos2, current_ecg_x_pos, current_ecg_y_pos, ecg_count,
+                              previousR, constrainedy, constrainedx, perminant_constraints, num_ypos_class,
+                              num_xpos_class, num_Yloops, num_Xloops, num_yconstraint, num_xconstraint, num_yzjump,
+                              num_xzjump)
 
-    time.sleep(1/120.)  # gives more stable fps.
+    time.sleep(1/60.)  # gives more stable fps.
     img.setImage(data.T)  # puts animation grid on image.
 
     # Stuff to do with time and fps.
