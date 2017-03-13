@@ -405,7 +405,7 @@ def update_data():
                 # first potential x constraint
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                 y_class_value = y_class.predict(sample)[0]
-                y_probarg = reg_predictor(y_classifier_full.predict_proba(sample)[0, :], 10)
+                y_probarg = reg_predictor(y_classifier_full.predict_proba(sample)[0, :])
 
                 # POSITIVE CLASSIFICATION FOR Y
                 if y_class_value == 1:
@@ -511,7 +511,7 @@ def update_data():
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 hsign = sample[0, :][-2]  # Gets the h sign
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
-                x_probarg = reg_predictor(x_classifier_full.predict_proba(sample)[0, :], 10)  # Prob map
+                x_probarg = reg_predictor(x_classifier_full.predict_proba(sample)[0, :])  # Prob map
                 x_class_value = x_class.predict(sample)[0]
 
                 # POSITIVE CLASSIFICATION FOR X
