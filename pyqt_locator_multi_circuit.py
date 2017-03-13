@@ -16,10 +16,10 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-y_classifier_full = joblib.load(args[1])
-y_class = joblib.load(args[2])
-x_classifier_full = joblib.load(args[3])
-x_class = joblib.load(args[4])
+y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
 #####################################
 
 # Initialising the Heart structure
@@ -394,7 +394,7 @@ def update_data():
                 # first potential x constraint
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                 y_class_value = y_class.predict(sample)[0]
-                y_probarg = reg_predictor(y_classifier_full.predict_proba(sample)[0, :], 10)
+                y_probarg = reg_predictor(y_classifier_full.predict_proba(sample)[0, :], 0.4)
 
                 # POSITIVE CLASSIFICATION FOR Y
                 if y_class_value == 1:
@@ -499,7 +499,7 @@ def update_data():
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 hsign = sample[0, :][-2]  # Gets the h sign
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
-                x_probarg = reg_predictor(x_classifier_full.predict_proba(sample)[0, :], 10)  # Prob map
+                x_probarg = reg_predictor(x_classifier_full.predict_proba(sample)[0, :], 0.4)  # Prob map
                 x_class_value = x_class.predict(sample)[0]
 
                 # POSITIVE CLASSIFICATION FOR X
