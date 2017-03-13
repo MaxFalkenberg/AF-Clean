@@ -315,6 +315,12 @@ previousR = "None"
 updateTime = ptime.time()
 fps = 0
 
+# Rotor state
+rotors_found = 0
+
+# estimated number of rotors (Needs a function to predict this value)
+N_rotors = 1
+
 # length of time for recording -> process (should be set to cover at least two waveform periods)
 process_length = 150
 
@@ -336,6 +342,9 @@ hsign_short_memory = []
 constrainedy = [None, None]
 constrainedx = [20, 179]
 
+# List of perminant constraints (gets reset when all rotors are found)
+perminant_constraints = []
+
 # Loop checking
 y_short_memory = []
 x_short_memory = []
@@ -348,7 +357,7 @@ state = 0
 
 update_label_text(cp_x_pos, cp_y_pos, current_ecg_x_pos, current_ecg_y_pos, ecg_count, previousR,
                   constrainedy, constrainedx, num_ypos_class, num_xpos_class, num_Yloops,
-                      num_Xloops, num_yconstraint, num_xconstraint, num_yzjump, num_xzjump)
+                  num_Xloops, num_yconstraint, num_xconstraint, num_yzjump, num_xzjump)
 
 
 # Updates the frames and goes through pipework for ECG processing and machine learning processes.
@@ -367,6 +376,8 @@ def update_data():
         yLline.setPos(constrainedx[0])
         xUline.setPos(300)
         xLline.setPos(300)
+        pUline.setPos(-300)
+        pLline.setPos(-300)
         vLine.setPos(current_ecg_x_pos + 0.5)
         hLine.setPos(current_ecg_y_pos + 0.5)
 
@@ -394,7 +405,7 @@ def update_data():
                 # first potential x constraint
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Get sample without sign information.
                 y_class_value = y_class.predict(sample)[0]
-                y_probarg = reg_predictor(y_classifier_full.predict_proba(sample)[0, :], 0.4)
+                y_probarg = reg_predictor(y_classifier_full.predict_proba(sample)[0, :])
 
                 # POSITIVE CLASSIFICATION FOR Y
                 if y_class_value == 1:
@@ -406,6 +417,7 @@ def update_data():
                     x_class_value = x_class.predict(sample)[0]
                     num_ypos_class += 1
 
+                    # CHECKS IF ITS ON THE CORRECT Y AXIS
                     if x_class_value == 1:
                         previousR = "(%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
                         del y_short_memory
@@ -499,7 +511,8 @@ def update_data():
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 hsign = sample[0, :][-2]  # Gets the h sign
                 # sample_ = sample[0, :][0:-3].reshape(1, -1)  # Takes a sample without sign information
-                x_probarg = reg_predictor(x_classifier_full.predict_proba(sample)[0, :], 0.4)  # Prob map
+
+                x_probarg = reg_predictor(x_classifier_full.predict_proba(sample)[0, :])  # Prob map
                 x_class_value = x_class.predict(sample)[0]
 
                 # POSITIVE CLASSIFICATION FOR X
