@@ -1673,7 +1673,6 @@ def multi_feature_compile_rt(uncompiled, sign="record_sign"):
     compiled = process_multi_feature(uncompiled)
     if sign == "record_sign" or sign == "record_sign_plus":
         signs = sign_solver(uncompiled[:, 0])
-        print signs
         signs = signs[:-2]
         bsigns = signs[-2:]
         compiled = np.concatenate([compiled,signs])
