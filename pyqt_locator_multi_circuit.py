@@ -677,35 +677,17 @@ def update_data():
                         state = 0
                         ecg_count = 0
                         num_xconstraint += 1
-
-                        if rotors_found == N_rotors:
-                            xUline.setPos(300)
-                            xLline.setPos(300)
-                            pUline.setPos(-300)
-                            pLline.setPos(-300)
-                            current_ecg_x_pos = randint(20, 179)
-                            current_ecg_y_pos = randint(0, 199)
-                            rotors_found = 0
-                            del total_sign_info
-                            total_sign_info = []
-                            perminant_constraints = []
-
-                        else:
-                            rotors_found += 1
-                            upper = current_ecg_y_pos - 10
-                            upper %= 200
-                            lower = current_ecg_y_pos + 10
-                            lower %= 200
-                            perminant_constraints.append([lower, upper])
-                            current_ecg_x_pos = randint(20, 179)
-                            current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
-                            xUline.setPos(300)
-                            xLline.setPos(300)
-                            pUline.setPos(upper)
-                            pLline.setPos(lower)
-
+                        xUline.setPos(300)
+                        xLline.setPos(300)
                         constrainedy = [None, None]
                         constrainedx = [20, 179]
+                        if rotors_found > 0:
+                            lower = perminant_constraints[0][0]
+                            upper = perminant_constraints[0][1]
+                            current_ecg_y_pos = choice(conposition(lower, upper))
+                        else:
+                            current_ecg_y_pos = randint(0, 199)
+                        current_ecg_x_pos = randint(20, 179)
                         yUline.setPos(constrainedx[1])
                         yLline.setPos(constrainedx[0])
                         del x_short_memory
@@ -725,35 +707,17 @@ def update_data():
                             state = 0
                             ecg_count = 0
                             num_xzjump += 1
-
-                            if rotors_found == N_rotors:
-                                xUline.setPos(300)
-                                xLline.setPos(300)
-                                pUline.setPos(-300)
-                                pLline.setPos(-300)
-                                current_ecg_x_pos = randint(20, 179)
-                                current_ecg_y_pos = randint(0, 199)
-                                rotors_found = 0
-                                del total_sign_info
-                                total_sign_info = []
-                                perminant_constraints = []
-
-                            else:
-                                rotors_found += 1
-                                upper = current_ecg_y_pos - 10
-                                upper %= 200
-                                lower = current_ecg_y_pos + 10
-                                lower %= 200
-                                perminant_constraints.append([lower, upper])
-                                current_ecg_x_pos = randint(20, 179)
-                                current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
-                                xUline.setPos(300)
-                                xLline.setPos(300)
-                                pUline.setPos(upper)
-                                pLline.setPos(lower)
-
+                            xUline.setPos(300)
+                            xLline.setPos(300)
                             constrainedy = [None, None]
                             constrainedx = [20, 179]
+                            if rotors_found > 0:
+                                lower = perminant_constraints[0][0]
+                                upper = perminant_constraints[0][1]
+                                current_ecg_y_pos = choice(conposition(lower, upper))
+                            else:
+                                current_ecg_y_pos = randint(0, 199)
+                            current_ecg_x_pos = randint(20, 179)
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             del x_short_memory
@@ -774,39 +738,17 @@ def update_data():
                             state = 0
                             ecg_count = 0
                             num_Xloops += 1
-
-                            if rotors_found == N_rotors:
-                                xUline.setPos(300)
-                                xLline.setPos(300)
-                                pUline.setPos(-300)
-                                pLline.setPos(-300)
-                                current_ecg_x_pos = randint(20, 179)
-                                current_ecg_y_pos = randint(0, 199)
-                                rotors_found = 0
-                                del total_sign_info
-                                total_sign_info = []
-                                perminant_constraints = []
-
-                            else:
-                                rotors_found += 1
-                                upper = current_ecg_y_pos - 10
-                                upper %= 200
-                                lower = current_ecg_y_pos + 10
-                                lower %= 200
-                                perminant_constraints.append([lower, upper])
-                                current_ecg_x_pos = randint(20, 179)
-                                current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
-                                xUline.setPos(300)
-                                xLline.setPos(300)
-                                pUline.setPos(upper)
-                                pLline.setPos(lower)
-                                †
                             xUline.setPos(300)
                             xLline.setPos(300)
-                            pUline.setPos(-300)
-                            pLline.setPos(-300)
                             constrainedy = [None, None]
                             constrainedx = [20, 179]
+                            if rotors_found > 0:
+                                lower = perminant_constraints[0][0]
+                                upper = perminant_constraints[0][1]
+                                current_ecg_y_pos = choice(conposition(lower, upper))
+                            else:
+                                current_ecg_y_pos = randint(0, 199)
+                            current_ecg_x_pos = randint(20, 179)
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             del x_short_memory
