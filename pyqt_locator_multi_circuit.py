@@ -29,7 +29,7 @@ cp_x_pos = randint(30, 169)
 cp_y_pos = randint(0, 199)
 cp_x_pos2 = randint(30, 169)
 cp_y_pos2 = randint(0, 199)
-while np.absolute(cp_y_pos2 - cp_y_pos) < 10 and np.absolute(cp_x_pos2 - cp_x_pos) < 40:
+while np.absolute(cp_y_pos2 - cp_y_pos) <= 10 or 200 - np.absolute(cp_y_pos2 - cp_y_pos) <= 10:
     cp_x_pos = randint(30, 169)
     cp_y_pos = randint(0, 199)
     cp_x_pos2 = randint(30, 169)
@@ -205,14 +205,14 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
 
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
             if axis == 'x':
-                if prev_vector < -3 and constrained_[0] is not None:
+                if prev_vector < -4 and constrained_[0] is not None:
                     constrained_[0] += 3
                     constrained_[0] %= 200
             constrained_[1] = current_ecg_pos_
 
         if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
             if axis == 'x':
-                if prev_vector > 3 and constrained_[1] is not None:
+                if prev_vector > 4 and constrained_[1] is not None:
                     constrained_[1] -= 3
                     constrained_[1] %= 200
             constrained_[0] = current_ecg_pos_
@@ -229,7 +229,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
             if constrained_[0] is None:
                 constrained_[1] = current_ecg_pos_
                 if axis == 'x':
-                    if prev_vector > 3:
+                    if prev_vector > 4:
                         constrained_[1] -= 3
                         constrained_[1] %= 200
             if condistance(constrained_) > condistance([constrained_[0], current_ecg_pos_]):
@@ -239,7 +239,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
             if constrained_[1] is None:
                 constrained_[0] = current_ecg_pos_
                 if axis == 'x':
-                    if prev_vector < -3:
+                    if prev_vector < -4:
                         constrained_[0] += 3
                         constrained_[0] %= 200
             if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
@@ -378,7 +378,7 @@ def update_data():
 
         if ptr1 % process_length == 0 and ptr1 != stability_time:
 
-            sample = rt_ecg_gathering(process_list, sign_para=args[5])  # ECG Recording and feature gathering
+            sample, bsign = rt_ecg_gathering(process_list, sign_para='record_sign_plus')  # ECG Recording and feature gathering
             ecg_count += 1
 
             if state == 0:
@@ -421,7 +421,7 @@ def update_data():
                     vsign_short_memory.append(vsign)
                     constrainedy, vsign_short_memory = constrained_finder(prev_y_vector, vsign_short_memory,
                                                                           current_ecg_y_pos, constrainedy, axis='x')
-                    if condistance(constrainedy) <= 1:
+                    if condistance(constrainedy) == 1:
                         state = 1
                         x_class_value = x_class.predict(sample)[0]
                         num_yconstraint += 1
@@ -516,7 +516,7 @@ def update_data():
                     constrainedx, hsign_short_memory = constrained_finder(prev_x_vector, hsign_short_memory,
                                                                           current_ecg_x_pos, constrainedx, axis='y')
 
-                    if condistance(constrainedx) <= 1:  # Row is constrained to be have distance 1, take position.
+                    if condistance(constrainedx) == 1:  # Row is constrained to be have distance 1, take position.
                         previousR = "(%s, %s) (Constrained)" % (current_ecg_x_pos, current_ecg_y_pos)
                         state = 1
                         del x_short_memory
