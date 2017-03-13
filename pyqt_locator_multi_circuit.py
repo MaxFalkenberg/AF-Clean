@@ -500,7 +500,7 @@ def update_data():
                                                                           current_ecg_y_pos, constrainedy, 'x',
                                                                           perminant_constraints)
                     # CONSTRAINED CONDITION FOR Y
-                    if condistance(constrainedy) == 1 or condistance(constrainedy) == 0:
+                    if condistance(constrainedy) == 0:
                         state = 1
                         x_class_value = x_class.predict(sample)[0]
                         num_yconstraint += 1
@@ -672,7 +672,7 @@ def update_data():
                                                                           perminant_constraints)
 
                     # CONSTRAINED CONDITION FOR X
-                    if condistance(constrainedx) == 1 or condistance(constrainedx) == 0:  # Row is constrained to be have distance 1, take position.
+                    if condistance(constrainedx) == 0:  # Row is constrained to be have distance 1, take position.
                         previousR = "(%s, %s) (Constrained)" % (current_ecg_x_pos, current_ecg_y_pos)
                         state = 0
                         ecg_count = 0
