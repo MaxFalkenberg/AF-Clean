@@ -505,6 +505,7 @@ def update_data():
                         x_class_value = x_class.predict(sample)[0]
                         num_yconstraint += 1
 
+                        # CHECKING IF ITS ON THE RIGHT Y AXIS
                         if x_class_value == 1:
                             previousR = "(%s, %s) (Constrained)" % (current_ecg_x_pos, current_ecg_y_pos)
                             state = 0
@@ -554,36 +555,60 @@ def update_data():
                                                                                       constrainedy), axis='x')
                         y_vector = y_classifier_full.classes_[likelyp]
 
+                        # IF THE PREDICTED Y JUMP IS ZERO
                         if y_vector == 0:
-                            state = 1  # Change to state 1 for y axis regression/classification.
-                            del y_short_memory
-                            y_short_memory = []
-                            del vsign_short_memory
-                            vsign_short_memory = []
+                            state = 1
                             x_class_value = x_class.predict(sample)[0]
                             num_yzjump += 1
 
+                            # CHECKING IF ITS ON THE RIGHT X AXIS
                             if x_class_value == 1:
                                 previousR = "(%s, %s) (0 Y Jump)" % (current_ecg_x_pos, current_ecg_y_pos)
+                                state = 0
+                                ecg_count = 0
+                                num_xpos_class += 1
+                                # ALL ROTORS ARE FOUND
+                                if rotors_found == N_rotors:
+                                    rotors_found = 0
+                                    current_ecg_x_pos = randint(20, 179)
+                                    current_ecg_y_pos = randint(0, 199)
+                                    xUline.setPos(300)
+                                    xLline.setPos(300)
+                                    pUline.setPos(-300)
+                                    pLline.setPos(-300)
+                                    del total_sign_info
+                                    total_sign_info = []
+                                    perminant_constraints = []
+
+                                # ONE OF THE ROTORS IS FOUND
+                                else:
+                                    rotors_found += 1
+                                    upper = current_ecg_y_pos - 10
+                                    upper %= 200
+                                    lower = current_ecg_y_pos + 10
+                                    lower %= 200
+                                    perminant_constraints.append([lower, upper])
+                                    current_ecg_x_pos = randint(20, 179)
+                                    current_ecg_y_pos = choice(
+                                        conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
+                                    xUline.setPos(300)
+                                    xLline.setPos(300)
+                                    pUline.setPos(upper)
+                                    pLline.setPos(lower)
+
+                                constrainedy = [None, None]
+                                constrainedx = [20, 179]
+                                yUline.setPos(constrainedx[1])
+                                yLline.setPos(constrainedx[0])
                                 del y_short_memory
                                 y_short_memory = []
                                 del vsign_short_memory
                                 vsign_short_memory = []
-                                del constrainedy
-                                constrainedy = [None, None]
-                                current_ecg_y_pos = randint(20, 179)  # reseting the process.
-                                current_ecg_x_pos = randint(20, 179)
-                                state = 0
-                                ecg_count = 0
-                                num_xpos_class += 1
-                                yUline.setPos(constrainedx[1])
-                                yLline.setPos(constrainedx[0])
-                                xUline.setPos(300)
-                                xLline.setPos(300)  # If it predicts a jump of 0, then take the position it's on.
 
                         prev_y_vector = y_vector
                         current_ecg_y_pos -= y_vector
 
+                        # WRAPPING AROUND THE BOUNDRY CONDITION
                         if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
 
@@ -647,7 +672,7 @@ def update_data():
                                                                           perminant_constraints)
 
                     # CONSTRAINED CONDITION FOR X
-                    if condistance(constrainedx) == 1:  # Row is constrained to be have distance 1, take position.
+                    if condistance(constrainedx) == 1 or condistance(constrainedx) == 0:  # Row is constrained to be have distance 1, take position.
                         previousR = "(%s, %s) (Constrained)" % (current_ecg_x_pos, current_ecg_y_pos)
                         state = 0
                         ecg_count = 0
@@ -694,49 +719,100 @@ def update_data():
                                                                                       constrainedx), axis='y')
                         x_vector = x_classifier_full.classes_[likelyp]
 
+                        # IF THE PREDICTED JUMP IS ZERO
                         if x_vector == 0:  # If the predicted X jump is 0
                             previousR = "(%s, %s) (0 X Jump)" % (current_ecg_x_pos, current_ecg_y_pos)
-                            current_ecg_x_pos = randint(20, 179)
-                            current_ecg_y_pos = randint(0, 199)
                             state = 0
                             ecg_count = 0
                             num_xzjump += 1
+
+                            if rotors_found == N_rotors:
+                                xUline.setPos(300)
+                                xLline.setPos(300)
+                                pUline.setPos(-300)
+                                pLline.setPos(-300)
+                                current_ecg_x_pos = randint(20, 179)
+                                current_ecg_y_pos = randint(0, 199)
+                                rotors_found = 0
+                                del total_sign_info
+                                total_sign_info = []
+                                perminant_constraints = []
+
+                            else:
+                                rotors_found += 1
+                                upper = current_ecg_y_pos - 10
+                                upper %= 200
+                                lower = current_ecg_y_pos + 10
+                                lower %= 200
+                                perminant_constraints.append([lower, upper])
+                                current_ecg_x_pos = randint(20, 179)
+                                current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
+                                xUline.setPos(300)
+                                xLline.setPos(300)
+                                pUline.setPos(upper)
+                                pLline.setPos(lower)
+
+                            constrainedy = [None, None]
+                            constrainedx = [20, 179]
+                            yUline.setPos(constrainedx[1])
+                            yLline.setPos(constrainedx[0])
                             del x_short_memory
                             x_short_memory = []
                             del hsign_short_memory
                             hsign_short_memory = []
-                            constrainedx = [20, 179]
-                            del constrainedy
-                            constrainedy = [None, None]
-                            yUline.setPos(constrainedx[1])
-                            yLline.setPos(constrainedx[0])
-                            xUline.setPos(300)
-                            xLline.setPos(300)
 
                         prev_x_vector = x_vector
                         current_ecg_x_pos -= x_vector
 
+                        # WRAPPING AROUND THE BOUNDRY
                         if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                             current_ecg_x_pos %= 200
 
+                        # X LOOP FORMS
                         if current_ecg_x_pos in x_short_memory:
                             previousR = '(X LOOP, %s)' % current_ecg_y_pos
-                            state = 1
+                            state = 0
+                            ecg_count = 0
+                            num_Xloops += 1
+
+                            if rotors_found == N_rotors:
+                                xUline.setPos(300)
+                                xLline.setPos(300)
+                                pUline.setPos(-300)
+                                pLline.setPos(-300)
+                                current_ecg_x_pos = randint(20, 179)
+                                current_ecg_y_pos = randint(0, 199)
+                                rotors_found = 0
+                                del total_sign_info
+                                total_sign_info = []
+                                perminant_constraints = []
+
+                            else:
+                                rotors_found += 1
+                                upper = current_ecg_y_pos - 10
+                                upper %= 200
+                                lower = current_ecg_y_pos + 10
+                                lower %= 200
+                                perminant_constraints.append([lower, upper])
+                                current_ecg_x_pos = randint(20, 179)
+                                current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
+                                xUline.setPos(300)
+                                xLline.setPos(300)
+                                pUline.setPos(upper)
+                                pLline.setPos(lower)
+                                †
+                            xUline.setPos(300)
+                            xLline.setPos(300)
+                            pUline.setPos(-300)
+                            pLline.setPos(-300)
+                            constrainedy = [None, None]
+                            constrainedx = [20, 179]
+                            yUline.setPos(constrainedx[1])
+                            yLline.setPos(constrainedx[0])
                             del x_short_memory
                             x_short_memory = []
                             del hsign_short_memory
                             hsign_short_memory = []
-                            constrainedx = [20, 179]
-                            constrainedy = [None, None]
-                            current_ecg_x_pos = randint(20, 179)
-                            current_ecg_y_pos = randint(0, 199)
-                            state = 0
-                            ecg_count = 0
-                            num_Xloops += 1
-                            yUline.setPos(constrainedx[1])
-                            yLline.setPos(constrainedx[0])
-                            xUline.setPos(300)
-                            xLline.setPos(300)
 
             # UPDATING LINES AND PREPARING FOR NEW MEASURMENT
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
