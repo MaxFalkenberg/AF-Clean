@@ -1923,12 +1923,14 @@ def binplot_pretty(X, feature, clim = None, title = 'Default', binsize = 1, spli
     x = rad * np.cos(theta)
     y = rad * np.sin(theta)
 
-    x = x.astype('int')
-    y = y.astype('int')
+    x = x.astype('float')
+    y = y.astype('float')
     x /= binsize
     y /= binsize
     x += np.absolute(np.min(x))
     y += np.absolute(np.min(y))
+    x = x.astype('int')
+    y = y.astype('int')
     z = np.zeros((np.max(y) + 1, np.max(x) + 1), dtype = 'float')
     count = np.copy(z)
 
