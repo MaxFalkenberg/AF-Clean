@@ -1963,6 +1963,49 @@ def binplot_pretty(X, feature, clim = None, title = 'Default', binsize = 1, spli
     return z#, clim, feature
 
 
+def prob_bins(X, feature, binsize = 1):
+
+    x = np.array(X['Vector X 0'])
+    y = np.array(X['Vector Y 0'])
+    f = np.array(X[feature])
+    f += 1.
+    f *= 6.
+    f = np.rint(f)
+
+    x = x.astype('float')
+    y = y.astype('float')
+    x /= binsize
+    y /= binsize
+    x += np.absolute(np.min(x))
+    y += np.absolute(np.min(y))
+    x = x.astype('int')
+    y = y.astype('int')
+    z = np.zeros((np.max(y) + 1, np.max(x) + 1), dtype = 'float')
+    p = np.zeros((np.max(y) + 1, np.max(x) + 1,13), dtype = 'float')
+    c = np.zeros(13)
+    count = np.copy(z)
+
+    for i in range(len(x)):
+        p[y[i]][x[i]][f[i]] += 1.
+        count[y[i]][x[i]] += 1.
+        c[f[i]] += 1.
+    count = count.reshape((len(count[:,0]),len(count[0]),1))
+    p /= count
+    print c
+    return p#, clim, feature
+
+def check_signs(x,y,sign_value,sign_tensor,thr = 0.1):
+    x = float(x) / 10.
+    y = float(y) / 10.
+    x = int(x + 18.)
+    y = int(y + 10.)
+    j = int((sign_value + 1.) * 6.)
+    p = sign_tensor[:,:,j][y][x]
+    print x,y,j,p
+    return p > thr
+
+
+
 def modeplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save=False):
 
     try:
