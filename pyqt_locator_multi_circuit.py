@@ -285,10 +285,14 @@ xUline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('c', width=4))
 xLline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('b', width=4))
 yUline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('y', width=4))
 yLline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('y', width=4))
+pUline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('m', width=4))
+pLline = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen('g', width=4))
 view.addItem(xUline, ignoreBounds=True)
 view.addItem(xLline, ignoreBounds=True)
 view.addItem(yUline, ignoreBounds=True)
 view.addItem(yLline, ignoreBounds=True)
+view.addItem(pUline, ignoreBounds=True)
+view.addItem(pLline, ignoreBounds=True)
 
 # Crosshair setup
 vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen('r', width=2))
@@ -372,15 +376,18 @@ def update_data():
 
     ptr1 += 1
 
+    # CONDITION TO START THE LOCATING PROCESS
     if ptr1 >= stability_time:
         if not ECG_start_flag:
             ECG_start_flag = True
 
+        # CONDITION TO TAKE A MEASURMENT
         if ptr1 % process_length == 0 and ptr1 != stability_time:
 
             sample, bsign = rt_ecg_gathering(process_list, sign_para='record_sign_plus')  # ECG Recording and feature gathering
             ecg_count += 1
 
+            # LOOKING FOR THE ROTORS X AXIS
             if state == 0:
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 vsign = sample[0, :][-3]
@@ -389,6 +396,7 @@ def update_data():
                 y_class_value = y_class.predict(sample)[0]
                 y_probarg = reg_predictor(y_classifier_full.predict_proba(sample)[0, :], 10)
 
+                # POSITIVE CLASSIFICATION FOR Y
                 if y_class_value == 1:
                     state = 1  # Change to state 1 for y axis regression/classification.
                     del y_short_memory
@@ -416,11 +424,13 @@ def update_data():
                         xLline.setPos(300)
                         num_xpos_class += 1
 
+                # NEGATIVE CLASSIFIACTION FOR Y
                 if y_class_value == 0:
                     y_short_memory.append(current_ecg_y_pos)
                     vsign_short_memory.append(vsign)
                     constrainedy, vsign_short_memory = constrained_finder(prev_y_vector, vsign_short_memory,
                                                                           current_ecg_y_pos, constrainedy, axis='x')
+                    # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 1:
                         state = 1
                         x_class_value = x_class.predict(sample)[0]
@@ -445,6 +455,7 @@ def update_data():
                             xUline.setPos(300)
                             xLline.setPos(300)
 
+                    # MOVING THE PROBE IN THE Y AXIS
                     else:
                         likelyp = prediction(y_probarg, vector_constraint=vecdistance(current_ecg_y_pos,
                                                                                       constrainedy), axis='x')
@@ -483,6 +494,7 @@ def update_data():
                         if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
 
+            # LOOKING FOR THE ROTORS Y AXIS
             if state == 1:
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
                 hsign = sample[0, :][-2]  # Gets the h sign
@@ -490,6 +502,7 @@ def update_data():
                 x_probarg = reg_predictor(x_classifier_full.predict_proba(sample)[0, :], 10)  # Prob map
                 x_class_value = x_class.predict(sample)[0]
 
+                # POSITIVE CLASSIFICATION FOR X
                 if x_class_value == 1:
                     previousR = "(%s, %s)" % (current_ecg_x_pos, current_ecg_y_pos)
                     current_ecg_x_pos = randint(20, 179)
@@ -510,12 +523,14 @@ def update_data():
                     xUline.setPos(300)
                     xLline.setPos(300)
 
+                # NEGATIVE CLASSIFICATION FOR X
                 if x_class_value == 0:
                     x_short_memory.append(current_ecg_x_pos)
                     hsign_short_memory.append(hsign)
                     constrainedx, hsign_short_memory = constrained_finder(prev_x_vector, hsign_short_memory,
                                                                           current_ecg_x_pos, constrainedx, axis='y')
 
+                    # CONSTRAINED CONDITION FOR X
                     if condistance(constrainedx) == 1:  # Row is constrained to be have distance 1, take position.
                         previousR = "(%s, %s) (Constrained)" % (current_ecg_x_pos, current_ecg_y_pos)
                         state = 1
@@ -537,6 +552,7 @@ def update_data():
                         xUline.setPos(300)
                         xLline.setPos(300)
 
+                    # MOVING THE PROBE IN THE X AXIS
                     else:
                         likelyp = prediction(x_probarg, vector_constraint=vecdistance(current_ecg_x_pos,
                                                                                       constrainedx), axis='y')
@@ -589,6 +605,7 @@ def update_data():
                             xUline.setPos(300)
                             xLline.setPos(300)
 
+            # UPDATING LINES AND PREPARING FOR NEW MEASURMENT
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
             if constrainedy[0] is not None:
                 xLline.setPos(constrainedy[0])
