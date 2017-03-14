@@ -218,8 +218,8 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
                 del sign_short_memory_  # resets the short_memory as it needs to find first constraint again.
                 sign_short_memory_ = []
             else:
-                constrained_[0] = perm_constraints[0]
-                constrained_[1] = perm_constraints[1]
+                constrained_[0] = perm_constraints[0][0]
+                constrained_[1] = perm_constraints[0][1]
 
     if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
@@ -294,8 +294,8 @@ def update_label_text(rotor_x_1, rotor_y_1, rotor_x_2, rotor_y_2,
               Number of X Loops: %s<br>\n
               Number of Fully Constrained X Axis: %s<br>\n
               Number of Fully Constrained Y Axis: %s<br>\n
-              Number of Y Zeros Jumps: %s<br>\n
-              Number of Z Zeros Jumps: %s<br>\n """ % (rotor_x_1, rotor_y_1, rotor_x_2, rotor_y_2, ecg_x, ecg_y,
+              Number of Y Zero Jumps: %s<br>\n
+              Number of X Zero Jumps: %s<br>\n """ % (rotor_x_1, rotor_y_1, rotor_x_2, rotor_y_2, ecg_x, ecg_y,
                                                        prev_res, xaxis_const, yaxis_const, Pconst, ecg_num, nypos,
                                                        nxpos, nyloop, nxloop, nycons, nxcons, nyz, nxz)
     label.setText(text)
@@ -362,8 +362,10 @@ prev_x_vector = None
 vsign_short_memory = []
 hsign_short_memory = []
 
-# All the sign information
+# History information
 total_sign_info = []
+x_history = []
+y_history = []
 
 # Constrained y/x values
 constrainedy = [None, None]
@@ -393,6 +395,7 @@ def update_data():
     global current_ecg_y_pos, current_ecg_x_pos, y_short_memory, x_short_memory, ecg_count, previousR, prev_y_vector
     global prev_x_vector, hsign_short_memory, num_ypos_class, num_xpos_class, num_Yloops, num_Xloops, num_yconstraint
     global num_xconstraint, num_xzjump, num_yzjump, rotors_found, perminant_constraints, N_rotors, total_sign_info
+    global x_history, y_history
 
     data = a.propagate(ecg=True)
     data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
@@ -425,6 +428,8 @@ def update_data():
             sample, bsign = rt_ecg_gathering(process_list, sign_para='record_sign_plus')  # ECG Recording and feature gathering
             ecg_count += 1
             total_sign_info.append(sample[-3:])
+            x_history.append(current_ecg_x_pos)
+            y_history.append(current_ecg_y_pos)
 
             # LOOKING FOR THE ROTORS X AXIS
             if state == 0:
@@ -460,8 +465,6 @@ def update_data():
                             pUline.setPos(-300)
                             pLline.setPos(-300)
                             rotors_found = 0
-                            del total_sign_info
-                            total_sign_info = []
                             perminant_constraints = []
 
                         # ONE OF THE ROTORS IS FOUND
@@ -478,6 +481,9 @@ def update_data():
                             xLline.setPos(300)
                             pUline.setPos(upper)
                             pLline.setPos(lower)
+                            print x_history
+                            print y_history
+                            print total_sign_info
 
                         constrainedy = [None, None]
                         constrainedx = [20, 179]
@@ -488,6 +494,9 @@ def update_data():
                         y_short_memory = []
                         del vsign_short_memory
                         vsign_short_memory = []
+                        total_sign_info = []
+                        x_history = []
+                        y_history = []
 
                 # NEGATIVE CLASSIFIACTION FOR Y
                 if y_class_value == 0:
@@ -561,6 +570,9 @@ def update_data():
                         y_short_memory = []
                         del vsign_short_memory
                         vsign_short_memory = []
+                        total_sign_info = []
+                        x_history = []
+                        y_history = []
 
                     # MOVING THE PROBE IN THE Y AXIS
                     else:
@@ -644,7 +656,7 @@ def update_data():
                             current_ecg_y_pos %= 200
 
                         # Y LOOP FORM CHECK
-                        if current_ecg_x_pos in x_short_memory:
+                        if current_ecg_y_pos in y_short_memory:
                             previousR = 'Y LOOP'
                             state = 0
                             ecg_count = 0
@@ -666,6 +678,9 @@ def update_data():
                             y_short_memory = []
                             del vsign_short_memory
                             vsign_short_memory = []
+                            total_sign_info = []
+                            x_history = []
+                            y_history = []
 
             # LOOKING FOR THE ROTORS Y AXIS
             if state == 1:
@@ -691,8 +706,6 @@ def update_data():
                         current_ecg_x_pos = randint(20, 179)
                         current_ecg_y_pos = randint(0, 199)
                         rotors_found = 0
-                        del total_sign_info
-                        total_sign_info = []
                         perminant_constraints = []
 
                     else:
@@ -708,6 +721,9 @@ def update_data():
                         xLline.setPos(300)
                         pUline.setPos(upper)
                         pLline.setPos(lower)
+                        print x_history
+                        print y_history
+                        print total_sign_info
 
                     constrainedy = [None, None]
                     constrainedx = [20, 179]
@@ -717,6 +733,9 @@ def update_data():
                     x_short_memory = []
                     del hsign_short_memory
                     hsign_short_memory = []
+                    total_sign_info = []
+                    x_history = []
+                    y_history = []
 
                 # NEGATIVE CLASSIFICATION FOR X
                 if x_class_value == 0:
@@ -749,6 +768,9 @@ def update_data():
                         x_short_memory = []
                         del hsign_short_memory
                         hsign_short_memory = []
+                        total_sign_info = []
+                        x_history = []
+                        y_history = []
 
                     # MOVING THE PROBE IN THE X AXIS
                     else:
@@ -779,6 +801,9 @@ def update_data():
                             x_short_memory = []
                             del hsign_short_memory
                             hsign_short_memory = []
+                            total_sign_info = []
+                            x_history = []
+                            y_history = []
 
                         prev_x_vector = x_vector
                         current_ecg_x_pos -= x_vector
@@ -810,6 +835,9 @@ def update_data():
                             x_short_memory = []
                             del hsign_short_memory
                             hsign_short_memory = []
+                            total_sign_info = []
+                            x_history = []
+                            y_history = []
 
             # UPDATING LINES AND PREPARING FOR NEW MEASURMENT
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))
@@ -829,7 +857,7 @@ def update_data():
                               num_xpos_class, num_Yloops, num_Xloops, num_yconstraint, num_xconstraint, num_yzjump,
                               num_xzjump)
 
-    time.sleep(1/120.)  # gives more stable fps.
+    # time.sleep(1/120.)  # gives more stable fps.
     img.setImage(data.T)  # puts animation grid on image.
 
     # Stuff to do with time and fps.
