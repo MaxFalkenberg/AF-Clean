@@ -490,13 +490,11 @@ def update_data():
                             lower = current_ecg_y_pos + 10
                             lower %= 200
                             perminant_constraints.append([lower, upper])
-                            print x_history
-                            print y_history
-                            print total_sign_info
                             xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos, current_ecg_y_pos)
                             print xvec
                             print yvec
-                            current_ecg_x_pos = randint(20, 179)
+                            print total_sign_info
+                            current_ecg_x_pos = randint(20, 179)  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
                             current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
                             xUline.setPos(300)
                             xLline.setPos(300)
@@ -733,14 +731,12 @@ def update_data():
                         lower = current_ecg_y_pos + 10
                         lower %= 200
                         perminant_constraints.append([lower, upper])
-                        print x_history
-                        print y_history
-                        print total_sign_info
                         xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos, current_ecg_y_pos)
                         print xvec
                         print yvec
-                        current_ecg_x_pos = randint(20, 179)
-                        current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
+                        print total_sign_info
+                        current_ecg_x_pos = randint(20, 179)  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
+                        current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FRO MAX
                         xUline.setPos(300)
                         xLline.setPos(300)
                         pUline.setPos(upper)
@@ -878,7 +874,7 @@ def update_data():
                               num_xpos_class, num_Yloops, num_Xloops, num_yconstraint, num_xconstraint, num_yzjump,
                               num_xzjump)
 
-    time.sleep(1/60.)  # gives more stable fps.
+    time.sleep(1/120.)  # gives more stable fps.
     img.setImage(data.T)  # puts animation grid on image.
 
     # Stuff to do with time and fps.
