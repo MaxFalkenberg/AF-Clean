@@ -156,6 +156,21 @@ def conposition(lower, upper):
         return range(lower, 200) + range(0, upper)
 
 
+def relative_vectors(x_pos, y_pos, ref_x, ref_y):
+    """
+    give back the relative vector in relation to the reference point.
+    :param x_pos:
+    :param y_pos:
+    :param ref_x:
+    :param ref_y:
+    :return:
+    """
+    vector_x = [(x - ref_x) for x in x_pos]
+    vector_y = [(y - ref_y) for y in y_pos]
+    vector_y = [y-200 if y > 100 else y+200 if y <= -100 else y for y in vector_y]
+    return vector_x, vector_y
+
+
 def prediction(prob_map, vector_constraint, axis):
     """
     makes a vector prediction
@@ -475,15 +490,18 @@ def update_data():
                             lower = current_ecg_y_pos + 10
                             lower %= 200
                             perminant_constraints.append([lower, upper])
+                            print x_history
+                            print y_history
+                            print total_sign_info
+                            xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos, current_ecg_y_pos)
+                            print xvec
+                            print yvec
                             current_ecg_x_pos = randint(20, 179)
                             current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
                             xUline.setPos(300)
                             xLline.setPos(300)
                             pUline.setPos(upper)
                             pLline.setPos(lower)
-                            print x_history
-                            print y_history
-                            print total_sign_info
 
                         constrainedy = [None, None]
                         constrainedx = [20, 179]
@@ -715,15 +733,18 @@ def update_data():
                         lower = current_ecg_y_pos + 10
                         lower %= 200
                         perminant_constraints.append([lower, upper])
+                        print x_history
+                        print y_history
+                        print total_sign_info
+                        xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos, current_ecg_y_pos)
+                        print xvec
+                        print yvec
                         current_ecg_x_pos = randint(20, 179)
                         current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
                         xUline.setPos(300)
                         xLline.setPos(300)
                         pUline.setPos(upper)
                         pLline.setPos(lower)
-                        print x_history
-                        print y_history
-                        print total_sign_info
 
                     constrainedy = [None, None]
                     constrainedx = [20, 179]
@@ -857,7 +878,7 @@ def update_data():
                               num_xpos_class, num_Yloops, num_Xloops, num_yconstraint, num_xconstraint, num_yzjump,
                               num_xzjump)
 
-    # time.sleep(1/120.)  # gives more stable fps.
+    time.sleep(1/60.)  # gives more stable fps.
     img.setImage(data.T)  # puts animation grid on image.
 
     # Stuff to do with time and fps.
