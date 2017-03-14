@@ -214,8 +214,12 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
                 constrained_[0] = perm_constraints[0][0]
 
         if sign == 0:  # Starts right on the boundry
-            del sign_short_memory_  # resets the short_memory as it needs to find first constraint again.
-            sign_short_memory_ = []
+            if not perm_constraints:
+                del sign_short_memory_  # resets the short_memory as it needs to find first constraint again.
+                sign_short_memory_ = []
+            else:
+                constrained_[0] = perm_constraints[0]
+                constrained_[1] = perm_constraints[1]
 
     if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
         vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
@@ -639,6 +643,30 @@ def update_data():
                         if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
                             current_ecg_y_pos %= 200
 
+                        # Y LOOP FORM CHECK
+                        if current_ecg_x_pos in x_short_memory:
+                            previousR = 'Y LOOP'
+                            state = 0
+                            ecg_count = 0
+                            num_Yloops += 1
+                            xUline.setPos(300)
+                            xLline.setPos(300)
+                            constrainedy = [None, None]
+                            constrainedx = [20, 179]
+                            if rotors_found > 0:
+                                lower = perminant_constraints[0][0]
+                                upper = perminant_constraints[0][1]
+                                current_ecg_y_pos = choice(conposition(lower, upper))
+                            else:
+                                current_ecg_y_pos = randint(0, 199)
+                            current_ecg_x_pos = randint(20, 179)
+                            yUline.setPos(constrainedx[1])
+                            yLline.setPos(constrainedx[0])
+                            del y_short_memory
+                            y_short_memory = []
+                            del vsign_short_memory
+                            vsign_short_memory = []
+
             # LOOKING FOR THE ROTORS Y AXIS
             if state == 1:
                 sample = sample.reshape(1, -1)  # Get deprication warning if this is not done.
@@ -759,7 +787,7 @@ def update_data():
                         if current_ecg_x_pos > 199 or current_ecg_x_pos < 0:
                             current_ecg_x_pos %= 200
 
-                        # X LOOP FORMS
+                        # X LOOP FORM CHECK
                         if current_ecg_x_pos in x_short_memory:
                             previousR = '(X LOOP, %s)' % current_ecg_y_pos
                             state = 0
