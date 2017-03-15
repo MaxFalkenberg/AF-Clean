@@ -16,6 +16,14 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
+# y_classifier_full = joblib.load(args[1])
+# y_class = joblib.load(args[2])
+# x_classifier_full = joblib.load(args[3])
+# x_class = joblib.load(args[4])
+# vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
+# hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
+# axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+
 y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
 y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
 x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
@@ -23,7 +31,7 @@ x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
 vsign_check = np.load('vsign_tensor.npy')
 hsign_check = np.load('hsign_tensor.npy')
 axessign_check = np.load('axessign_tensor.npy')
-#####################################
+
 
 # Initialising the Heart structure
 a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
@@ -301,13 +309,13 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
     :return:
     """
     binary = False
+    x_jump = False
     b = check_bsign(total_sign[0][-2], total_sign[0][-1])
+    h = total_sign_info[0][1]
+    v = total_sign_info[0][0]
     if b != 0:
         binary = True
     else:
-        v = total_sign_info[0][0]
-        h = total_sign_info[0][1]
-
         if v >= 0:
             constrained_y[1] = current_y
             constrained_y[0] = perm_const[0][0]
@@ -322,7 +330,20 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
         if h == 1:
             contrained_x[1] = current_x
 
-    return contrained_x, constrained_y, binary
+    x_jump = True
+    #     if h > 0:
+    #         current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
+    #     else:
+    #         current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+    # else:
+    #     xr = 179 - current_ecg_x_pos
+    #     xl = current_ecg_x_pos - 20
+    #     if xr >= xl:
+    #         current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+    #     else:
+    #         current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
+
+    return contrained_x, constrained_y, binary, x_jump
 
 
 def update_label_text(rotor_x_1, rotor_y_1, rotor_x_2, rotor_y_2,
@@ -431,6 +452,7 @@ y_history = []
 special_state = False
 binary_state = False
 binary_jump = 0
+jump_x = False
 
 # Constrained y/x values
 constrainedy = [None, None]
@@ -460,7 +482,7 @@ def update_data():
     global current_ecg_y_pos, current_ecg_x_pos, y_short_memory, x_short_memory, ecg_count, previousR, prev_y_vector
     global prev_x_vector, hsign_short_memory, num_ypos_class, num_xpos_class, num_Yloops, num_Xloops, num_yconstraint
     global num_xconstraint, num_xzjump, num_yzjump, rotors_found, perminant_constraints, N_rotors, total_sign_info, vconsistent, hconsistent, bconsistent
-    global x_history, y_history, special_state, binary_jump, binary_state
+    global x_history, y_history, special_state, binary_jump, binary_state, jump_x
 
     data = a.propagate(ecg=True)
     data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
@@ -597,8 +619,10 @@ def update_data():
                                                                               current_ecg_y_pos, constrainedy, 'x',
                                                                               perminant_constraints)
                     if special_state:
-                        constrainedx, constrainedy, binary_state = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
+                        constrainedx, constrainedy, binary_state, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
                                                                                              constrainedx, perminant_constraints)
+
+                        special_state = False
 
 
                     # CONSTRAINED CONDITION FOR Y
@@ -636,13 +660,31 @@ def update_data():
                             y_vector = y_classifier_full.classes_[likelyp]
 
                         if binary_state:
-                            if binary_jump == 0:
-                                y_vector = 50
-                                binary_jump += 1
+                            print "binary_state"
                             if binary_jump == 1:
                                 y_vector = -100
                                 binary_jump = 0
                                 binary_state = False
+                            if binary_jump == 0:
+                                y_vector = 50
+                                binary_jump += 1
+
+                        if jump_x:
+                            h = total_sign_info[-1][1]
+                            if np.abs(h) > 0.4:
+                                if h > 0:
+                                    current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
+                                else:
+                                    current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+
+                            else:
+                                xr = 179 - current_ecg_x_pos
+                                xl = current_ecg_x_pos - 20
+                                if xr >= xl:
+                                    current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+                                else:
+                                    current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
+                            jump_x = False
 
                         # IF THE PREDICTED Y JUMP IS ZERO
                         if y_vector == 0:
