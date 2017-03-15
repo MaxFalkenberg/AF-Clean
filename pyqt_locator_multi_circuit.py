@@ -9,17 +9,20 @@ import copy
 from sklearn.externals import joblib
 from random import randint, choice
 import analysis_theano as at
-from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_compile_rt
+from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_compile_rt, check_signs, check_bsign
 import propagate_singlecircuit as ps
 
 args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-y_classifier_full = joblib.load(args[1])
-y_class = joblib.load(args[2])
-x_classifier_full = joblib.load(args[3])
-x_class = joblib.load(args[4])
+y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+vsign_check = np.load('vsign_tensor.npy')
+hsign_check = np.load('hsign_tensor.npy')
+axessign_check = np.load('axessign_tensor.npy')
 #####################################
 
 # Initialising the Heart structure
@@ -70,8 +73,8 @@ def rt_ecg_gathering(ecg_list, sign_para):
     uncompiled_features = []
     for index in range(9):
         uncompiled_features.append(feature_extract_multi_test_rt(index, voltages))
-    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign=sign_para)
-    return compiled_features
+    compiled_features, bsigns = multi_feature_compile_rt(np.array(uncompiled_features), sign='record_sign_plus')
+    return compiled_features, bsigns
 
 
 def movingaverage(values, weight):
@@ -364,6 +367,9 @@ hsign_short_memory = []
 
 # History information
 total_sign_info = []
+vconsistent = []
+hconsistent = []
+bconsistent = []
 x_history = []
 y_history = []
 
@@ -394,7 +400,7 @@ def update_data():
     global updateTime, fps, ptr1, process_list, ECG_start_flag, state, vsign_short_memory, constrainedy, constrainedx
     global current_ecg_y_pos, current_ecg_x_pos, y_short_memory, x_short_memory, ecg_count, previousR, prev_y_vector
     global prev_x_vector, hsign_short_memory, num_ypos_class, num_xpos_class, num_Yloops, num_Xloops, num_yconstraint
-    global num_xconstraint, num_xzjump, num_yzjump, rotors_found, perminant_constraints, N_rotors, total_sign_info
+    global num_xconstraint, num_xzjump, num_yzjump, rotors_found, perminant_constraints, N_rotors, total_sign_info, vconsistent,hconsistent, bconsistent
     global x_history, y_history
 
     data = a.propagate(ecg=True)
@@ -425,9 +431,9 @@ def update_data():
         # CONDITION TO TAKE A MEASURMENT
         if ptr1 % process_length == 0 and ptr1 != stability_time:
 
-            sample, bsign = rt_ecg_gathering(process_list, sign_para='record_sign_plus')  # ECG Recording and feature gathering
+            sample, signs = rt_ecg_gathering(process_list, sign_para='record_sign_plus')  # ECG Recording and feature gathering
             ecg_count += 1
-            total_sign_info.append(sample[-3:])
+            total_sign_info.append(signs)
             x_history.append(current_ecg_x_pos)
             y_history.append(current_ecg_y_pos)
 
@@ -475,8 +481,8 @@ def update_data():
                             lower = current_ecg_y_pos + 10
                             lower %= 200
                             perminant_constraints.append([lower, upper])
-                            current_ecg_x_pos = randint(20, 179)
-                            current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
+                            #current_ecg_x_pos = randint(20, 179)
+                            #current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
                             xUline.setPos(300)
                             xLline.setPos(300)
                             pUline.setPos(upper)
@@ -484,6 +490,35 @@ def update_data():
                             print x_history
                             print y_history
                             print total_sign_info
+                            for i in range(len(x_history)):
+                                y = y_history[i] - current_ecg_y_pos
+                                if y > 100:
+                                    y -= 200
+                                elif y <= -100:
+                                    y += 200
+                                vconsistent.append(check_signs(x_history[i] - current_ecg_x_pos,y,total_sign_info[i][0],vsign_check,thr = 0.02))
+                                hconsistent.append(check_signs(x_history[i] - current_ecg_x_pos,y,total_sign_info[i][1],hsign_check,thr = 0.02))
+                                bconsistent.append(check_bsign(total_sign_info[i][-2],total_sign_info[i][-1]))
+                            print vconsistent
+                            print hconsistent
+                            print bconsistent
+                            if np.size(np.argwhere(np.array(bconsistent) != 0)) != 0:
+                                i = np.argmin(np.array(bconsistent))
+                                y = y_history[i] - current_ecg_y_pos
+                                if y > 100:
+                                    y -= 200
+                                elif y <= -100:
+                                    y += 200
+                                if y>= 0:
+                                    d = -50
+                                else:
+                                    d = 50
+                                print current_ecg_y_pos, y, d
+                                current_ecg_y_pos = (current_ecg_y_pos + (y + d) + 100) %200
+                                print current_ecg_y_pos
+                                print 'learned jump'
+                            else:
+                                current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
 
                         constrainedy = [None, None]
                         constrainedx = [20, 179]
@@ -495,6 +530,9 @@ def update_data():
                         del vsign_short_memory
                         vsign_short_memory = []
                         total_sign_info = []
+                        vconsistent = []
+                        hconsistent = []
+                        bconsistent = []
                         x_history = []
                         y_history = []
 
@@ -560,7 +598,8 @@ def update_data():
                         if rotors_found > 0:
                             lower = perminant_constraints[0][0]
                             upper = perminant_constraints[0][1]
-                            current_ecg_y_pos = choice(conposition(lower, upper))
+                            # current_ecg_y_pos = choice(conposition(lower, upper))
+                            current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                         else:
                             current_ecg_y_pos = randint(0, 199)
                         current_ecg_x_pos = randint(20, 179)
@@ -571,6 +610,9 @@ def update_data():
                         del vsign_short_memory
                         vsign_short_memory = []
                         total_sign_info = []
+                        vconsistent = []
+                        hconsistent = []
+                        bconsistent = []
                         x_history = []
                         y_history = []
 
@@ -637,10 +679,11 @@ def update_data():
                             if rotors_found > 0:
                                 lower = perminant_constraints[0][0]
                                 upper = perminant_constraints[0][1]
-                                current_ecg_y_pos = choice(conposition(lower, upper))
+                                # current_ecg_y_pos = choice(conposition(lower, upper))
+                                current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
-                            current_ecg_x_pos = randint(20, 179)
+                                current_ecg_x_pos = randint(20, 179)
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             del y_short_memory
@@ -668,10 +711,11 @@ def update_data():
                             if rotors_found > 0:
                                 lower = perminant_constraints[0][0]
                                 upper = perminant_constraints[0][1]
-                                current_ecg_y_pos = choice(conposition(lower, upper))
+                                # current_ecg_y_pos = choice(conposition(lower, upper))
+                                current_ecg_y_pos = (current_ecg_y_pos + 100)%200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
-                            current_ecg_x_pos = randint(20, 179)
+                                current_ecg_x_pos = randint(20, 179)
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             del y_short_memory
@@ -679,6 +723,9 @@ def update_data():
                             del vsign_short_memory
                             vsign_short_memory = []
                             total_sign_info = []
+                            vconsistent = []
+                            hconsistent = []
+                            bconsistent = []
                             x_history = []
                             y_history = []
 
@@ -715,15 +762,45 @@ def update_data():
                         lower = current_ecg_y_pos + 10
                         lower %= 200
                         perminant_constraints.append([lower, upper])
-                        current_ecg_x_pos = randint(20, 179)
-                        current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
+                        #current_ecg_x_pos = randint(20, 179)
+                        #current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE
+                        # current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                         xUline.setPos(300)
                         xLline.setPos(300)
                         pUline.setPos(upper)
                         pLline.setPos(lower)
-                        print x_history
-                        print y_history
-                        print total_sign_info
+                        # print x_history
+                        # print y_history
+                        # print total_sign_info
+                        for i in range(len(x_history) - 1):
+                            y = y_history[i] - current_ecg_y_pos
+                            if y > 100:
+                                y -= 200
+                            elif y <= -100:
+                                y += 200
+                            vconsistent.append(check_signs(x_history[i] - current_ecg_x_pos,y,total_sign_info[i][0],vsign_check,thr = 0.02))
+                            hconsistent.append(check_signs(x_history[i] - current_ecg_x_pos,y,total_sign_info[i][1],hsign_check,thr = 0.02))
+                            bconsistent.append(check_bsign(total_sign_info[i][-2],total_sign_info[i][-1]))
+                        print vconsistent
+                        print hconsistent
+                        print bconsistent
+                        if np.size(np.argwhere(np.array(bconsistent) != 0)) != 0:
+                            i = np.argmin(np.array(bconsistent))
+                            y = y_history[i] - current_ecg_y_pos
+                            if y > 100:
+                                y -= 200
+                            elif y <= -100:
+                                y += 200
+                            if y>= 0:
+                                d = -50
+                            else:
+                                d = 50
+                            print current_ecg_y_pos, y, d
+                            current_ecg_y_pos = (current_ecg_y_pos + (y + d) + 100) %200
+                            print current_ecg_y_pos
+                            print 'learned jump'
+                        else:
+                            current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
 
                     constrainedy = [None, None]
                     constrainedx = [20, 179]
@@ -734,6 +811,9 @@ def update_data():
                     del hsign_short_memory
                     hsign_short_memory = []
                     total_sign_info = []
+                    vconsistent = []
+                    hconsistent = []
+                    bconsistent = []
                     x_history = []
                     y_history = []
 
@@ -758,7 +838,8 @@ def update_data():
                         if rotors_found > 0:
                             lower = perminant_constraints[0][0]
                             upper = perminant_constraints[0][1]
-                            current_ecg_y_pos = choice(conposition(lower, upper))
+                            # current_ecg_y_pos = choice(conposition(lower, upper))
+                            current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                         else:
                             current_ecg_y_pos = randint(0, 199)
                         current_ecg_x_pos = randint(20, 179)
@@ -771,6 +852,9 @@ def update_data():
                         total_sign_info = []
                         x_history = []
                         y_history = []
+                        vconsistent = []
+                        hconsistent = []
+                        bconsistent = []
 
                     # MOVING THE PROBE IN THE X AXIS
                     else:
@@ -791,10 +875,11 @@ def update_data():
                             if rotors_found > 0:
                                 lower = perminant_constraints[0][0]
                                 upper = perminant_constraints[0][1]
-                                current_ecg_y_pos = choice(conposition(lower, upper))
+                                # current_ecg_y_pos = choice(conposition(lower, upper))
+                                current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
-                            current_ecg_x_pos = randint(20, 179)
+                                current_ecg_x_pos = randint(20, 179)
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             del x_short_memory
@@ -804,6 +889,9 @@ def update_data():
                             total_sign_info = []
                             x_history = []
                             y_history = []
+                            vconsistent = []
+                            hconsistent = []
+                            bconsistent = []
 
                         prev_x_vector = x_vector
                         current_ecg_x_pos -= x_vector
@@ -825,7 +913,8 @@ def update_data():
                             if rotors_found > 0:
                                 lower = perminant_constraints[0][0]
                                 upper = perminant_constraints[0][1]
-                                current_ecg_y_pos = choice(conposition(lower, upper))
+                                # current_ecg_y_pos = choice(conposition(lower, upper))
+                                current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
                             current_ecg_x_pos = randint(20, 179)
@@ -838,6 +927,9 @@ def update_data():
                             total_sign_info = []
                             x_history = []
                             y_history = []
+                            vconsistent = []
+                            hconsistent = []
+                            bconsistent = []
 
             # UPDATING LINES AND PREPARING FOR NEW MEASURMENT
             ecg_processing.reset_singlegrid((current_ecg_y_pos, current_ecg_x_pos))

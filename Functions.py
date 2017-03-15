@@ -1662,7 +1662,7 @@ def multi_feature_compile(dataframe,test_key = 'Multi Target 0'):
     df.to_hdf(name + '.h5','w')
 
 
-def multi_feature_compile_rt(uncompiled, sign="record_sign"):
+def multi_feature_compile_rt(uncompiled, sign="record_sign_plus"):
     """
     Compiles all the ecg features into a single multi probe feature array. This is then fed into a RF model.
     :param uncompiled: Uncompiled ecg features.
@@ -1673,9 +1673,7 @@ def multi_feature_compile_rt(uncompiled, sign="record_sign"):
     compiled = process_multi_feature(uncompiled)
     if sign == "record_sign" or sign == "record_sign_plus":
         signs = sign_solver(uncompiled[:, 0])
-        signs = signs[:-2]
-        bsigns = signs[-2:]
-        compiled = np.concatenate([compiled,signs])
+        compiled = np.concatenate([compiled,signs[:-2]])
     # Cleans all inf values
     # print np.shape(compiled)
     compiled[compiled == np.inf] = 99999.
@@ -1684,7 +1682,7 @@ def multi_feature_compile_rt(uncompiled, sign="record_sign"):
     if np.isnan(compiled).any():
         print "NAN came through"
     if sign == "record_sign_plus":
-        return np.nan_to_num(compiled),bsigns
+        return np.nan_to_num(compiled),signs
     else:
         return np.nan_to_num(compiled)
 
@@ -2001,10 +1999,28 @@ def check_signs(x,y,sign_value,sign_tensor,thr = 0.1):
     y = int(y + 10.)
     j = int((sign_value + 1.) * 6.)
     p = sign_tensor[:,:,j][y][x]
-    print x,y,j,p
+    # print x,y,j,p
     return p > thr
 
+def check_bsign(bsign,bsum,thr = -10):
+    if bsign < 0 or bsum < thr:
+        return bsum
+    else:
+        return 0
 
+def plot_matrix(z,title):
+    cm = plt.cm.get_cmap('coolwarm')
+    plt.figure(figsize =(10.,10.))
+    plt.imshow(z, interpolation="nearest", origin="lower", cmap = cm,extent=[-180, 180, -99, 100])
+    cbar = plt.colorbar(shrink=0.4, pad = 0.07)
+    cbar.ax.tick_params(labelsize=15)
+    plt.xlabel('X', fontsize = 18)
+    plt.ylabel('Y', fontsize = 18)
+    plt.title(title, fontsize = 21)
+    plt.tick_params(axis='both', which='major', labelsize=15)
+    save_data_name = raw_input("Saved datafile name: ")
+    plt.savefig(save_data_name + '.pdf')
+    plt.close()
 
 def modeplot(X, feature, clim = None, condition = None, binsize = 1, split = 'none', save=False):
 
