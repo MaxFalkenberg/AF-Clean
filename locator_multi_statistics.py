@@ -174,9 +174,9 @@ print "Median fail distance from rotor: {:.2f}".format(fail_median)
 # # cx2.hist(xloop_yvec, bins=50)
 # #
 plt.figure()
-count_grid = np.zeros((200, 200))
+count_grid = np.zeros((300, 300))
 for x in vector_unp:
-    count_grid[99 + x[1]][99 + x[0]] += 1
+    count_grid[149 + x[1]][149 + x[0]] += 1
 plt.imshow(count_grid, interpolation='nearest', origin="lower")
 # #
 # # plt.figure()
