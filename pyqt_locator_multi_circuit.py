@@ -683,7 +683,8 @@ def update_data():
 
                         if jump_x:
                             h = total_sign_info[-1][1]
-                            if np.abs(h) > 0.7:
+                            if np.abs(h) > 1.0:
+                                print 'constrain jump'
                                 if h > 0:
                                     current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
                                 else:
@@ -698,8 +699,11 @@ def update_data():
 
                         if rotors_found > 0 and condistance(constrainedy) < 60:
                             print 'something whatever'
-                            if np.abs(y_vector) > condistance(constrainedy) * 0.6:
-                                y_vector = int(np.sign(y_vector)*condistance(constrainedy)/2.)
+                            d = condistance(constrainedy)
+                            if type(d) == type(None):
+                                d = 100
+                            if np.abs(y_vector) > d * 0.6:
+                                y_vector = int(np.sign(y_vector)*d/2.)
 
                         # IF THE PREDICTED Y JUMP IS ZERO
                         if y_vector == 0:
