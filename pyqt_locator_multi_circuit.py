@@ -16,21 +16,21 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-y_classifier_full = joblib.load(args[1])
-y_class = joblib.load(args[2])
-x_classifier_full = joblib.load(args[3])
-x_class = joblib.load(args[4])
-vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
-hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
-axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+# y_classifier_full = joblib.load(args[1])
+# y_class = joblib.load(args[2])
+# x_classifier_full = joblib.load(args[3])
+# x_class = joblib.load(args[4])
+# vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
+# hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
+# axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
 
-# y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
-# y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
-# x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
-# x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
-# vsign_check = np.load('vsign_tensor.npy')
-# hsign_check = np.load('hsign_tensor.npy')
-# axessign_check = np.load('axessign_tensor.npy')
+y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+vsign_check = np.load('vsign_tensor.npy')
+hsign_check = np.load('hsign_tensor.npy')
+axessign_check = np.load('axessign_tensor.npy')
 
 
 # Initialising the Heart structure
@@ -610,6 +610,7 @@ def update_data():
                     if special_state:
                         constrainedx, constrainedy, binary_state, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
                                                                                              constrainedx, perminant_constraints)
+
 
                     # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 0:
