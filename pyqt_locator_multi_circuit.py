@@ -679,22 +679,21 @@ def update_data():
                             else:
                                 y_vector = 50
                                 binary_jump += 1
+                            special_state = False
 
                         if jump_x:
                             h = total_sign_info[-1][1]
-                            if np.abs(h) > 0.4:
+                            if np.abs(h) > 0.7:
                                 if h > 0:
                                     current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
                                 else:
                                     current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
 
                             else:
-                                xr = 179 - current_ecg_x_pos
-                                xl = current_ecg_x_pos - 20
-                                if xr >= xl:
-                                    current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+                                if 179 - current_ecg_x_pos >= 80:
+                                    current_ecg_x_pos += 80
                                 else:
-                                    current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
+                                    current_ecg_x_pos -= 80
                             jump_x = False
 
                         # IF THE PREDICTED Y JUMP IS ZERO
