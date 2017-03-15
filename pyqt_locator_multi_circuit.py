@@ -16,13 +16,13 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-y_classifier_full = joblib.load(args[1])
-y_class = joblib.load(args[2])
-x_classifier_full = joblib.load(args[3])
-x_class = joblib.load(args[4])
-vsign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
-hsign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
-axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+vsign_check = np.load('vsign_tensor.npy')
+hsign_check = np.load('hsign_tensor.npy')
+axessign_check = np.load('axessign_tensor.npy')
 #####################################
 
 # Initialising the Heart structure
@@ -324,6 +324,18 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
 
         if h == 1:
             contrained_x[1] = current_x
+    if np.absolute(h) > 0.4:
+        if h > 0:
+            current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
+        else:
+            current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+    else:
+        xr = 179 - current_ecg_x_pos
+        xl = current_ecg_x_pos - 20
+        if xr >= xl:
+            current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+        else:
+            current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
 
     return contrained_x, constrained_y, binary
 
@@ -750,7 +762,7 @@ def update_data():
                         xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos, current_ecg_y_pos)
                         xvec = np.array(xvec)
                         yvec = np.array(yvec)
-                        
+
                         for i in range(len(x_history)):
 
                             vconsistent.append(check_signs(xvec[i],yvec[i],total_sign_info[i][0],vsign_check,thr = 0.05))
