@@ -626,7 +626,7 @@ def update_data():
                                                                               perminant_constraints)
                     if special_state:
                         constrainedx, constrainedy, binary_state, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
-                                                                                             constrainedx, perminant_constraints,special_y,special_vsign)
+                                                                                                     constrainedx, perminant_constraints,special_y,special_vsign)
 
                     # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 0:
@@ -665,7 +665,6 @@ def update_data():
                             if np.abs(y_vector) > 45 and special_state:
                                 print y_vector
                                 y_vector = 45 * int(copysign(1, y_vector))
-
                             special_state = False
 
                         if binary_state:
@@ -679,6 +678,7 @@ def update_data():
                             else:
                                 y_vector = 50
                                 binary_jump += 1
+                            special_state = False
 
                         if jump_x:
                             h = total_sign_info[-1][1]
@@ -696,6 +696,11 @@ def update_data():
                                 else:
                                     current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
                             jump_x = False
+
+                        if rotors_found > 0 and condistance(constrainedy) < 60:
+                            print 'something whatever'
+                            if np.abs(y_vector) > condistance(constrainedy) * 0.6:
+                                y_vector = int(np.sign(y_vector)*condistance(constrainedy)/2.)
 
                         # IF THE PREDICTED Y JUMP IS ZERO
                         if y_vector == 0:
@@ -781,8 +786,6 @@ def update_data():
                         current_ecg_y_pos = randint(0, 199)
                         rotors_found = 0
                         perminant_constraints = []
-                        binary_state = False
-                        binary_jump = 0
 
                     else:
                         rotors_found += 1
