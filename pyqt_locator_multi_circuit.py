@@ -495,53 +495,35 @@ def update_data():
                         # ONE OF THE ROTORS IS FOUND
                         else:
                             rotors_found += 1
-                            upper = current_ecg_y_pos - 10
+                            upper = current_ecg_y_pos - 5
                             upper %= 200
-                            lower = current_ecg_y_pos + 10
+                            lower = current_ecg_y_pos + 5
                             lower %= 200
                             perminant_constraints.append([lower, upper])
-                            #current_ecg_x_pos = randint(20, 179)
-                            #current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
+
 
                             xUline.setPos(300)
                             xLline.setPos(300)
                             pUline.setPos(upper)
                             pLline.setPos(lower)
                             xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos, current_ecg_y_pos)
-                            print xvec
-                            print yvec
-                            print x_history
-                            print y_history
-                            print total_sign_info
+                            xvec = np.array(xvec)
+                            yvec = np.array(yvec)
+
                             for i in range(len(x_history)):
-                                # y = y_history[i] - current_ecg_y_pos
-                                # if y > 100:
-                                #     y -= 200
-                                # elif y <= -100:
-                                #     y += 200
-                                vconsistent.append(check_signs(xvec[i],yvec[i],total_sign_info[i][0],vsign_check,thr = 0.02))
+
+                                vconsistent.append(check_signs(xvec[i],yvec[i],total_sign_info[i][0],vsign_check,thr = 0.05))
                                 hconsistent.append(check_signs(xvec[i],yvec[i],total_sign_info[i][1],hsign_check,thr = 0.02))
                                 bconsistent.append(check_bsign(total_sign_info[i][-2],total_sign_info[i][-1]))
-                            print vconsistent
-                            print hconsistent
-                            print bconsistent
-                            # if np.size(np.argwhere(np.array(bconsistent) != 0)) != 0:
-                            #     i = np.argmin(np.array(bconsistent))
-                            #     y = y_history[i] - current_ecg_y_pos
-                            #     if y > 100:
-                            #         y -= 200
-                            #     elif y <= -100:
-                            #         y += 200
-                            #     if y>= 0:
-                            #         d = -50
-                            #     else:
-                            #         d = 50
-                            #     print current_ecg_y_pos, y, d
-                            #     current_ecg_y_pos = (current_ecg_y_pos + (y + d) + 100) %200
-                            #     print current_ecg_y_pos
-                            #     print 'learned jump'
-                            # else:
-                            #     current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
+                            vconsistent = np.array(vconsistent)[np.absolute(yvec) > 4]
+                            hconsistent = np.array(hconsistent)[np.absolute(yvec) > 4]
+                            bconsistent = np.array(bconsistent)[np.absolute(yvec) > 4]
+                            total_sign_info = np.array(total_sign_info)
+                            tsign = total_sign_info[np.absolute(yvec) > 4]
+                            yvec_use = yvec[np.absolute(yvec) > 4]
+                            xvec_use = xvec[np.absolute(yvec) > 4]
+                            print vconsistent, yvec_use[vconsistent == False],tsign[:,0][vconsistent == False]
+
                             current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
 
                         constrainedy = [None, None]
@@ -709,7 +691,7 @@ def update_data():
                                 current_ecg_y_pos = (pred_rotor_y[-1] + 100) % 200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
-                                current_ecg_x_pos = randint(20, 179)
+                            current_ecg_x_pos = randint(20, 179)
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             del y_short_memory
@@ -741,7 +723,7 @@ def update_data():
                                 current_ecg_y_pos = (current_ecg_y_pos + 100)%200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
-                                current_ecg_x_pos = randint(20, 179)
+                            current_ecg_x_pos = randint(20, 179)
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             del y_short_memory
@@ -785,9 +767,9 @@ def update_data():
 
                     else:
                         rotors_found += 1
-                        upper = current_ecg_y_pos - 10
+                        upper = current_ecg_y_pos - 5
                         upper %= 200
-                        lower = current_ecg_y_pos + 10
+                        lower = current_ecg_y_pos + 5
                         lower %= 200
                         perminant_constraints.append([lower, upper])
                         #current_ecg_x_pos = randint(20, 179)
@@ -798,40 +780,30 @@ def update_data():
                         pUline.setPos(upper)
                         pLline.setPos(lower)
                         xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos, current_ecg_y_pos)
-                        print xvec
-                        print yvec
-                        print x_history
-                        print y_history
-                        print total_sign_info
+                        xvec = np.array(xvec)
+                        yvec = np.array(yvec)
+                        # print xvec
+                        # print yvec
+                        # print x_history
+                        # print y_history
+                        # print total_sign_info
                         for i in range(len(x_history)):
                             # y = y_history[i] - current_ecg_y_pos
                             # if y > 100:
                             #     y -= 200
                             # elif y <= -100:
                             #     y += 200
-                            vconsistent.append(check_signs(xvec[i],yvec[i],total_sign_info[i][0],vsign_check,thr = 0.02))
+                            vconsistent.append(check_signs(xvec[i],yvec[i],total_sign_info[i][0],vsign_check,thr = 0.05))
                             hconsistent.append(check_signs(xvec[i],yvec[i],total_sign_info[i][1],hsign_check,thr = 0.02))
                             bconsistent.append(check_bsign(total_sign_info[i][-2],total_sign_info[i][-1]))
-                        print vconsistent
-                        print hconsistent
-                        print bconsistent
-                        # if np.size(np.argwhere(np.array(bconsistent) != 0)) != 0:
-                        #     i = np.argmin(np.array(bconsistent))
-                        #     y = y_history[i] - current_ecg_y_pos
-                        #     if y > 100:
-                        #         y -= 200
-                        #     elif y <= -100:
-                        #         y += 200
-                        #     if y>= 0:
-                        #         d = -50
-                        #     else:
-                        #         d = 50
-                        #     print current_ecg_y_pos, y, d
-                        #     current_ecg_y_pos = (current_ecg_y_pos + (y + d) + 100) %200
-                        #     print current_ecg_y_pos
-                        #     print 'learned jump'
-                        # else:
-                        #     current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
+                        vconsistent = np.array(vconsistent)[np.absolute(yvec) > 4]
+                        hconsistent = np.array(hconsistent)[np.absolute(yvec) > 4]
+                        bconsistent = np.array(bconsistent)[np.absolute(yvec) > 4]
+                        total_sign_info = np.array(total_sign_info)
+                        tsign = total_sign_info[np.absolute(yvec) > 4]
+                        yvec_use = yvec[np.absolute(yvec) > 4]
+                        xvec_use = xvec[np.absolute(yvec) > 4]
+                        print vconsistent, yvec_use[vconsistent == False],tsign[:,0][vconsistent == False]
                         current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
 
                     constrainedy = [None, None]
@@ -913,7 +885,7 @@ def update_data():
                                 current_ecg_y_pos = (pred_rotor_y[-1] + 100) % 200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
-                                current_ecg_x_pos = randint(20, 179)
+                            current_ecg_x_pos = randint(20, 179)
                             yUline.setPos(constrainedx[1])
                             yLline.setPos(constrainedx[0])
                             del x_short_memory
