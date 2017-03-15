@@ -16,21 +16,21 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-y_classifier_full = joblib.load(args[1])
-y_class = joblib.load(args[2])
-x_classifier_full = joblib.load(args[3])
-x_class = joblib.load(args[4])
-vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
-hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
-axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+# y_classifier_full = joblib.load(args[1])
+# y_class = joblib.load(args[2])
+# x_classifier_full = joblib.load(args[3])
+# x_class = joblib.load(args[4])
+# vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
+# hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
+# axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
 
-# y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
-# y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
-# x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
-# x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
-# vsign_check = np.load('vsign_tensor.npy')
-# hsign_check = np.load('hsign_tensor.npy')
-# axessign_check = np.load('axessign_tensor.npy')
+y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+vsign_check = np.load('vsign_tensor.npy')
+hsign_check = np.load('hsign_tensor.npy')
+axessign_check = np.load('axessign_tensor.npy')
 
 
 # Initialising the Heart structure
@@ -211,7 +211,7 @@ def prediction(prob_map, vector_constraint, axis):
             possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
             possible_points = [x + upper_index for x in possible_points_detail]
             if len(possible_points) == 1:
-                return possible_points[0]
+                return int(possible_points[0])
             if len(possible_points) > 1:
                 return int(np.mean(possible_points))
 
@@ -664,8 +664,9 @@ def update_data():
 
                             if np.abs(y_vector) > 45 and special_state:
                                 print y_vector
-                                y_vector = 45 * int(copysign(1, y_vector))
+                                y_vector = int(45 * copysign(1, y_vector))
                             special_state = False
+                            print y_vector
 
                         if binary_state:
                             print "Binary If"
@@ -682,19 +683,17 @@ def update_data():
 
                         if jump_x:
                             h = total_sign_info[-1][1]
-                            if np.abs(h) > 0.4:
+                            if np.abs(h) > 0.7:
                                 if h > 0:
                                     current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
                                 else:
                                     current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
 
                             else:
-                                xr = 179 - current_ecg_x_pos
-                                xl = current_ecg_x_pos - 20
-                                if xr >= xl:
-                                    current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+                                if 179 - current_ecg_x_pos >= 80:
+                                    current_ecg_x_pos += 80
                                 else:
-                                    current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
+                                    current_ecg_x_pos -= 80
                             jump_x = False
 
                         if rotors_found > 0 and condistance(constrainedy) < 60:
