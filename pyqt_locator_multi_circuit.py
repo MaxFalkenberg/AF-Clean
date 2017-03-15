@@ -211,7 +211,7 @@ def prediction(prob_map, vector_constraint, axis):
             possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
             possible_points = [x + upper_index for x in possible_points_detail]
             if len(possible_points) == 1:
-                return possible_points[0]
+                return int(possible_points[0])
             if len(possible_points) > 1:
                 return int(np.mean(possible_points))
 
@@ -249,7 +249,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
                 constrained_[1] = perm_constraints[0][1]
 
     if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
-        vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
+        vsign_diff = int(copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2]))
 
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
             if axis == 'x':
@@ -665,9 +665,9 @@ def update_data():
 
                             if np.abs(y_vector) > 45 and special_state:
                                 print y_vector
-                                y_vector = 45 * copysign(1, y_vector)
-                                special_state = False
-                                print y_vector
+                                y_vector = int(45 * copysign(1, y_vector))
+                            special_state = False
+                            print y_vector
 
                         if binary_state:
                             print "Binary If"
