@@ -20,8 +20,8 @@ y_classifier_full = joblib.load(args[1])
 y_class = joblib.load(args[2])
 x_classifier_full = joblib.load(args[3])
 x_class = joblib.load(args[4])
-vsign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
-hsign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
+hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
 axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
 #####################################
 
@@ -602,10 +602,7 @@ def update_data():
                     if special_state:
                         constrainedx, constrainedy, binary_state = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
                                                                                              constrainedx, perminant_constraints)
-
-                    print special_state
-                    print binary_state
-                    print binary_jump
+                        special_state = False
 
                     # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 0:
@@ -642,13 +639,14 @@ def update_data():
                             y_vector = y_classifier_full.classes_[likelyp]
 
                         if binary_state:
-                            if binary_jump == 0:
-                                y_vector = 50
-                                binary_jump += 1
+                            print "binary_state"
                             if binary_jump == 1:
                                 y_vector = -100
                                 binary_jump = 0
                                 binary_state = False
+                            if binary_jump == 0:
+                                y_vector = 50
+                                binary_jump += 1
 
                         # IF THE PREDICTED Y JUMP IS ZERO
                         if y_vector == 0:
