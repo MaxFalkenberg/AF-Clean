@@ -300,9 +300,6 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
     :param pred_y:
     :return:
     """
-    print constrained_y
-    print contrained_x
-    print perm_const
     binary = False
     b = check_bsign(total_sign[0][-2], total_sign[0][-1])
     if b != 0:
@@ -324,18 +321,6 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
 
         if h == 1:
             contrained_x[1] = current_x
-    if np.absolute(h) > 0.4:
-        if h > 0:
-            current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
-        else:
-            current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
-    else:
-        xr = 179 - current_ecg_x_pos
-        xl = current_ecg_x_pos - 20
-        if xr >= xl:
-            current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
-        else:
-            current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
 
     return contrained_x, constrained_y, binary
 
@@ -615,9 +600,6 @@ def update_data():
                         constrainedx, constrainedy, binary_state = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
                                                                                              constrainedx, perminant_constraints)
 
-                    print special_state
-                    print binary_state
-                    print binary_jump
 
                     # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 0:
