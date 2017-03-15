@@ -331,17 +331,6 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
             contrained_x[1] = current_x
 
     x_jump = True
-    #     if h > 0:
-    #         current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
-    #     else:
-    #         current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
-    # else:
-    #     xr = 179 - current_ecg_x_pos
-    #     xl = current_ecg_x_pos - 20
-    #     if xr >= xl:
-    #         current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
-    #     else:
-    #         current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
 
     return contrained_x, constrained_y, binary, x_jump
 
@@ -621,7 +610,6 @@ def update_data():
                     if special_state:
                         constrainedx, constrainedy, binary_state, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
                                                                                              constrainedx, perminant_constraints)
-                        special_state = False
 
                     # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 0:
@@ -657,13 +645,22 @@ def update_data():
                                                                                           constrainedy), axis='x')
                             y_vector = y_classifier_full.classes_[likelyp]
 
+                            if np.abs(y_vector) > 45 and special_state:
+                                print y_vector
+                                y_vector = 45 * copysign(1, y_vector)
+                                special_state = False
+                                print y_vector
+
                         if binary_state:
-                            print "binary_state"
+                            print "Binary If"
+                            print binary_jump
                             if binary_jump == 1:
+                                print current_ecg_y_pos
                                 y_vector = -100
                                 binary_jump = 0
                                 binary_state = False
-                            if binary_jump == 0:
+                            else:
+                                print current_ecg_y_pos
                                 y_vector = 50
                                 binary_jump += 1
 
