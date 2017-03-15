@@ -16,21 +16,21 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-# y_classifier_full = joblib.load(args[1])
-# y_class = joblib.load(args[2])
-# x_classifier_full = joblib.load(args[3])
-# x_class = joblib.load(args[4])
-# vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
-# hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
-# axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+y_classifier_full = joblib.load(args[1])
+y_class = joblib.load(args[2])
+x_classifier_full = joblib.load(args[3])
+x_class = joblib.load(args[4])
+vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
+hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
+axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
 
-y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
-y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
-x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
-x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
-vsign_check = np.load('vsign_tensor.npy')
-hsign_check = np.load('hsign_tensor.npy')
-axessign_check = np.load('axessign_tensor.npy')
+# y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+# y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+# x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+# x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+# vsign_check = np.load('vsign_tensor.npy')
+# hsign_check = np.load('hsign_tensor.npy')
+# axessign_check = np.load('axessign_tensor.npy')
 
 
 # Initialising the Heart structure
@@ -249,7 +249,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
                 constrained_[1] = perm_constraints[0][1]
 
     if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
-        vsign_diff = copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2])
+        vsign_diff = int(copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2]))
 
         if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
             if axis == 'x':
@@ -628,7 +628,6 @@ def update_data():
                         constrainedx, constrainedy, binary_state, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
                                                                                              constrainedx, perminant_constraints,special_y,special_vsign)
 
-
                     # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 0:
                         state = 0
@@ -665,15 +664,15 @@ def update_data():
 
                             if np.abs(y_vector) > 45 and special_state:
                                 print y_vector
-                                y_vector = 45 * copysign(1, y_vector)
-                                special_state = False
-                                print y_vector
+                                y_vector = 45 * int(copysign(1, y_vector))
+
+                            special_state = False
 
                         if binary_state:
                             print "Binary If"
                             print binary_jump
-                            if binary_jump == 1:
-                                print current_ecg_y_pos
+
+                            if binary_jump > 0:
                                 y_vector = -100
                                 binary_jump = 0
                                 binary_state = False
@@ -782,6 +781,8 @@ def update_data():
                         current_ecg_y_pos = randint(0, 199)
                         rotors_found = 0
                         perminant_constraints = []
+                        binary_state = False
+                        binary_jump = 0
 
                     else:
                         rotors_found += 1
