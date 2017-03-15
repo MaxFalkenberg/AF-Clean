@@ -628,7 +628,6 @@ def update_data():
                         constrainedx, constrainedy, binary_state, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
                                                                                              constrainedx, perminant_constraints,special_y,special_vsign)
 
-
                     # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 0:
                         state = 0
@@ -672,8 +671,8 @@ def update_data():
                         if binary_state:
                             print "Binary If"
                             print binary_jump
-                            if binary_jump == 1:
-                                print current_ecg_y_pos
+
+                            if binary_jump > 0:
                                 y_vector = -100
                                 binary_jump = 0
                                 binary_state = False
@@ -782,6 +781,8 @@ def update_data():
                         current_ecg_y_pos = randint(0, 199)
                         rotors_found = 0
                         perminant_constraints = []
+                        binary_state = False
+                        binary_jump = 0
 
                     else:
                         rotors_found += 1
