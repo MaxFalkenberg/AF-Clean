@@ -702,7 +702,7 @@ def update_data():
                             d = condistance(constrainedy)
                             if type(d) == type(None):
                                 d = 100
-                            if np.abs(y_vector) > d * 0.6:
+                            if np.abs(y_vector) > d * 0.75:
                                 y_vector = int(np.sign(y_vector)*d/2.)
 
                         # IF THE PREDICTED Y JUMP IS ZERO
