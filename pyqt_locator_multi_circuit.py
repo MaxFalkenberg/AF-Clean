@@ -296,7 +296,7 @@ def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constr
     return constrained_, sign_short_memory_
 
 
-def special_constraint_finder(current_x, current_y, total_sign, constrained_y, contrained_x, perm_const):
+def special_constraint_finder(current_x, current_y, total_sign, constrained_y, contrained_x, perm_const,spec_y,spec_v):
     """
 
     :param current_y:
@@ -319,10 +319,26 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
         if v >= 0:
             constrained_y[1] = current_y
             constrained_y[0] = perm_const[0][0]
+            p = True
 
         if v < 0:
             constrained_y[1] = perm_const[0][1]
             constrained_y[0] = current_y
+            p = False
+
+        if np.size(spec_y) != 0:
+            u = constrained_y[1]
+            l = constrained_y[0]
+            for i in range(len(spec_y)):
+                m = spec_y[i]
+                print u, l, m, constrained_y
+                if (u-m) * (m-l) >= 0:
+                    print 'Special Constrain'
+                    if p:
+                        constrained_y[0] = m
+                    else:
+                        constrained_y[1] = m
+                    break
 
         if h == -1:
             contrained_x[0] = current_x
@@ -482,7 +498,7 @@ def update_data():
     global current_ecg_y_pos, current_ecg_x_pos, y_short_memory, x_short_memory, ecg_count, previousR, prev_y_vector
     global prev_x_vector, hsign_short_memory, num_ypos_class, num_xpos_class, num_Yloops, num_Xloops, num_yconstraint
     global num_xconstraint, num_xzjump, num_yzjump, rotors_found, perminant_constraints, N_rotors, total_sign_info, vconsistent, hconsistent, bconsistent
-    global x_history, y_history, special_state, binary_jump, binary_state, jump_x
+    global x_history, y_history, special_state, binary_jump, binary_state, jump_x, special_vsign, special_y
 
     data = a.propagate(ecg=True)
     data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
@@ -589,7 +605,8 @@ def update_data():
                             tsign = total_sign_info[np.absolute(yvec) > 4]
                             yvec_use = yvec[np.absolute(yvec) > 4]
                             xvec_use = xvec[np.absolute(yvec) > 4]
-                            print vconsistent, yvec_use[vconsistent == False],tsign[:,0][vconsistent == False]
+                            special_y = (yvec_use[vconsistent == False] + current_ecg_y_pos) % 200
+                            special_vsign = tsign[:,0][vconsistent == False]
 
                             current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                             special_state = True
@@ -620,7 +637,7 @@ def update_data():
                                                                               perminant_constraints)
                     if special_state:
                         constrainedx, constrainedy, binary_state, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
-                                                                                             constrainedx, perminant_constraints)
+                                                                                             constrainedx, perminant_constraints,special_y,special_vsign)
 
                         special_state = False
 
@@ -665,7 +682,7 @@ def update_data():
                                 y_vector = -100
                                 binary_jump = 0
                                 binary_state = False
-                            if binary_jump == 0:
+                            else:
                                 y_vector = 50
                                 binary_jump += 1
 
@@ -799,7 +816,8 @@ def update_data():
                         tsign = total_sign_info[np.absolute(yvec) > 4]
                         yvec_use = yvec[np.absolute(yvec) > 4]
                         xvec_use = xvec[np.absolute(yvec) > 4]
-                        print vconsistent, yvec_use[vconsistent == False],tsign[:,0][vconsistent == False]
+                        special_y = (yvec_use[vconsistent == False] + current_ecg_y_pos) % 200
+                        special_vsign = tsign[:,0][vconsistent == False]
 
                         current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                         special_state = True
