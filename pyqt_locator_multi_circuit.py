@@ -902,10 +902,6 @@ def update_data():
                             constrainedy = [None, None]
                             constrainedx = [20, 179]
                             if rotors_found > 0:
-                                lower = perminant_constraints[0][0]
-                                upper = perminant_constraints[0][1]
-                                # current_ecg_y_pos = choice(conposition(lower, upper))
-                                # current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                                 current_ecg_y_pos = (pred_rotor_y[-1] + 100) % 200
                             else:
                                 current_ecg_y_pos = randint(0, 199)

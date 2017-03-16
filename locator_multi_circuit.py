@@ -9,7 +9,8 @@ from sklearn.externals import joblib
 from math import copysign
 from random import randint, choice
 import analysis_theano as at
-from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_compile_rt, print_counter
+from Functions import ani_convert, feature_extract_multi_test_rt, multi_feature_compile_rt,\
+    print_counter, check_bsign, check_signs
 import propagate_singlecircuit as ps
 import cPickle
 
@@ -20,6 +21,17 @@ y_classifier_full = joblib.load(args[1])
 y_class = joblib.load(args[2])
 x_classifier_full = joblib.load(args[3])
 x_class = joblib.load(args[4])
+vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
+hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
+axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+
+# y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+# y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+# x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+# x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+# vsign_check = np.load('vsign_tensor.npy')
+# hsign_check = np.load('hsign_tensor.npy')
+# axessign_check = np.load('axessign_tensor.npy')
 #####################################
 
 # length of time for recording -> process (should be set to cover at least two waveform periods)
@@ -55,8 +67,8 @@ def rt_ecg_gathering(ecg_list, sign_para):
     uncompiled_features = []
     for index in range(9):
         uncompiled_features.append(feature_extract_multi_test_rt(index, voltages))
-    compiled_features = multi_feature_compile_rt(np.array(uncompiled_features), sign=sign_para)
-    return compiled_features
+    compiled_features, signs = multi_feature_compile_rt(np.array(uncompiled_features), sign='record_sign_plus')
+    return compiled_features, signs
 
 
 def movingaverage(values, weight):
@@ -185,9 +197,140 @@ def prediction(prob_map, vector_constraint, axis):
             possible_points_detail = np.argwhere(constrained_prob == np.amax(constrained_prob)).flatten()
             possible_points = [x + upper_index for x in possible_points_detail]
             if len(possible_points) == 1:
-                return possible_points[0]
+                return int(possible_points[0])
             if len(possible_points) > 1:
                 return int(np.mean(possible_points))
+
+
+def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_, axis, perm_constraints):
+    """
+
+    :param prev_vector:
+    :param sign_short_memory_:
+    :param current_ecg_pos_:
+    :param constrained_:
+    :param axis:
+    :param perm_constraints:
+    :param special:
+    :return:
+    """
+    if len(sign_short_memory_) == 1:  # Assigns the first constraint (for y case or if on boundry).
+        sign = sign_short_memory_[0]
+        if sign < 0:
+            constrained_[0] = current_ecg_pos_
+            if perm_constraints and axis == 'x':
+                constrained_[1] = perm_constraints[0][1]
+
+        if sign > 0:
+            constrained_[1] = current_ecg_pos_
+            if perm_constraints and axis == 'x':
+                constrained_[0] = perm_constraints[0][0]
+
+        if sign == 0:  # Starts right on the boundry
+            if not perm_constraints:
+                del sign_short_memory_  # resets the short_memory as it needs to find first constraint again.
+                sign_short_memory_ = []
+            else:
+                constrained_[0] = perm_constraints[0][0]
+                constrained_[1] = perm_constraints[0][1]
+
+    if len(sign_short_memory_) >= 2:  # Assigns constraints when 2 ECG have been taken.
+        vsign_diff = int(copysign(1, sign_short_memory_[-1]) - copysign(1, sign_short_memory_[-2]))
+
+        if prev_vector < 0 and vsign_diff == 2:  # Upper Constraint
+            if axis == 'x':
+                if prev_vector < -4 and constrained_[0] is not None:
+                    constrained_[0] += 3
+                    constrained_[0] %= 200
+            constrained_[1] = current_ecg_pos_
+
+        if prev_vector > 0 and vsign_diff == -2:  # Lower Constraint
+            if axis == 'x':
+                if prev_vector > 4 and constrained_[1] is not None:
+                    constrained_[1] -= 3
+                    constrained_[1] %= 200
+            constrained_[0] = current_ecg_pos_
+
+        if prev_vector < 0 and vsign_diff == -2:  # Passed boundry (top to bottom)
+            if constrained_[0] is None:
+                constrained_[0] = current_ecg_pos_
+
+        if prev_vector > 0 and vsign_diff == 2:  # Passed boundry (bottom to top)
+            if constrained_[1] is None:
+                constrained_[1] = current_ecg_pos_
+
+        if prev_vector > 0 and vsign_diff == 0:  # Potential updataing of upper constraint
+            if constrained_[0] is None:
+                constrained_[1] = current_ecg_pos_
+                if axis == 'x':
+                    if prev_vector > 4:
+                        constrained_[1] -= 3
+                        constrained_[1] %= 200
+            if condistance(constrained_) > condistance([constrained_[0], current_ecg_pos_]):
+                constrained_[1] = current_ecg_pos_
+
+        if prev_vector < 0 and vsign_diff == 0:  # Potential updating of lower constraint
+            if constrained_[1] is None:
+                constrained_[0] = current_ecg_pos_
+                if axis == 'x':
+                    if prev_vector < -4:
+                        constrained_[0] += 3
+                        constrained_[0] %= 200
+            if condistance(constrained_) > condistance([current_ecg_pos_, constrained_[1]]):
+                constrained_[0] = current_ecg_pos_
+
+    return constrained_, sign_short_memory_
+
+
+def special_constraint_finder(current_x, current_y, total_sign, constrained_y, contrained_x, perm_const,spec_y,spec_v):
+    """
+
+    :param current_y:
+    :param current_x:
+    :param total_sign:
+    :param constrained_y:
+    :param contrained_x:
+    :param perm_const:
+    :param pred_y:
+    :return:
+    """
+    b = check_bsign(total_sign[0][-2], total_sign[0][-1])
+    h = total_sign_info[0][1]
+    v = total_sign_info[0][0]
+    if b != 0:
+        pass
+    else:
+        if v >= 0:
+            constrained_y[1] = current_y
+            constrained_y[0] = perm_const[0][0]
+            p = True
+
+        if v < 0:
+            constrained_y[1] = perm_const[0][1]
+            constrained_y[0] = current_y
+            p = False
+
+        if np.size(spec_y) != 0:
+            u = constrained_y[1]
+            l = constrained_y[0]
+            for i in range(len(spec_y)):
+                m = spec_y[i]
+                if (u-m) * (m-l) >= 0:
+                    if p:
+                        constrained_y[0] = m
+                    else:
+                        constrained_y[1] = m
+                    break
+
+        # if h == -1:
+        #     contrained_x[0] = current_x
+        #
+        # if h == 1:
+        #     contrained_x[1] = current_x
+
+    x_jump = True
+
+    return contrained_x, constrained_y, x_jump
 
 
 def constrained_finder(prev_vector, sign_short_memory_, current_ecg_pos_, constrained_, axis, perm_constraints):
@@ -350,7 +493,7 @@ zero_x_check = [0]*number_of_rotors       # num
 
 pp = 0
 print_counter(pp, number_of_rotors)
-for i in range(number_of_rotors):
+for tissue in range(number_of_rotors):
 
     # Initialising the Heart structure
     a = ps.Heart(nu=0.2, delta=0.0, fakedata=True)
@@ -367,7 +510,10 @@ for i in range(number_of_rotors):
     a.set_multi_circuit(np.ravel_multi_index([cp_y_pos, cp_x_pos], (200, 200)),
                         np.ravel_multi_index([cp_y_pos2, cp_x_pos2], (200, 200)))
 
-    rotor[i] = [(cp_x_pos, cp_y_pos), (cp_x_pos2, cp_y_pos2)]
+    rotor[tissue] = [(cp_x_pos, cp_y_pos), (cp_x_pos2, cp_y_pos2)]
+
+    pred_rotor_x = []
+    pred_rotor_y = []
 
     # Rotor state
     rotors_found = 0
@@ -382,7 +528,7 @@ for i in range(number_of_rotors):
     current_ecg_x_pos = randint(20, 179)
     current_ecg_y_pos = randint(0, 199)
     ecg_processing = at.ECG(centre=(current_ecg_y_pos, current_ecg_x_pos), m='g_single')
-    ecg_start[i] = (current_ecg_x_pos, current_ecg_y_pos)
+    ecg_start[tissue] = (current_ecg_x_pos, current_ecg_y_pos)
 
     # Animation grids
     animation_grid = np.zeros(a.shape)
@@ -400,6 +546,12 @@ for i in range(number_of_rotors):
     # vector sign history
     vsign_short_memory = []
     hsign_short_memory = []
+    vconsistent = []
+    hconsistent = []
+    bconsistent = []
+
+    special_state = False
+    jump_x = False
 
     # History information
     total_sign_info = []
@@ -448,11 +600,10 @@ for i in range(number_of_rotors):
                 ECG_start_flag = True
 
             if ptr1 % process_length == 0 and ptr1 != stability_time:
-
-                sample, bsign = rt_ecg_gathering(process_list, sign_para='record_sign_plus')
+                sample, signs = rt_ecg_gathering(process_list, sign_para='record_sign_plus')
                 # ECG Recording and feature gathering
                 ecg_num += 1
-                total_sign_info.append(sample[-3:])
+                total_sign_info.append(signs)
                 x_history.append(current_ecg_x_pos)
                 y_history.append(current_ecg_y_pos)
 
@@ -465,43 +616,70 @@ for i in range(number_of_rotors):
 
                     # POSITIVE CLASSIFICATION FOR Y
                     if y_class_value == 1:
+                        if special_state:
+                            special_state = False
                         state = 1  # Change to state 1 for y axis regression/classification.
                         x_class_value = x_class.predict(sample)[0]
 
+                        # CHECKS IF ON THE CORRECT Y AXIS
                         if x_class_value == 1:
                             ecg_end_positions[rotors_found] = (current_ecg_x_pos, current_ecg_y_pos)
                             ecg_num_list[rotors_found] = ecg_num
                             state = 0
+                            pred_rotor_y.append(current_ecg_y_pos)
+                            pred_rotor_x.append(current_ecg_x_pos)
 
                             # ALL ROTORS ARE FOUND
                             if rotors_found == N_rotors:
                                 ecg_end_positions[rotors_found] = (current_ecg_x_pos, current_ecg_y_pos)
                                 rotors_found = 0
-                                ecg_end[i] = ecg_end_positions
-                                ecg_counter[i] = ecg_num_list
-                                constrain_check_y[i] = current_constraint_y_info
-                                constrain_check_x[i] = current_constraint_x_info
-                                xloop[i] = xloop_count
-                                yloop[i] = yloop_count
-                                zero_x_check[i] = zero_x_info
-                                zero_y_check[i] = zero_y_info
+                                ecg_end[tissue] = ecg_end_positions
+                                ecg_counter[tissue] = ecg_num_list
+                                constrain_check_y[tissue] = current_constraint_y_info
+                                constrain_check_x[tissue] = current_constraint_x_info
+                                xloop[tissue] = xloop_count
+                                yloop[tissue] = yloop_count
+                                zero_x_check[tissue] = zero_x_info
+                                zero_y_check[tissue] = zero_y_info
                                 ECG_located_flag = True
 
                             # ONE OF THE ROTORS IS FOUND
                             else:
                                 rotors_found += 1
-                                upper = current_ecg_y_pos - 10
+                                upper = current_ecg_y_pos - 5
                                 upper %= 200
-                                lower = current_ecg_y_pos + 10
+                                lower = current_ecg_y_pos + 5
                                 lower %= 200
                                 perminant_constraints.append([lower, upper])
                                 xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos,
                                                               current_ecg_y_pos)
-                                current_ecg_x_pos = randint(20, 179)  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
-                                current_ecg_y_pos = choice(conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
+                                xvec = np.array(xvec)
+                                yvec = np.array(yvec)
+
+                                for i in range(len(x_history)):
+                                    vconsistent.append(
+                                        check_signs(xvec[i], yvec[i], total_sign_info[i][0], vsign_check, thr=0.05))
+                                    hconsistent.append(
+                                        check_signs(xvec[i], yvec[i], total_sign_info[i][1], hsign_check, thr=0.02))
+                                    bconsistent.append(check_bsign(total_sign_info[i][-2], total_sign_info[i][-1]))
+                                vconsistent = np.array(vconsistent)[np.absolute(yvec) > 4]
+                                hconsistent = np.array(hconsistent)[np.absolute(yvec) > 4]
+                                bconsistent = np.array(bconsistent)[np.absolute(yvec) > 4]
+                                total_sign_info = np.array(total_sign_info)
+                                tsign = total_sign_info[np.absolute(yvec) > 4]
+                                yvec_use = yvec[np.absolute(yvec) > 4]
+                                xvec_use = xvec[np.absolute(yvec) > 4]
+                                special_y = (yvec_use[vconsistent == False] + current_ecg_y_pos) % 200
+                                special_vsign = tsign[:, 0][vconsistent == False]
+
+                                current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
+                                special_state = True
                                 y_short_memory = []
                                 vsign_short_memory = []
                                 total_sign_info = []
+                                vconsistent = []
+                                hconsistent = []
+                                bconsistent = []
                                 x_history = []
                                 y_history = []
                                 ecg_num = 0
@@ -513,23 +691,35 @@ for i in range(number_of_rotors):
                     if y_class_value == 0:
                         y_short_memory.append(current_ecg_y_pos)
                         vsign_short_memory.append(vsign)
-                        constrainedy, vsign_short_memory = constrained_finder(prev_y_vector, vsign_short_memory,
-                                                                              current_ecg_y_pos, constrainedy, 'x',
-                                                                              perminant_constraints)
+                        if not special_state:
+                            constrainedy, vsign_short_memory = constrained_finder(prev_y_vector, vsign_short_memory,
+                                                                                  current_ecg_y_pos, constrainedy, 'x',
+                                                                                  perminant_constraints)
+                        if special_state:
+                            constrainedx, constrainedy, jump_x = special_constraint_finder(current_ecg_x_pos,
+                                                                                           current_ecg_y_pos,
+                                                                                           total_sign_info,
+                                                                                           constrainedy,
+                                                                                           constrainedx,
+                                                                                           perminant_constraints,
+                                                                                           special_y, special_vsign)
+                            # might need this to fix weird constraints
+                            vsign_short_memory = []
 
                         # CONSTRAINED CONDITION FOR Y
                         if condistance(constrainedy) == 0:
                             current_constraint_y_info[rotors_found] += 1
                             if rotors_found > 0:
-                                lower = perminant_constraints[0][0]
-                                upper = perminant_constraints[0][1]
-                                current_ecg_y_pos = choice(conposition(lower, upper))
+                                current_ecg_y_pos = (pred_rotor_y[-1] + 100) % 200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
                             current_ecg_x_pos = randint(20, 179)
                             y_short_memory = []
                             vsign_short_memory = []
                             total_sign_info = []
+                            vconsistent = []
+                            hconsistent = []
+                            bconsistent = []
                             x_history = []
                             y_history = []
 
@@ -538,8 +728,34 @@ for i in range(number_of_rotors):
                             likelyp = prediction(y_probarg, vector_constraint=vecdistance(current_ecg_y_pos,
                                                                                           constrainedy), axis='x')
                             y_vector = y_classifier_full.classes_[likelyp]
-                            prev_y_vector = y_vector
-                            current_ecg_y_pos -= y_vector
+
+                            # SPECIAL CONDITION
+                            if np.abs(y_vector) > 45 and special_state:
+                                y_vector = int(45 * copysign(1, y_vector))
+                            special_state = False
+
+                            # JUMPS IN THE X DIRECTION AS WELL UNDER SPECIAL CONDITION
+                            if jump_x:
+                                h = total_sign_info[-1][1]
+                                if np.abs(h) > 1.0:
+                                    if h > 0:
+                                        current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
+                                    else:
+                                        current_ecg_x_pos = int((current_ecg_x_pos + 179) / 2.)
+
+                                else:
+                                    if 179 - current_ecg_x_pos >= 80:
+                                        current_ecg_x_pos += 80
+                                    else:
+                                        current_ecg_x_pos -= 80
+                                jump_x = False
+
+                            if rotors_found > 0 and condistance(constrainedy) < 60:
+                                d = condistance(constrainedy)
+                                if type(d) == type(None):
+                                    d = 100
+                                if np.abs(y_vector) > d * 0.75:
+                                    y_vector = int(np.sign(y_vector) * d / 2.)
 
                             # IF THE PREDICTED Y JUMP IS ZERO
                             if y_vector == 0:
@@ -548,14 +764,15 @@ for i in range(number_of_rotors):
                                 constrainedy = [None, None]
                                 constrainedx = [20, 179]
                                 if rotors_found > 0:
-                                    lower = perminant_constraints[0][0]
-                                    upper = perminant_constraints[0][1]
-                                    current_ecg_y_pos = choice(conposition(lower, upper))
+                                    current_ecg_y_pos = (pred_rotor_y[-1] + 100) % 200
                                 else:
                                     current_ecg_y_pos = randint(0, 199)
                                 current_ecg_x_pos = randint(20, 179)
                                 y_short_memory = []
                                 vsign_short_memory = []
+
+                            prev_y_vector = y_vector
+                            current_ecg_y_pos -= y_vector
 
                             # WRAPPING AROUND THE BOUNDRY CONDITION
                             if current_ecg_y_pos > 199 or current_ecg_y_pos < 0:
@@ -567,15 +784,16 @@ for i in range(number_of_rotors):
                                 constrainedy = [None, None]
                                 constrainedx = [20, 179]
                                 if rotors_found > 0:
-                                    lower = perminant_constraints[0][0]
-                                    upper = perminant_constraints[0][1]
-                                    current_ecg_y_pos = choice(conposition(lower, upper))
+                                    current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
                                 else:
                                     current_ecg_y_pos = randint(0, 199)
                                 current_ecg_x_pos = randint(20, 179)
                                 y_short_memory = []
                                 vsign_short_memory = []
                                 total_sign_info = []
+                                vconsistent = []
+                                hconsistent = []
+                                bconsistent = []
                                 x_history = []
                                 y_history = []
 
@@ -591,33 +809,54 @@ for i in range(number_of_rotors):
                         ecg_end_positions[rotors_found] = (current_ecg_x_pos, current_ecg_y_pos)
                         ecg_num_list[rotors_found] = ecg_num
                         state = 0
+                        pred_rotor_y.append(current_ecg_y_pos)
+                        pred_rotor_x.append(current_ecg_x_pos)
+
                         # ALL ROTORS ARE FOUND
                         if rotors_found == N_rotors:
                             ecg_end_positions[rotors_found] = (current_ecg_x_pos, current_ecg_y_pos)
                             rotors_found = 0
-                            ecg_end[i] = ecg_end_positions
-                            ecg_counter[i] = ecg_num_list
-                            constrain_check_y[i] = current_constraint_y_info
-                            constrain_check_x[i] = current_constraint_x_info
-                            xloop[i] = xloop_count
-                            yloop[i] = yloop_count
-                            zero_x_check[i] = zero_x_info
-                            zero_y_check[i] = zero_y_info
+                            ecg_end[tissue] = ecg_end_positions
+                            ecg_counter[tissue] = ecg_num_list
+                            constrain_check_y[tissue] = current_constraint_y_info
+                            constrain_check_x[tissue] = current_constraint_x_info
+                            xloop[tissue] = xloop_count
+                            yloop[tissue] = yloop_count
+                            zero_x_check[tissue] = zero_x_info
+                            zero_y_check[tissue] = zero_y_info
                             ECG_located_flag = True
 
                         # ONE OF THE ROTORS IS FOUND
                         else:
                             rotors_found += 1
-                            upper = current_ecg_y_pos - 10
+                            upper = current_ecg_y_pos - 5
                             upper %= 200
-                            lower = current_ecg_y_pos + 10
+                            lower = current_ecg_y_pos + 5
                             lower %= 200
                             perminant_constraints.append([lower, upper])
                             xvec, yvec = relative_vectors(x_history, y_history, current_ecg_x_pos,
                                                           current_ecg_y_pos)
-                            current_ecg_x_pos = randint(20, 179)  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
-                            current_ecg_y_pos = choice(
-                                conposition(lower, upper))  # TEMPORARY - NEW Y CHOICE HERE FOR MAX
+                            xvec = np.array(xvec)
+                            yvec = np.array(yvec)
+
+                            for i in range(len(x_history)):
+                                vconsistent.append(
+                                    check_signs(xvec[i], yvec[i], total_sign_info[i][0], vsign_check, thr=0.05))
+                                hconsistent.append(
+                                    check_signs(xvec[i], yvec[i], total_sign_info[i][1], hsign_check, thr=0.02))
+                                bconsistent.append(check_bsign(total_sign_info[i][-2], total_sign_info[i][-1]))
+                            vconsistent = np.array(vconsistent)[np.absolute(yvec) > 4]
+                            hconsistent = np.array(hconsistent)[np.absolute(yvec) > 4]
+                            bconsistent = np.array(bconsistent)[np.absolute(yvec) > 4]
+                            total_sign_info = np.array(total_sign_info)
+                            tsign = total_sign_info[np.absolute(yvec) > 4]
+                            yvec_use = yvec[np.absolute(yvec) > 4]
+                            xvec_use = xvec[np.absolute(yvec) > 4]
+                            special_y = (yvec_use[vconsistent == False] + current_ecg_y_pos) % 200
+                            special_vsign = tsign[:, 0][vconsistent == False]
+
+                            current_ecg_y_pos = (current_ecg_y_pos + 100) % 200
+                            special_state = True
                             y_short_memory = []
                             vsign_short_memory = []
                             total_sign_info = []
@@ -643,9 +882,7 @@ for i in range(number_of_rotors):
                             constrainedy = [None, None]
                             constrainedx = [20, 179]
                             if rotors_found > 0:
-                                lower = perminant_constraints[0][0]
-                                upper = perminant_constraints[0][1]
-                                current_ecg_y_pos = choice(conposition(lower, upper))
+                                current_ecg_y_pos = (pred_rotor_y[-1] + 100) % 200
                             else:
                                 current_ecg_y_pos = randint(0, 199)
                             current_ecg_x_pos = randint(20, 179)
@@ -654,6 +891,9 @@ for i in range(number_of_rotors):
                             total_sign_info = []
                             x_history = []
                             y_history = []
+                            vconsistent = []
+                            hconsistent = []
+                            bconsistent = []
 
                         # MOVING THE PROBE IN THE X AXIS
                         else:
@@ -669,9 +909,7 @@ for i in range(number_of_rotors):
                                 constrainedy = [None, None]
                                 constrainedx = [20, 179]
                                 if rotors_found > 0:
-                                    lower = perminant_constraints[0][0]
-                                    upper = perminant_constraints[0][1]
-                                    current_ecg_y_pos = choice(conposition(lower, upper))
+                                    current_ecg_y_pos = (pred_rotor_y[-1] + 100) % 200
                                 else:
                                     current_ecg_y_pos = randint(0, 199)
                                 current_ecg_x_pos = randint(20, 179)
@@ -680,6 +918,9 @@ for i in range(number_of_rotors):
                                 total_sign_info = []
                                 x_history = []
                                 y_history = []
+                                vconsistent = []
+                                hconsistent = []
+                                bconsistent = []
 
                             prev_x_vector = x_vector
                             current_ecg_x_pos -= x_vector
@@ -695,9 +936,7 @@ for i in range(number_of_rotors):
                                 constrainedy = [None, None]
                                 constrainedx = [20, 179]
                                 if rotors_found > 0:
-                                    lower = perminant_constraints[0][0]
-                                    upper = perminant_constraints[0][1]
-                                    current_ecg_y_pos = choice(conposition(lower, upper))
+                                    current_ecg_y_pos = (pred_rotor_y[-1] + 100) % 200
                                 else:
                                     current_ecg_y_pos = randint(0, 199)
                                 current_ecg_x_pos = randint(20, 179)
@@ -706,6 +945,9 @@ for i in range(number_of_rotors):
                                 total_sign_info = []
                                 x_history = []
                                 y_history = []
+                                vconsistent = []
+                                hconsistent = []
+                                bconsistent = []
 
                 del process_list
                 process_list = []
