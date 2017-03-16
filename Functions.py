@@ -1997,6 +1997,8 @@ def check_signs(x,y,sign_value,sign_tensor,thr = 0.1):
     y = float(y) / 10.
     x = int(x + 18.)
     y = int(y + 10.)
+    if y >= 20:
+        y = 19
     j = int((sign_value + 1.) * 6.)
     p = sign_tensor[:,:,j][y][x]
     # print x,y,j,p
