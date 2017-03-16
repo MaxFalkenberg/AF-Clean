@@ -17,21 +17,21 @@ import cPickle
 args = sys.argv
 # Loading in Machine Learning models (should have sign data)
 #####################################
-y_classifier_full = joblib.load(args[1])
-y_class = joblib.load(args[2])
-x_classifier_full = joblib.load(args[3])
-x_class = joblib.load(args[4])
-vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
-hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
-axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+# y_classifier_full = joblib.load(args[1])
+# y_class = joblib.load(args[2])
+# x_classifier_full = joblib.load(args[3])
+# x_class = joblib.load(args[4])
+# vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
+# hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
+# axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
 
-# y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
-# y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
-# x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
-# x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
-# vsign_check = np.load('vsign_tensor.npy')
-# hsign_check = np.load('hsign_tensor.npy')
-# axessign_check = np.load('axessign_tensor.npy')
+y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+vsign_check = np.load('vsign_tensor.npy')
+hsign_check = np.load('hsign_tensor.npy')
+axessign_check = np.load('axessign_tensor.npy')
 #####################################
 
 # length of time for recording -> process (should be set to cover at least two waveform periods)
@@ -970,7 +970,7 @@ if save_data == 'n':
 final_data = {"ECG Counter": ecg_counter, "Rotor Position": rotor, "ECG Start": ecg_start, "ECG End": ecg_end,
               "Y Constraint Check": constrain_check_y, "X Constraint Check": constrain_check_x,
               "Y Zero Check": zero_y_check, "X Zero Check": zero_x_check, "Y Loop": yloop, "X Loop": xloop,
-              "Machine Learning Models": [args[1], args[2], args[3], args[4]]}
+              "Machine Learning Models": ['sc4k_yreg_byclass.pkl', 'sc4k_xaxis_class.pkl', 'sc4k_xreg_byclass.pkl', 'sc4k_target_xaxisrestricted.pkl']}
 
 if save_data == 'y':
     with open('%s.p' % save_data_name, 'wb') as f:

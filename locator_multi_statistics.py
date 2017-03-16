@@ -13,7 +13,7 @@ rotor_datafile = args[1]
 with open('%s.p' % rotor_datafile, 'rb') as f:
     data = cPickle.load(f)
 
-print data['Machine Learning Models']
+# print data['Machine Learning Models']
 
 ECG_start = data['ECG Start']  # (x, y)
 ECG_end = data['ECG End']  # (x, y), y loop - ('NA', 'Y LOOP'), X loop - ('X Loop', y)
