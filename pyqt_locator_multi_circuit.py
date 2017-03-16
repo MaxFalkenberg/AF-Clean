@@ -16,21 +16,21 @@ args = sys.argv
 
 # Loading in Machine Learning models
 #####################################
-# y_classifier_full = joblib.load(args[1])
-# y_class = joblib.load(args[2])
-# x_classifier_full = joblib.load(args[3])
-# x_class = joblib.load(args[4])
-# vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
-# hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
-# axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
+y_classifier_full = joblib.load(args[1])
+y_class = joblib.load(args[2])
+x_classifier_full = joblib.load(args[3])
+x_class = joblib.load(args[4])
+vsign_check = np.load('/Users/williamcheng/AF-Clean/vsign_tensor.npy')
+hsign_check = np.load('/Users/williamcheng/AF-Clean/hsign_tensor.npy')
+axessign_check = np.load('/Users/williamcheng/AF-Clean/axessign_tensor.npy')
 
-y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
-y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
-x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
-x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
-vsign_check = np.load('vsign_tensor.npy')
-hsign_check = np.load('hsign_tensor.npy')
-axessign_check = np.load('axessign_tensor.npy')
+# y_classifier_full = joblib.load('modeldump\models_sc\sc4k_yreg_byclass.pkl')
+# y_class = joblib.load('modeldump\models_sc\sc4k_xaxis_class.pkl')
+# x_classifier_full = joblib.load('modeldump\models_sc\sc4k_xreg_byclass.pkl')
+# x_class = joblib.load('modeldump\models_sc\sc4k_target_xaxisrestricted.pkl')
+# vsign_check = np.load('vsign_tensor.npy')
+# hsign_check = np.load('hsign_tensor.npy')
+# axessign_check = np.load('axessign_tensor.npy')
 
 
 # Initialising the Heart structure
@@ -308,13 +308,11 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
     :param pred_y:
     :return:
     """
-    binary = False
-    x_jump = False
     b = check_bsign(total_sign[0][-2], total_sign[0][-1])
     h = total_sign_info[0][1]
     v = total_sign_info[0][0]
     if b != 0:
-        binary = True
+        pass
     else:
         if v >= 0:
             constrained_y[1] = current_y
@@ -340,15 +338,15 @@ def special_constraint_finder(current_x, current_y, total_sign, constrained_y, c
                         constrained_y[1] = m
                     break
 
-        if h == -1:
-            contrained_x[0] = current_x
-
-        if h == 1:
-            contrained_x[1] = current_x
+        # if h == -1:
+        #     contrained_x[0] = current_x
+        #
+        # if h == 1:
+        #     contrained_x[1] = current_x
 
     x_jump = True
 
-    return contrained_x, constrained_y, binary, x_jump
+    return contrained_x, constrained_y, x_jump
 
 
 def update_label_text(rotor_x_1, rotor_y_1, rotor_x_2, rotor_y_2,
@@ -455,8 +453,6 @@ x_history = []
 y_history = []
 
 special_state = False
-binary_state = False
-binary_jump = 0
 jump_x = False
 
 # Constrained y/x values
@@ -487,7 +483,7 @@ def update_data():
     global current_ecg_y_pos, current_ecg_x_pos, y_short_memory, x_short_memory, ecg_count, previousR, prev_y_vector
     global prev_x_vector, hsign_short_memory, num_ypos_class, num_xpos_class, num_Yloops, num_Xloops, num_yconstraint
     global num_xconstraint, num_xzjump, num_yzjump, rotors_found, perminant_constraints, N_rotors, total_sign_info, vconsistent, hconsistent, bconsistent
-    global x_history, y_history, special_state, binary_jump, binary_state, jump_x, special_vsign, special_y
+    global x_history, y_history, special_state, jump_x, special_vsign, special_y
 
     data = a.propagate(ecg=True)
     data = ani_convert(data, shape=a.shape, rp=a.rp, animation_grid=animation_grid)
@@ -562,8 +558,6 @@ def update_data():
                             pLline.setPos(-300)
                             rotors_found = 0
                             perminant_constraints = []
-                            binary_state = False
-                            binary_jump = 0
 
                         # ONE OF THE ROTORS IS FOUND
                         else:
@@ -625,8 +619,10 @@ def update_data():
                                                                               current_ecg_y_pos, constrainedy, 'x',
                                                                               perminant_constraints)
                     if special_state:
-                        constrainedx, constrainedy, binary_state, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
+                        constrainedx, constrainedy, jump_x = special_constraint_finder(current_ecg_x_pos, current_ecg_y_pos, total_sign_info, constrainedy,
                                                                                                      constrainedx, perminant_constraints,special_y,special_vsign)
+                        # might need this to fix weird constraints
+                        vsign_short_memory = []
 
                     # CONSTRAINED CONDITION FOR Y
                     if condistance(constrainedy) == 0:
@@ -657,34 +653,21 @@ def update_data():
 
                     # MOVING THE PROBE IN THE Y AXIS
                     else:
-                        if not binary_state:
-                            likelyp = prediction(y_probarg, vector_constraint=vecdistance(current_ecg_y_pos,
-                                                                                          constrainedy), axis='x')
-                            y_vector = y_classifier_full.classes_[likelyp]
+                        likelyp = prediction(y_probarg, vector_constraint=vecdistance(current_ecg_y_pos,
+                                                                                      constrainedy), axis='x')
+                        y_vector = y_classifier_full.classes_[likelyp]
 
-                            if np.abs(y_vector) > 45 and special_state:
-                                print y_vector
-                                y_vector = int(45 * copysign(1, y_vector))
-                            special_state = False
+                        # SPECIAL CONDITION
+                        if np.abs(y_vector) > 45 and special_state:
                             print y_vector
+                            y_vector = int(45 * copysign(1, y_vector))
+                        special_state = False
 
-                        if binary_state:
-                            print "Binary If"
-                            print binary_jump
-
-                            if binary_jump > 0:
-                                y_vector = -100
-                                binary_jump = 0
-                                binary_state = False
-                            else:
-                                y_vector = 50
-                                binary_jump += 1
-                            special_state = False
-
+                        # JUMPS IN THE X DIRECTION AS WELL UNDER SPECIAL CONDITION
                         if jump_x:
                             h = total_sign_info[-1][1]
                             if np.abs(h) > 1.0:
-                                print 'constrain jump'
+                                print 'constraint jump'
                                 if h > 0:
                                     current_ecg_x_pos = int((current_ecg_x_pos + 20) / 2.)
                                 else:
