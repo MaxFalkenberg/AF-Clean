@@ -606,16 +606,17 @@ for tissue in range(number_of_rotors):
                 sample, signs = rt_ecg_gathering(process_list, sign_para='record_sign_plus')
                 # ECG Recording and feature gathering
                 ecg_num += 1
-                # if ecg_num is not None and ecg_num == (ecg_limit + 1):
-                #     ecg_end[tissue] = ecg_end_positions
-                #     ecg_counter[tissue] = ecg_num_list
-                #     constrain_check_y[tissue] = current_constraint_y_info
-                #     constrain_check_x[tissue] = current_constraint_x_info
-                #     xloop[tissue] = xloop_count
-                #     yloop[tissue] = yloop_count
-                #     zero_x_check[tissue] = zero_x_info
-                #     zero_y_check[tissue] = zero_y_info
-                #     break
+                if ecg_num is not None and ecg_num == (ecg_limit + 1):
+                    ecg_end[tissue] = ecg_end_positions
+                    ecg_num_list[rotors_found] = 'Limit Hit'
+                    ecg_counter[tissue] = ecg_num_list
+                    constrain_check_y[tissue] = current_constraint_y_info
+                    constrain_check_x[tissue] = current_constraint_x_info
+                    xloop[tissue] = xloop_count
+                    yloop[tissue] = yloop_count
+                    zero_x_check[tissue] = zero_x_info
+                    zero_y_check[tissue] = zero_y_info
+                    break
                 total_sign_info.append(signs)
                 x_history.append(current_ecg_x_pos)
                 y_history.append(current_ecg_y_pos)
