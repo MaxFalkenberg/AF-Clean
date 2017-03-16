@@ -42,7 +42,7 @@ n = 2
 stability_time = n * process_length
 
 # number of ecgs before it moves on.
-ecg_limit = None
+ecg_limit = 30
 
 # Number of rotors to find
 number_of_rotors = int(raw_input('Number of rotors to find: '))
