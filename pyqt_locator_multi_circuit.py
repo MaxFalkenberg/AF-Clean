@@ -697,14 +697,6 @@ def update_data():
                                     current_ecg_x_pos -= 80
                             jump_x = False
 
-                        if rotors_found > 0 and condistance(constrainedy) < 60:
-                            print 'something whatever'
-                            d = condistance(constrainedy)
-                            if type(d) == type(None):
-                                d = 100
-                            if np.abs(y_vector) > d * 0.75:
-                                y_vector = int(np.sign(y_vector)*d/2.)
-
                         # IF THE PREDICTED Y JUMP IS ZERO
                         if y_vector == 0:
                             previousR = "(%s, %s) (0 Y Jump)" % (current_ecg_x_pos, current_ecg_y_pos)
